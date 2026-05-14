@@ -1,2 +1,2 @@
 # blank
-minimalistic text editor for macOS
+the minimalistic text editor for macOS
