@@ -222,7 +222,8 @@ body.resizing * {
 }
 
 #btn-pin.on,
-#btn-zen.on {
+#btn-zen.on,
+#btn-syntax.on {
   background: var(--pill);
 }
 

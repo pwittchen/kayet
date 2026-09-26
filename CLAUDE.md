@@ -9,7 +9,7 @@ kayet is a minimalistic macOS text editor built with Rust + Tauri 2 and a CodeMi
   - `commands.rs` Tauri commands, `fs_ops.rs` file I/O, `workspace.rs` file tree,
     `markdown.rs` Markdown rendering (pulldown-cmark), `menu.rs`, `chrome.rs`, `config.rs`
 - `ui/` — TypeScript frontend (vanilla TS, no framework), built by Vite into `dist/`
-  - `editor.ts` CodeMirror setup, `preview.ts` Markdown preview, `tree.ts` file tree,
+  - `editor.ts` CodeMirror setup, `languages.ts` code highlighting by file extension, `preview.ts` Markdown preview, `tree.ts` file tree,
     `chrome.ts` auto-hiding window chrome, `api.ts` Tauri command bindings, `theme.css`
 
 ## Commands

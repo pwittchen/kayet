@@ -10,6 +10,7 @@ import { api, basename, Config, dirname, isMarkdown, isWithin, relativeTo, Theme
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
 import { icons } from "./icons";
+import { codeLanguage, isCode } from "./languages";
 import { Preview } from "./preview";
 import { FileTree } from "./tree";
 
@@ -36,6 +37,8 @@ const els = {
   btnWorkspace: $<HTMLButtonElement>("btn-workspace"),
   btnTheme: $<HTMLButtonElement>("btn-theme"),
   btnPreview: $<HTMLButtonElement>("btn-preview"),
+  btnSyntax: $<HTMLButtonElement>("btn-syntax"),
+  btnCloseFile: $<HTMLButtonElement>("btn-close-file"),
   edgeHandle: $("edge-handle"),
   banner: $("banner"),
   bannerReload: $<HTMLButtonElement>("banner-reload"),
@@ -176,6 +179,7 @@ function updateLayout(): void {
   els.sidebar.hidden = !ui.sidebar_visible;
   els.sidebarDivider.hidden = !ui.sidebar_visible;
   els.btnSidebar.classList.toggle("on", ui.sidebar_visible);
+  els.btnCloseFile.hidden = !doc.path;
 
   const md = isMarkdown(doc.path);
   if (!md) previewOpen = false;
@@ -286,10 +290,37 @@ makeResizable(
 
 // ---- documents ----
 
+let syntaxSeq = 0;
+
+/**
+ * Highlights the open document: Markdown always, code files per the syntax highlighting
+ * setting. Code grammars load lazily, so they are applied once ready.
+ */
+async function applySyntax(): Promise<void> {
+  const seq = ++syntaxSeq;
+  const code = isCode(doc.path);
+  const on = cfg.editor.syntax_highlighting;
+  void api.setSyntaxMenu(code, on).catch(() => {});
+  els.btnSyntax.hidden = !code;
+  els.btnSyntax.classList.toggle("on", on);
+  els.btnSyntax.setAttribute("aria-pressed", String(on));
+  if (isMarkdown(doc.path)) return editor.setSyntax("markdown");
+  const lang = code && on ? await codeLanguage(doc.path) : null;
+  if (seq === syntaxSeq) editor.setSyntax(lang);
+}
+
+function toggleSyntax(): void {
+  if (!isCode(doc.path)) return;
+  cfg.editor.syntax_highlighting = !cfg.editor.syntax_highlighting;
+  saveConfig();
+  void applySyntax();
+}
+
 function loadDoc(path: string | null, text: string): void {
   doc.path = path;
   doc.disk = text;
-  editor.load(text, isMarkdown(path));
+  editor.load(text, isMarkdown(path) ? "markdown" : null);
+  void applySyntax().catch(showError);
   doc.saved = editor.doc;
   hideBanner();
   rememberLastFile(path);
@@ -299,9 +330,8 @@ function loadDoc(path: string | null, text: string): void {
 }
 
 function setDocPath(path: string): void {
-  const wasMd = isMarkdown(doc.path);
   doc.path = path;
-  if (wasMd !== isMarkdown(path)) editor.setMarkdown(isMarkdown(path));
+  void applySyntax().catch(showError);
   rememberLastFile(path);
   updateAll();
 }
@@ -330,6 +360,12 @@ async function openWithDialog(): Promise<void> {
 }
 
 async function newDoc(): Promise<void> {
+  if (!(await confirmDiscard())) return;
+  loadDoc(null, "");
+}
+
+/** Closes the open file, leaving an empty untitled document. */
+async function closeFile(): Promise<void> {
   if (!(await confirmDiscard())) return;
   loadDoc(null, "");
 }
@@ -473,6 +509,7 @@ const commands: Record<string, () => unknown> = {
   "reset-workspace": resetWorkspace,
   save,
   "save-as": saveAs,
+  "close-file": closeFile,
   close: () => appWindow.close(),
   quit: () => appWindow.close(),
   undo: () => (inTextField() ? document.execCommand("undo") : editor.undo()),
@@ -484,6 +521,7 @@ const commands: Record<string, () => unknown> = {
   "cycle-theme": cycleTheme,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
+  "toggle-syntax": toggleSyntax,
   "zoom-in": () => zoom(1),
   "zoom-out": () => zoom(-1),
   "zoom-reset": () => zoom("reset"),
@@ -506,6 +544,8 @@ els.btnSidebar.addEventListener("click", () => run("toggle-tree"));
 els.btnWorkspace.addEventListener("click", () => run("open-workspace"));
 els.btnTheme.addEventListener("click", () => run("cycle-theme"));
 els.btnPreview.addEventListener("click", () => run("toggle-preview"));
+els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
+els.btnCloseFile.addEventListener("click", () => run("close-file"));
 els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 
 els.btnPin.innerHTML = icons.pin;
@@ -513,6 +553,8 @@ els.btnZen.innerHTML = icons.zen;
 els.btnSidebar.innerHTML = icons.sidebar;
 els.btnWorkspace.innerHTML = icons.folder;
 els.btnPreview.innerHTML = icons.eye;
+els.btnSyntax.innerHTML = icons.code;
+els.btnCloseFile.innerHTML = icons.closeFile;
 
 // Keep the default browser context menu out of the editor chrome.
 document.addEventListener("contextmenu", (e) => {

@@ -107,6 +107,7 @@ fn main() {
             commands::open_external,
             commands::render_markdown,
             commands::set_chrome_visible,
+            commands::set_syntax_menu,
             commands::open_file_dialog,
             commands::save_file_dialog,
             commands::pick_workspace,

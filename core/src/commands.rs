@@ -241,6 +241,11 @@ pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
 }
 
 #[tauri::command]
+pub fn set_syntax_menu(app: AppHandle, enabled: bool, checked: bool) {
+    crate::menu::set_syntax_item(&app, enabled, checked);
+}
+
+#[tauri::command]
 pub async fn open_file_dialog(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Option<String>> {
     let dir = lock(&state.workspace).clone();
     let picked = app.dialog().file().set_directory(dir).blocking_pick_file();

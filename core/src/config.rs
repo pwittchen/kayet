@@ -86,6 +86,8 @@ pub struct EditorConfig {
     pub soft_wrap: bool,
     pub max_line_width: u32,
     pub autosave: bool,
+    /// Syntax highlighting for source code and data/config files (Markdown is always highlighted).
+    pub syntax_highlighting: bool,
 }
 
 impl Default for EditorConfig {
@@ -97,6 +99,7 @@ impl Default for EditorConfig {
             soft_wrap: true,
             max_line_width: 72,
             autosave: false,
+            syntax_highlighting: true,
         }
     }
 }

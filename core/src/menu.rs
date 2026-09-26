@@ -1,8 +1,11 @@
 //! Application menu. Custom items are forwarded to the frontend as `menu` events carrying
 //! the item id; the frontend owns all editor actions.
 
-use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::menu::{AboutMetadata, CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Runtime};
+
+const VIEW: &str = "view";
+const SYNTAX: &str = "toggle-syntax";
 
 pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let item = |id: &str, label: &str, accel: Option<&str>| {
@@ -41,6 +44,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &item("save", "Save", Some("CmdOrCtrl+S"))?,
             &item("save-as", "Save As…", Some("CmdOrCtrl+Shift+S"))?,
             &sep()?,
+            &item("close-file", "Close File", None)?,
             &item("close", "Close Window", Some("CmdOrCtrl+W"))?,
         ],
     )?;
@@ -63,8 +67,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         ],
     )?;
 
-    let view = Submenu::with_items(
+    let view = Submenu::with_id_and_items(
         app,
+        VIEW,
         "View",
         true,
         &[
@@ -73,6 +78,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &item("cycle-theme", "Cycle Theme", Some("CmdOrCtrl+Shift+L"))?,
             &item("toggle-chrome", "Keep Title Bar Visible", Some("CmdOrCtrl+."))?,
             &item("toggle-zen", "Zen Mode", Some("CmdOrCtrl+Shift+J"))?,
+            // Enabled by the frontend only while a code file is open.
+            &CheckMenuItem::with_id(app, SYNTAX, "Syntax Highlighting", false, true, None::<&str>)?,
             &sep()?,
             &item("zoom-in", "Zoom In", Some("CmdOrCtrl+="))?,
             &item("zoom-out", "Zoom Out", Some("CmdOrCtrl+-"))?,
@@ -93,4 +100,18 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     )?;
 
     Menu::with_items(app, &[&app_menu, &file, &edit, &view, &window])
+}
+
+/// Updates the View → Syntax Highlighting item.
+pub fn set_syntax_item<R: Runtime>(app: &AppHandle<R>, enabled: bool, checked: bool) {
+    let Some(view) = app.menu().and_then(|m| m.get(VIEW)) else {
+        return;
+    };
+    let Some(item) = view.as_submenu().and_then(|v| v.get(SYNTAX)) else {
+        return;
+    };
+    if let Some(check) = item.as_check_menuitem() {
+        let _ = check.set_enabled(enabled);
+        let _ = check.set_checked(checked);
+    }
 }

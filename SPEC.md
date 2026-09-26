@@ -36,7 +36,7 @@ no unnecessary icons, labels or decorations.
 | Language (core)  | Rust (edition 2024)                                                    |
 | App shell        | Tauri 2.x                                                              |
 | Frontend         | TypeScript + lightweight UI (vanilla TS or Svelte/Solid — no heavy framework) |
-| Editor component | CodeMirror 6 (plain text + Markdown mode)                              |
+| Editor component | CodeMirror 6 (plain text, Markdown, code via `@codemirror/legacy-modes`) |
 | Markdown render  | Rust side: `pulldown-cmark` (CommonMark + GFM tables, task lists, strikethrough) |
 | HTML sanitizing  | `ammonia` (sanitize rendered Markdown before injecting into preview)   |
 | File watching    | `notify` crate                                                         |
@@ -70,6 +70,8 @@ in CI or releases.
 - Files are opened from the file tree, via `⌘O`, or by drag-and-drop onto the window.
 - Encoding: UTF-8. Line endings are preserved as found in the file.
 - New untitled document: `⌘N`. On first save, the default location is the current workspace.
+- `File → Close File` closes the open document (asking to save unsaved changes first) and
+  leaves an empty untitled document; the closed file is no longer restored on next launch.
 
 ## 5. Window & Layout
 
@@ -120,9 +122,11 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):
   | Icon | Action | Shortcut |
   |------|--------|----------|
+  | × (close) | Close the open file — **only shown when a file is open** | — |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
   | Sidebar | Toggle file tree | `⌘\` |
   | Folder | Change workspace | `⌘⇧O` |
+  | Code | Toggle syntax highlighting — **only shown for code and data/config files** | — |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
 
@@ -148,6 +152,11 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Font: monospace by default (`SF Mono` via `ui-monospace`), optional system UI font (`-apple-system`) setting.
   Default size 15px, line height 1.6.
 - Markdown syntax highlighting is subtle (weight/opacity changes, muted accent for links/code).
+- Source code and data/config files (e.g. `.rs`, `.ts`, `.py`, `.json`, `.toml`, `.yaml`, `.xml`,
+  `.csv`, `Dockerfile`) get syntax highlighting picked by file extension or well-known file name,
+  using the same muted palette as preview code blocks. Grammars are loaded lazily per language.
+- `View → Syntax Highlighting` (or the title bar code icon) toggles highlighting for code files; the setting is global and
+  persisted. The item is disabled for plain text and Markdown files.
 - Standard shortcuts: `⌘S` save, `⌘⇧S` save as, `⌘Z/⌘⇧Z` undo/redo, `⌘F` find, `⌘⌥F` replace,
   `⌘+/⌘-/⌘0` zoom.
 - Autosave: off by default; optional setting to autosave after 1s of inactivity.
@@ -221,6 +230,7 @@ line_height = 1.6
 soft_wrap = true
 max_line_width = 72
 autosave = false
+syntax_highlighting = true  # code and data/config files
 
 [window]
 width = 1000
@@ -250,6 +260,7 @@ kayet/
 │   ├── index.html
 │   ├── main.ts
 │   ├── editor.ts            # CodeMirror setup
+│   ├── languages.ts         # code languages by file extension (lazy-loaded)
 │   ├── tree.ts              # file tree component
 │   ├── preview.ts           # preview pane
 │   ├── chrome.ts            # hover reveal logic, title bar

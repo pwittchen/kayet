@@ -12,7 +12,7 @@ import {
   keymap,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
-import { HighlightStyle, LanguageSupport, indentOnInput, syntaxHighlighting } from "@codemirror/language";
+import { HighlightStyle, Language, LanguageSupport, indentOnInput, syntaxHighlighting } from "@codemirror/language";
 import { markdownLanguage } from "@codemirror/lang-markdown";
 import { SearchQuery, highlightSelectionMatches, openSearchPanel, search, searchKeymap, setSearchQuery } from "@codemirror/search";
 import { tags as t } from "@lezer/highlight";
@@ -24,6 +24,9 @@ export interface EditorSettings {
   softWrap: boolean;
   maxLineWidth: number;
 }
+
+/** How the document is highlighted: as Markdown, as a code language, or not at all. */
+export type Syntax = "markdown" | Language | null;
 
 export interface EditorCallbacks {
   onChange: () => void;
@@ -40,6 +43,20 @@ const markdownHighlight = HighlightStyle.define([
   { tag: t.monospace, fontFamily: "var(--font-mono)", fontSize: "0.92em", color: "var(--code-text)" },
   { tag: t.quote, color: "var(--text-muted)" },
   { tag: [t.processingInstruction, t.meta, t.contentSeparator, t.labelName], color: "var(--text-muted)", opacity: "0.7" },
+]);
+
+/** Source code and data files: a few muted hues on top of the regular text color. */
+const codeHighlight = HighlightStyle.define([
+  { tag: [t.keyword, t.operatorKeyword, t.controlKeyword, t.definitionKeyword, t.moduleKeyword], color: "var(--hl-keyword)" },
+  { tag: [t.string, t.special(t.string), t.regexp, t.inserted], color: "var(--hl-string)" },
+  { tag: [t.number, t.bool, t.null, t.atom, t.constant(t.variableName), t.attributeName], color: "var(--hl-number)" },
+  {
+    tag: [t.typeName, t.className, t.definition(t.variableName), t.function(t.variableName), t.propertyName, t.tagName, t.heading, t.labelName],
+    color: "var(--hl-title)",
+  },
+  { tag: [t.comment, t.meta, t.processingInstruction, t.deleted], color: "var(--hl-comment)", fontStyle: "italic" },
+  { tag: [t.punctuation, t.separator, t.bracket], color: "var(--text-muted)" },
+  { tag: t.invalid, textDecoration: "underline wavy", textDecorationColor: "var(--hl-number)" },
 ]);
 
 /**
@@ -123,7 +140,7 @@ export class Editor {
 
   constructor(parent: HTMLElement, settings: EditorSettings, private readonly cb: EditorCallbacks) {
     this.settings = settings;
-    this.view = new EditorView({ parent, state: this.createState("", false) });
+    this.view = new EditorView({ parent, state: this.createState("", null) });
     this.view.scrollDOM.addEventListener("scroll", () => this.cb.onScroll(), { passive: true });
     this.view.contentDOM.addEventListener("keydown", (e) => {
       if (!e.metaKey && !e.ctrlKey && !["Shift", "Alt", "Control", "Meta", "CapsLock"].includes(e.key)) {
@@ -133,7 +150,7 @@ export class Editor {
     this.view.contentDOM.setAttribute("spellcheck", "true");
   }
 
-  private createState(text: string, isMarkdown: boolean): EditorState {
+  private createState(text: string, syntax: Syntax): EditorState {
     const extensions: Extension[] = [
       this.lineSep.of(EditorState.lineSeparator.of(detectLineSeparator(text))),
       history(),
@@ -145,7 +162,7 @@ export class Editor {
       highlightSelectionMatches(),
       EditorState.allowMultipleSelections.of(false),
       keymap.of([...searchKeymap, ...historyKeymap, ...defaultKeymap, indentWithTab]),
-      this.language.of(this.languageFor(isMarkdown)),
+      this.language.of(this.languageFor(syntax)),
       this.wrap.of(this.settings.softWrap ? EditorView.lineWrapping : []),
       this.look.of(this.lookExtension()),
       this.zen.of(this.zenOn ? zenMode : []),
@@ -157,11 +174,12 @@ export class Editor {
     return EditorState.create({ doc: text, extensions });
   }
 
-  private languageFor(isMarkdown: boolean): Extension {
-    return isMarkdown
-      ? // Bare GFM language: skips the embedded HTML/JS/CSS grammars and autocompletion.
-        [new LanguageSupport(markdownLanguage), syntaxHighlighting(markdownHighlight)]
-      : [];
+  private languageFor(syntax: Syntax): Extension {
+    if (syntax === "markdown") {
+      // Bare GFM language: skips the embedded HTML/JS/CSS grammars and autocompletion.
+      return [new LanguageSupport(markdownLanguage), syntaxHighlighting(markdownHighlight)];
+    }
+    return syntax ? [new LanguageSupport(syntax), syntaxHighlighting(codeHighlight)] : [];
   }
 
   private lookExtension(): Extension {
@@ -180,8 +198,8 @@ export class Editor {
   }
 
   /** Replaces the document; resets undo history. */
-  load(text: string, isMarkdown: boolean): void {
-    this.view.setState(this.createState(text, isMarkdown));
+  load(text: string, syntax: Syntax): void {
+    this.view.setState(this.createState(text, syntax));
     this.view.scrollDOM.scrollTop = 0;
   }
 
@@ -196,8 +214,8 @@ export class Editor {
     });
   }
 
-  setMarkdown(isMarkdown: boolean): void {
-    this.view.dispatch({ effects: this.language.reconfigure(this.languageFor(isMarkdown)) });
+  setSyntax(syntax: Syntax): void {
+    this.view.dispatch({ effects: this.language.reconfigure(this.languageFor(syntax)) });
   }
 
   /** Zen mode: keeps the cursor line vertically centered and dims all but the current paragraph. */

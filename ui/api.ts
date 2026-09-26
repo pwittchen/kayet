@@ -21,6 +21,7 @@ export interface Config {
     soft_wrap: boolean;
     max_line_width: number;
     autosave: boolean;
+    syntax_highlighting: boolean;
   };
   window: { width: number; height: number; x: number; y: number };
   session: { last_file?: string | null };
@@ -60,6 +61,8 @@ export const api = {
     invoke<string>("render_markdown", { text, base }),
   setChromeVisible: (visible: boolean) =>
     invoke<void>("set_chrome_visible", { visible }),
+  setSyntaxMenu: (enabled: boolean, checked: boolean) =>
+    invoke<void>("set_syntax_menu", { enabled, checked }),
   openFileDialog: () => invoke<string | null>("open_file_dialog"),
   saveFileDialog: (directory: string | null, fileName: string) =>
     invoke<string | null>("save_file_dialog", { directory, fileName }),
