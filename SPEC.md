@@ -47,6 +47,10 @@ no unnecessary icons, labels or decorations.
 Primary target: **macOS**. The code should not preclude Linux/Windows builds, but they are
 not a v1 requirement.
 
+macOS builds target **Apple Silicon (M-series, `aarch64-apple-darwin`) only**. Intel Macs
+(`x86_64-apple-darwin`) and universal binaries are out of scope — no Intel builds are produced
+in CI or releases.
+
 ## 4. Core Concepts
 
 ### 4.1 Workspace
