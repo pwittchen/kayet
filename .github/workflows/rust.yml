@@ -9,6 +9,14 @@ on:
     branches: [ "master" ]
     paths-ignore:
       - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,21 +25,45 @@ jobs:
   build:
 
     # Apple Silicon (aarch64-apple-darwin) only — see SPEC.md §3.
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
     - uses: actions/checkout@v4
+
     - uses: actions/setup-node@v4
       with:
         node-version: 22
         cache: npm
+
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-apple-darwin
+
+    - uses: Swatinem/rust-cache@v2
+
     - name: Install frontend dependencies
       run: npm ci
+
+    # The Rust crate embeds dist/ at compile time, so the frontend must be built first.
     - name: Build frontend
       run: npm run build
+
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --locked
+
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --locked
+
     - name: Bundle app
       run: npx tauri build --target aarch64-apple-darwin --bundles app
+
+    - name: Package app
+      run: |
+        cd target/aarch64-apple-darwin/release/bundle/macos
+        ditto -c -k --keepParent kayet.app "$GITHUB_WORKSPACE/kayet-macos-aarch64.zip"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: kayet-macos-aarch64
+        path: kayet-macos-aarch64.zip
+        if-no-files-found: error
