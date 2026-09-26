@@ -54,6 +54,7 @@
           <span class="lights"><i></i><i></i><i></i></span>
           <span class="window-title">notes.md</span>
           <span class="window-controls" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h4v4H6zM6 6V4.25A1.75 1.75 0 1 0 4.25 6H6zM10 6V4.25A1.75 1.75 0 1 1 11.75 6H10zM6 10v1.75A1.75 1.75 0 1 1 4.25 10H6zM10 10v1.75A1.75 1.75 0 1 0 11.75 10H10z"/></svg>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 1.75l4.5 4.5-2.1.7-2.4 2.4-.35 3.15-1.4 1.4L2.1 8l1.4-1.4 3.15-.35 2.4-2.4z"/><path d="M5.1 10.9 1.75 14.25"/></svg>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.9 5.2A5.75 5.75 0 1 0 13.75 8.3"/><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none"/></svg>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2"/><path d="M6.25 2.75v10.5"/></svg>
@@ -103,15 +104,35 @@
       </div>
     </section>
 
+    <section id="palette" class="palette">
+      <h2 class="reveal">Every command, one keystroke away.</h2>
+      <p class="palette-lead reveal">Press <kbd>⌘</kbd><kbd>K</kbd> or click the ⌘ icon in the title bar. Type a few letters, hit Enter.</p>
+      <div class="palette-box reveal" aria-hidden="true">
+        <div class="palette-input">pre<span class="caret"></span></div>
+        <ul>
+          <li class="selected"><span>Show Preview</span><kbd>⌘⇧P</kbd></li>
+          <li><span>Keep Title Bar Visible</span><kbd>⌘.</kbd></li>
+          <li><span>Open Workspace…</span><kbd>⌘⇧O</kbd></li>
+        </ul>
+      </div>
+      <div class="config-notes reveal">
+        <p><strong>Fuzzy search.</strong> Matches substrings and letters in order, so a couple of keystrokes find any command.</p>
+        <p><strong>Learn as you go.</strong> Every command shows its shortcut, so the palette doubles as a cheat sheet.</p>
+        <p><strong>Only what applies.</strong> Context commands like preview, syntax highlighting or Close File appear only when they make sense.</p>
+      </div>
+    </section>
+
     <section id="shortcuts" class="shortcuts">
       <h2 class="reveal">Hands on the keyboard.</h2>
       <dl class="keys reveal">
+        <div><dt>Command palette</dt><dd><kbd>⌘</kbd><kbd>K</kbd></dd></div>
         <div><dt>Toggle zen mode</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>J</kbd></dd></div>
         <div><dt>Toggle file tree</dt><dd><kbd>⌘</kbd><kbd>\</kbd></dd></div>
         <div><dt>Toggle preview</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>P</kbd></dd></div>
         <div><dt>Cycle theme</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd></dd></div>
         <div><dt>Open workspace</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>O</kbd></dd></div>
         <div><dt>Show chrome</dt><dd><kbd>⌘</kbd><kbd>.</kbd></dd></div>
+        <div><dt>Close file</dt><dd><kbd>⌘</kbd><kbd>W</kbd></dd></div>
       </dl>
     </section>
 
@@ -153,7 +174,7 @@ y = <span class="t-num">0</span></code></pre>
       <div class="config-notes reveal">
         <p><strong>Created on first launch.</strong> Missing keys are filled in with their defaults and written back, so the file always lists every option.</p>
         <p><strong>Remembers your layout.</strong> Theme, file tree, zen mode, split sizes, window position and the last open file are saved as you use the app.</p>
-        <p><strong>Safe to edit.</strong> Changes apply on the next launch — edit it while kayet is closed. A file that fails to parse is left untouched and defaults are used.</p>
+        <p><strong>Edit it in kayet.</strong> Open it with <kbd>⌘</kbd><kbd>,</kbd> or the sliders icon — changes apply as soon as you save. A file that fails to parse is left untouched and defaults are used.</p>
       </div>
     </section>
 

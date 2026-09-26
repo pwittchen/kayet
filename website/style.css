@@ -344,6 +344,42 @@ kbd {
   color: var(--text-muted);
 }
 
+/* ---- command palette ---- */
+.palette { max-width: 1040px; margin: 0 auto; padding-bottom: 140px; }
+.palette h2 {
+  text-align: center;
+  font-size: clamp(36px, 5.5vw, 56px);
+  line-height: 1.08;
+}
+.palette-lead { margin: 16px auto 56px; max-width: 40em; text-align: center; color: var(--text-muted); font-size: 19px; }
+.palette-lead kbd { font-size: 15px; }
+.palette-box {
+  max-width: 560px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--window-bg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.palette-input {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+}
+.palette-box ul { margin: 0; padding: 6px; list-style: none; }
+.palette-box li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+.palette-box li.selected { background: color-mix(in srgb, var(--text) 7%, transparent); }
+.palette-box kbd { min-width: 0; padding: 0; border: 0; background: none; font-size: 12px; }
+
 /* ---- config ---- */
 .config { max-width: 1040px; margin: 0 auto; padding-bottom: 140px; }
 .config h2 {
@@ -445,7 +481,7 @@ kbd {
   .nav-links a span { display: none; }
   .nav-links a svg { width: 16px; height: 16px; }
   .hero { padding-top: 72px; }
-  .showcase, .features, .shortcuts, .config { padding-bottom: 96px; }
+  .showcase, .features, .palette, .shortcuts, .config { padding-bottom: 96px; }
   .config-code { font-size: 12px; }
   .window-body { min-height: 0; font-size: 13px; }
   .window-controls { display: none; }
