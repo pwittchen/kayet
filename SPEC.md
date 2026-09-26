@@ -117,7 +117,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Traffic lights are shown/hidden together with the title bar (via Tauri window API on macOS).
 
 ### 5.3 Title bar contents
-- **Left:** native traffic lights.
+- **Left:** native traffic lights, followed directly by the Sidebar icon (toggle file tree, `⌘\`).
 - **Center:** document name, muted "— edited" suffix when unsaved; workspace-relative path on hover tooltip.
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):
   | Icon | Action | Shortcut |
@@ -125,7 +125,6 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | × (close) | Close the open file — **only shown when a file is open** | — |
   | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
-  | Sidebar | Toggle file tree | `⌘\` |
   | Folder | Change workspace | `⌘⇧O` |
   | Code | Toggle syntax highlighting — **only shown for code and data/config files** | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |

@@ -31,6 +31,9 @@
     </div>
 
     <header id="titlebar" data-tauri-drag-region>
+      <nav class="controls controls-left">
+        <button id="btn-sidebar" type="button" title="Toggle file tree (⌘\)" aria-label="Toggle file tree"></button>
+      </nav>
       <div id="doc-title" data-tauri-drag-region>
         <span id="doc-name" data-tauri-drag-region></span>
         <span id="doc-edited" data-tauri-drag-region hidden>— edited</span>
@@ -40,7 +43,6 @@
         <button id="btn-palette" type="button" title="Command palette (⌘K)" aria-label="Command palette"></button>
         <button id="btn-pin" type="button" title="Keep title bar visible (⌘.)" aria-label="Keep title bar visible" aria-pressed="false"></button>
         <button id="btn-zen" type="button" title="Zen mode (⌘⇧J)" aria-label="Zen mode" aria-pressed="false"></button>
-        <button id="btn-sidebar" type="button" title="Toggle file tree (⌘\)" aria-label="Toggle file tree"></button>
         <button id="btn-workspace" type="button" title="Change workspace (⌘⇧O)" aria-label="Change workspace"></button>
         <button id="btn-syntax" type="button" title="Syntax highlighting" aria-label="Syntax highlighting" aria-pressed="false" hidden></button>
         <button id="btn-settings" type="button" title="Settings (⌘,)" aria-label="Settings"></button>

@@ -29,7 +29,7 @@
   --editor-font-size: 15px;
   --radius: 6px;
   --fade: 150ms ease-out;
-  --titlebar-height: 40px;
+  --titlebar-height: 48px;
 
   color-scheme: light;
 }
@@ -164,7 +164,7 @@ body.resizing * {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 10px 0 88px;
+  padding: 0 10px 0 84px;
   background: var(--bar-bg);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
