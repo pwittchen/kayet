@@ -373,11 +373,17 @@ button:focus-visible {
 #editor .cm-scroller {
   font-family: var(--font-ui);
   overflow: auto;
+  /* A classic (non-overlay) scrollbar reserves the same space on both sides so the
+     text column stays centered. */
+  scrollbar-gutter: stable both-edges;
 }
 
 #editor .cm-content {
   margin: 0 auto;
-  width: 100%;
+  /* Snap the text column to whole characters so a full line ends exactly at the right
+     padding, keeping the left and right space equal at any window width. */
+  width: calc(round(down, 100% - 96px, 1ch) + 96px);
+  flex-grow: 0;
   padding: calc(var(--titlebar-height) + 32px) 48px 40vh;
   caret-color: var(--caret);
   -webkit-user-select: text;
