@@ -11,6 +11,9 @@
   --window-bg: #ffffff;
   --shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 12px 40px rgb(0 0 0 / 8%), 0 40px 80px -20px rgb(0 0 0 / 12%);
   --glow: color-mix(in srgb, var(--accent) 14%, transparent);
+  --hl-string: #3e7d4f;
+  --hl-number: #b0602a;
+  --hl-title: #3b5bb5;
 
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
@@ -30,6 +33,9 @@
     --window-bg: #161618;
     --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 12px 40px rgb(0 0 0 / 40%), 0 40px 80px -20px rgb(0 0 0 / 50%);
     --glow: color-mix(in srgb, var(--accent) 10%, transparent);
+    --hl-string: #9ccc8c;
+    --hl-number: #e3a26f;
+    --hl-title: #8fb2f5;
     color-scheme: dark;
   }
 }
@@ -45,6 +51,9 @@
   --window-bg: #161618;
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 12px 40px rgb(0 0 0 / 40%), 0 40px 80px -20px rgb(0 0 0 / 50%);
   --glow: color-mix(in srgb, var(--accent) 10%, transparent);
+  --hl-string: #9ccc8c;
+  --hl-number: #e3a26f;
+  --hl-title: #8fb2f5;
   color-scheme: dark;
 }
 
@@ -335,6 +344,47 @@ kbd {
   color: var(--text-muted);
 }
 
+/* ---- config ---- */
+.config { max-width: 1040px; margin: 0 auto; padding-bottom: 140px; }
+.config h2 {
+  text-align: center;
+  font-size: clamp(36px, 5.5vw, 56px);
+  line-height: 1.08;
+}
+.config-lead { margin: 16px auto 56px; max-width: 40em; text-align: center; color: var(--text-muted); font-size: 19px; }
+.config-window { max-width: 760px; margin: 0 auto; }
+.config-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.config-code {
+  margin: 0;
+  padding: 28px clamp(20px, 5vw, 44px);
+  overflow-x: auto;
+  font: 13.5px/1.7 var(--font-mono);
+  color: var(--text);
+  tab-size: 2;
+}
+.t-sec { color: var(--hl-title); font-weight: 600; }
+.t-str { color: var(--hl-string); }
+.t-num { color: var(--hl-number); }
+.t-com { color: var(--text-muted); font-style: italic; }
+.config-notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px 32px;
+  max-width: 880px;
+  margin: 40px auto 0;
+}
+.config-notes p { margin: 0; font-size: 15px; color: var(--text-muted); }
+.config-notes strong { display: block; margin-bottom: 4px; color: var(--text); font-weight: 600; }
+
 /* ---- download ---- */
 .download {
   text-align: center;
@@ -395,7 +445,8 @@ kbd {
   .nav-links a span { display: none; }
   .nav-links a svg { width: 16px; height: 16px; }
   .hero { padding-top: 72px; }
-  .showcase, .features, .shortcuts { padding-bottom: 96px; }
+  .showcase, .features, .shortcuts, .config { padding-bottom: 96px; }
+  .config-code { font-size: 12px; }
   .window-body { min-height: 0; font-size: 13px; }
   .window-controls { display: none; }
 }
