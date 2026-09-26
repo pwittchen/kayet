@@ -1,7 +1,16 @@
 // CodeMirror 6 setup: no gutter, soft wrap, centered readable column, subtle Markdown.
 
-import { Compartment, EditorState, Extension, Text } from "@codemirror/state";
-import { EditorView, drawSelection, highlightSpecialChars, keymap } from "@codemirror/view";
+import { Compartment, EditorState, Extension, RangeSetBuilder, Text } from "@codemirror/state";
+import {
+  Decoration,
+  DecorationSet,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  drawSelection,
+  highlightSpecialChars,
+  keymap,
+} from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
 import { HighlightStyle, LanguageSupport, indentOnInput, syntaxHighlighting } from "@codemirror/language";
 import { markdownLanguage } from "@codemirror/lang-markdown";
@@ -42,6 +51,56 @@ const typewriter = EditorState.transactionExtender.of((tr) => {
   if (tr.isUserEvent("select.pointer")) return null;
   return { effects: EditorView.scrollIntoView(tr.newSelection.main.head, { y: "center" }) };
 });
+
+const focusLine = Decoration.line({ class: "cm-focus-paragraph" });
+
+/** Line range of the paragraph (run of non-blank lines) around `pos`; a blank line stands alone. */
+function paragraphAt(doc: Text, pos: number): { first: number; last: number } {
+  const line = doc.lineAt(pos).number;
+  const blank = (n: number) => doc.line(n).text.trim() === "";
+  if (blank(line)) return { first: line, last: line };
+  let first = line;
+  let last = line;
+  while (first > 1 && !blank(first - 1)) first--;
+  while (last < doc.lines && !blank(last + 1)) last++;
+  return { first, last };
+}
+
+function focusDecorations(view: EditorView): DecorationSet {
+  const { doc, selection } = view.state;
+  const first = paragraphAt(doc, selection.main.from).first;
+  const last = paragraphAt(doc, selection.main.to).last;
+  const builder = new RangeSetBuilder<Decoration>();
+  // Only lines in the viewport need the class; everything else is dimmed by CSS.
+  for (const { from, to } of view.visibleRanges) {
+    const start = Math.max(first, doc.lineAt(from).number);
+    const end = Math.min(last, doc.lineAt(to).number);
+    for (let n = start; n <= end; n++) {
+      const pos = doc.line(n).from;
+      builder.add(pos, pos, focusLine);
+    }
+  }
+  return builder.finish();
+}
+
+/** Focus-paragraph mode: marks the paragraph under the cursor so the rest can be dimmed. */
+const focusParagraph = [
+  EditorView.editorAttributes.of({ class: "cm-focus-mode" }),
+  ViewPlugin.fromClass(
+    class {
+      decorations: DecorationSet;
+      constructor(view: EditorView) {
+        this.decorations = focusDecorations(view);
+      }
+      update(u: ViewUpdate) {
+        if (u.docChanged || u.selectionSet || u.viewportChanged) this.decorations = focusDecorations(u.view);
+      }
+    },
+    { decorations: (v) => v.decorations },
+  ),
+];
+
+const zenMode = [typewriter, focusParagraph];
 
 /** Detects the file's line separator so saving writes back what was found. */
 function detectLineSeparator(text: string): string {
@@ -89,7 +148,7 @@ export class Editor {
       this.language.of(this.languageFor(isMarkdown)),
       this.wrap.of(this.settings.softWrap ? EditorView.lineWrapping : []),
       this.look.of(this.lookExtension()),
-      this.zen.of(this.zenOn ? typewriter : []),
+      this.zen.of(this.zenOn ? zenMode : []),
       EditorView.updateListener.of((u) => {
         if (u.docChanged) this.cb.onChange();
       }),
@@ -141,10 +200,10 @@ export class Editor {
     this.view.dispatch({ effects: this.language.reconfigure(this.languageFor(isMarkdown)) });
   }
 
-  /** Zen mode: keeps the cursor line vertically centered (typewriter scrolling). */
+  /** Zen mode: keeps the cursor line vertically centered and dims all but the current paragraph. */
   setZen(on: boolean): void {
     this.zenOn = on;
-    this.view.dispatch({ effects: this.zen.reconfigure(on ? typewriter : []) });
+    this.view.dispatch({ effects: this.zen.reconfigure(on ? zenMode : []) });
     if (on) this.centerCursor();
   }
 

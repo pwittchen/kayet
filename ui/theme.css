@@ -402,6 +402,16 @@ button:focus-visible {
   padding: 0;
 }
 
+/* Zen mode focus: dim every line except the paragraph under the cursor. */
+#editor .cm-focus-mode .cm-line {
+  opacity: 0.3;
+  transition: opacity var(--fade);
+}
+
+#editor .cm-focus-mode .cm-line.cm-focus-paragraph {
+  opacity: 1;
+}
+
 /* Soft fade instead of CodeMirror's hard on/off blink. CodeMirror restarts the blink on
    every cursor move by toggling the inline animation name between cm-blink/cm-blink2;
    mirror that with two identical keyframe sets so the caret is fully visible while typing. */

@@ -36,7 +36,5 @@ items here move into the spec once they are picked up.
 - [ ] **Word count / reading time** in the hover title bar.
 - [ ] **Open Recent** menu.
 - [ ] **Spell check** for prose files (built into the web view; just needs enabling).
-- [ ] **Typewriter / focus-paragraph mode** — dim everything except the current paragraph,
-      building on Zen mode.
 - [ ] **Export** Markdown to HTML / PDF.
 - [ ] **Tabs / multiple windows.**

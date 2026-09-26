@@ -49,7 +49,8 @@ pub struct UiConfig {
     pub sidebar_visible: bool,
     /// Keep the title bar (and traffic lights) visible instead of revealing it on hover.
     pub titlebar_pinned: bool,
-    /// Zen mode: cursor line kept vertically centered, extra top/bottom padding.
+    /// Zen mode: cursor line kept vertically centered, extra top/bottom padding,
+    /// all but the current paragraph dimmed.
     pub zen_mode: bool,
     pub sidebar_width: u32,
     pub preview_split: f64,

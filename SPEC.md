@@ -120,7 +120,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):
   | Icon | Action | Shortcut |
   |------|--------|----------|
-  | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding | `⌘⇧J` |
+  | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
   | Sidebar | Toggle file tree | `⌘\` |
   | Folder | Change workspace | `⌘⇧O` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
@@ -320,5 +320,4 @@ kayet/
 - Command palette (`⌘K`), Linear-style.
 - Fuzzy file finder (`⌘P`).
 - Word count / reading time in the hover title bar.
-- Typewriter / focus-paragraph mode.
 - Export Markdown to PDF/HTML.
