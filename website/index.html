@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kayet — the minimalistic text editor for macOS</title>
+  <meta name="description" content="kayet is a quiet, distraction-free text editor for macOS. When you are writing, the only thing on screen is your text.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    document.documentElement.classList.add("js");
+    try {
+      const t = localStorage.getItem("kayet-theme");
+      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    } catch {}
+  </script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="nav-brand" href="#top">
+      <img src="icon.png" alt="" width="22" height="22">
+      <span>kayet</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features" aria-label="Features"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 1.75c.45 3.1 1.4 4.05 4.5 4.5-3.1.45-4.05 1.4-4.5 4.5-.45-3.1-1.4-4.05-4.5-4.5 3.1-.45 4.05-1.4 4.5-4.5z"/><path d="M12.25 10.25v4M10.25 12.25h4"/></svg><span>Features</span></a>
+      <a href="#shortcuts" aria-label="Shortcuts"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6V4.25A1.75 1.75 0 1 0 4.25 6H6zm0 0h4M6 6v4m4-4V4.25A1.75 1.75 0 1 1 11.75 6H10zm0 0v4m0 0h1.75A1.75 1.75 0 1 1 10 11.75V10zm0 0H6m0 0v1.75A1.75 1.75 0 1 1 4.25 10H6z"/></svg><span>Shortcuts</span></a>
+      <a href="https://github.com/pwittchen/kayet" aria-label="GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+      <button class="theme-toggle" type="button" aria-label="Theme: System" title="Theme: System">
+        <svg class="i-system" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>
+        <svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+        <svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <img class="hero-icon reveal" src="icon.png" alt="kayet app icon" width="128" height="128">
+      <h1 class="reveal">kayet</h1>
+      <p class="hero-lead reveal">Just you and your text.</p>
+      <p class="hero-sub reveal">A quiet, distraction-free text editor for macOS.<br>Built with Rust. Instant to start. Tiny on disk.</p>
+      <div class="hero-cta reveal">
+        <a class="btn btn-primary" href="#download"><svg class="apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>Download for Mac</a>
+        <a class="btn btn-link" href="https://github.com/pwittchen/kayet">View source <span aria-hidden="true">›</span></a>
+      </div>
+    </section>
+
+    <section class="showcase reveal" aria-label="kayet window preview">
+      <div class="window">
+        <div class="window-bar">
+          <span class="lights"><i></i><i></i><i></i></span>
+          <span class="window-title">notes.md</span>
+          <span class="window-controls" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 1.75l4.5 4.5-2.1.7-2.4 2.4-.35 3.15-1.4 1.4L2.1 8l1.4-1.4 3.15-.35 2.4-2.4z"/><path d="M5.1 10.9 1.75 14.25"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.9 5.2A5.75 5.75 0 1 0 13.75 8.3"/><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2"/><path d="M6.25 2.75v10.5"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.75 4.5a1.5 1.5 0 0 1 1.5-1.5h2.6l1.5 1.6h5.4a1.5 1.5 0 0 1 1.5 1.5v5.9a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5z"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 2.25a5.75 5.75 0 0 1 0 11.5z" fill="currentColor" stroke="none"/></svg>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>
+          </span>
+        </div>
+        <div class="window-body">
+          <p class="doc-h"><span class="md">#</span> Morning pages</p>
+          <p class="doc-p">The window is empty except for the words. No toolbars, no tabs, no panels asking for attention.</p>
+          <p class="doc-p doc-active">Move the mouse to the top edge and the controls appear. Move away and they fade out again<span class="caret"></span></p>
+          <p class="doc-p">Everything else waits quietly until you reach for it.</p>
+        </div>
+      </div>
+      <p class="caption">Chrome appears only when you reach for it — then fades away.</p>
+    </section>
+
+    <section id="features" class="features">
+      <h2 class="reveal">Less, on purpose.</h2>
+      <div class="grid">
+        <article class="card reveal">
+          <h3>Hidden chrome</h3>
+          <p>The title bar, traffic lights and controls stay out of sight until your cursor reaches the top of the window.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Zen mode</h3>
+          <p>Keep the current line centered and dim everything but the paragraph you are writing.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Live Markdown preview</h3>
+          <p>A split pane that renders CommonMark and GitHub tables, task lists and strikethrough as you type.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Workspace tree</h3>
+          <p>Browse a folder of notes in an optional file tree. Hidden by default, one shortcut away.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Light &amp; dark</h3>
+          <p>Follows your system appearance, or pick a theme yourself. Soft neutrals, crisp type, nothing loud.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Native &amp; fast</h3>
+          <p>Rust and Tauri under the hood. Starts instantly and stays small — built for Apple Silicon.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="shortcuts" class="shortcuts">
+      <h2 class="reveal">Hands on the keyboard.</h2>
+      <dl class="keys reveal">
+        <div><dt>Toggle zen mode</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>J</kbd></dd></div>
+        <div><dt>Toggle file tree</dt><dd><kbd>⌘</kbd><kbd>\</kbd></dd></div>
+        <div><dt>Toggle preview</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>P</kbd></dd></div>
+        <div><dt>Cycle theme</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd></dd></div>
+        <div><dt>Open workspace</dt><dd><kbd>⌘</kbd><kbd>⇧</kbd><kbd>O</kbd></dd></div>
+        <div><dt>Show chrome</dt><dd><kbd>⌘</kbd><kbd>.</kbd></dd></div>
+      </dl>
+    </section>
+
+    <section id="download" class="download">
+      <img class="reveal" src="icon.png" alt="" width="72" height="72">
+      <h2 class="reveal">Start writing.</h2>
+      <p class="reveal">Free and open source. Requires macOS on Apple Silicon.</p>
+      <div class="reveal">
+        <!-- TODO: point href at the signed .dmg on GitHub Releases once available -->
+        <a class="btn btn-primary btn-disabled" href="#download" aria-disabled="true"><svg class="apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>Download kayet.dmg</a>
+        <p class="note">Coming soon — signed builds are on the way.<br>Meanwhile, <a href="https://github.com/pwittchen/kayet">build it from source</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>kayet</span>
+    <span class="dot">·</span>
+    <a href="https://github.com/pwittchen/kayet">GitHub</a>
+    <span class="dot">·</span>
+    <a href="https://github.com/pwittchen/kayet/blob/master/LICENSE">License</a>
+  </footer>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

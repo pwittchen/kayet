@@ -1,0 +1,10 @@
+{
+  "name": "kayet-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot ./index.html",
+    "build": "bun build ./index.html --outdir=dist --minify",
+    "preview": "bun run build && bun ./serve.ts"
+  }
+}
