@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src-tauri/icons/icon-source.png" alt="kayet logo" width="160" height="160">
+<img src="core/icons/icon-source.png" alt="kayet logo" width="160" height="160">
 
 # kayet
 
@@ -34,7 +34,7 @@ This starts the Vite dev server on `http://localhost:1420` (port must be free), 
 Rust backend in debug mode and opens the kayet window pointing at the dev server.
 
 - Changes in `ui/` (TypeScript, CSS) are hot-reloaded in the open window.
-- Changes in `src-tauri/` (Rust, `tauri.conf.json`, capabilities) trigger a rebuild and an
+- Changes in `core/` (Rust, `tauri.conf.json`, capabilities) trigger a rebuild and an
   automatic restart of the app.
 - Web inspector: right-click inside the editor → **Inspect Element**, or press `⌥⌘I`
   (debug builds only).
@@ -47,7 +47,7 @@ launch without touching them, point `HOME` somewhere else (keeping the Rust tool
 CARGO_HOME=~/.cargo RUSTUP_HOME=~/.rustup HOME=$(mktemp -d) npm run tauri dev
 ```
 
-Layout: `src-tauri/` is the Rust backend (Tauri commands, config, workspace watcher,
+Layout: `core/` is the Rust backend (Tauri commands, config, workspace watcher,
 Markdown rendering), `ui/` is the TypeScript frontend (CodeMirror 6 editor, file tree,
 preview, hover chrome).
 

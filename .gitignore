@@ -30,4 +30,4 @@ node_modules
 /dist
 
 # Tauri
-/src-tauri/gen
+/core/gen

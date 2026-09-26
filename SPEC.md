@@ -235,7 +235,7 @@ y = 0
 
 ```
 kayet/
-├── src-tauri/
+├── core/
 │   ├── src/
 │   │   ├── main.rs          # Tauri bootstrap, window setup
 │   │   ├── commands.rs      # #[tauri::command] handlers

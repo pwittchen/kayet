@@ -1,4 +1,4 @@
-// Typed wrappers around the Rust commands (see src-tauri/src/commands.rs).
+// Typed wrappers around the Rust commands (see core/src/commands.rs).
 
 import { invoke } from "@tauri-apps/api/core";
 
