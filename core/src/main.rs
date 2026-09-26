@@ -38,7 +38,7 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(AppState::new(config, workspace, notice))
+        .manage(AppState::new(config, &workspace, notice))
         .menu(menu::build)
         .on_menu_event(|app, event| {
             let _ = app.emit("menu", event.id().0.as_str());

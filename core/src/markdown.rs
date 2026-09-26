@@ -145,7 +145,7 @@ fn percent_decode(s: &str) -> String {
 }
 
 fn hex(b: u8) -> Option<u8> {
-    (b as char).to_digit(16).map(|d| d as u8)
+    (b as char).to_digit(16).and_then(|d| u8::try_from(d).ok())
 }
 
 #[cfg(test)]

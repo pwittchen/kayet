@@ -3,6 +3,9 @@
 //! File system access is restricted to the workspace and to files the user explicitly
 //! picked (open/save dialogs, drag-and-drop, the restored last file).
 
+// Tauri commands must take their arguments (State, AppHandle, WebviewWindow, …) by value.
+#![allow(clippy::needless_pass_by_value)]
+
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
@@ -30,7 +33,7 @@ pub struct AppState {
 }
 
 fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
-    m.lock().unwrap_or_else(|e| e.into_inner())
+    m.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn err(e: impl std::fmt::Display) -> String {
@@ -42,14 +45,14 @@ fn path_string(p: &Path) -> String {
 }
 
 impl AppState {
-    pub fn new(config: Config, workspace: PathBuf, notice: Option<String>) -> Self {
+    pub fn new(config: Config, workspace: &Path, notice: Option<String>) -> Self {
         let mut allowed = HashSet::new();
         if let Some(last) = &config.session.last_file {
             allowed.insert(canonical(Path::new(last)));
         }
         Self {
             config: Mutex::new(config),
-            workspace: Mutex::new(canonical(&workspace)),
+            workspace: Mutex::new(canonical(workspace)),
             watcher: Mutex::new(None),
             allowed: Mutex::new(allowed),
             notice: Mutex::new(notice),
@@ -95,7 +98,7 @@ impl AppState {
 
     fn switch_workspace(&self, app: &AppHandle, path: &Path) -> String {
         let path = canonical(path);
-        *lock(&self.workspace) = path.clone();
+        lock(&self.workspace).clone_from(&path);
         lock(&self.config).workspace.path = config::contract_tilde(&path);
         self.save_config();
         self.start_watcher(app);
