@@ -6,8 +6,8 @@
   --text: #1d1d1f;
   --text-muted: #8a8a8e;
   --border: #e6e6e8;
-  --accent: #5e6ad2;
-  --selection: #5e6ad233;
+  --accent: #0891b2;
+  --selection: #0891b233;
   --caret: #0891b2;
 
   --hover: color-mix(in srgb, var(--text) 5%, transparent);
@@ -40,8 +40,8 @@
   --text: #ededef;
   --text-muted: #8a8a8f;
   --border: #2a2a2e;
-  --accent: #7c85e0;
-  --selection: #7c85e040;
+  --accent: #22d3ee;
+  --selection: #22d3ee33;
   --caret: #22d3ee;
 
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 35%);

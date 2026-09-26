@@ -191,8 +191,8 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 | `--text`         | `#1D1D1F`  | `#EDEDEF`  |
 | `--text-muted`   | `#8A8A8E`  | `#8A8A8F`  |
 | `--border`       | `#E6E6E8`  | `#2A2A2E`  |
-| `--accent`       | `#5E6AD2`  | `#7C85E0`  |
-| `--selection`    | `#5E6AD233`| `#7C85E040`|
+| `--accent`       | `#0891B2`  | `#22D3EE`  |
+| `--selection`    | `#0891B233`| `#22D3EE33`|
 
 - Corners: 6px radius on interactive elements.
 - Motion: 150ms ease-out for fades; no bouncy animations.
