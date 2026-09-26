@@ -1,0 +1,349 @@
+//! `#[tauri::command]` handlers — the frontend's API.
+//!
+//! File system access is restricted to the workspace and to files the user explicitly
+//! picked (open/save dialogs, drag-and-drop, the restored last file).
+
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+use std::sync::{Mutex, MutexGuard};
+
+use serde::Deserialize;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::{AppHandle, Manager, State, WebviewWindow};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult};
+
+use crate::config::{self, Config};
+use crate::fs_ops::{self, canonical};
+use crate::markdown;
+use crate::workspace::{self, Entry, FsWatcher};
+
+type CmdResult<T> = Result<T, String>;
+
+pub struct AppState {
+    pub config: Mutex<Config>,
+    pub workspace: Mutex<PathBuf>,
+    pub watcher: Mutex<Option<FsWatcher>>,
+    /// Paths explicitly chosen by the user outside the workspace.
+    pub allowed: Mutex<HashSet<PathBuf>>,
+    /// Non-blocking notice shown once by the frontend (e.g. workspace fallback).
+    pub notice: Mutex<Option<String>>,
+}
+
+fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn err(e: impl std::fmt::Display) -> String {
+    e.to_string()
+}
+
+fn path_string(p: &Path) -> String {
+    p.to_string_lossy().into_owned()
+}
+
+impl AppState {
+    pub fn new(config: Config, workspace: PathBuf, notice: Option<String>) -> Self {
+        let mut allowed = HashSet::new();
+        if let Some(last) = &config.session.last_file {
+            allowed.insert(canonical(Path::new(last)));
+        }
+        Self {
+            config: Mutex::new(config),
+            workspace: Mutex::new(canonical(&workspace)),
+            watcher: Mutex::new(None),
+            allowed: Mutex::new(allowed),
+            notice: Mutex::new(notice),
+        }
+    }
+
+    /// Returns the canonical path if it is inside the workspace or was picked by the user.
+    fn authorize(&self, path: &str) -> CmdResult<PathBuf> {
+        let p = canonical(Path::new(path));
+        if p.starts_with(&*lock(&self.workspace)) || lock(&self.allowed).contains(&p) {
+            Ok(p)
+        } else {
+            Err(format!("access denied: {}", p.display()))
+        }
+    }
+
+    pub fn allow(&self, app: &AppHandle, path: &Path) -> PathBuf {
+        let p = canonical(path);
+        lock(&self.allowed).insert(p.clone());
+        if let Some(dir) = p.parent() {
+            let _ = app.asset_protocol_scope().allow_directory(dir, true);
+        }
+        p
+    }
+
+    pub fn save_config(&self) {
+        let cfg = lock(&self.config).clone();
+        if let Err(e) = config::save_to(&config::config_path(), &cfg) {
+            eprintln!("kayet: failed to save config: {e}");
+        }
+    }
+
+    pub fn start_watcher(&self, app: &AppHandle) {
+        let root = lock(&self.workspace).clone();
+        let _ = app.asset_protocol_scope().allow_directory(&root, true);
+        let mut watcher = lock(&self.watcher);
+        *watcher = None; // stop the old watcher before starting a new one
+        match FsWatcher::start(app.clone(), &root) {
+            Ok(w) => *watcher = Some(w),
+            Err(e) => eprintln!("kayet: cannot watch {}: {e}", root.display()),
+        }
+    }
+
+    fn switch_workspace(&self, app: &AppHandle, path: &Path) -> String {
+        let path = canonical(path);
+        *lock(&self.workspace) = path.clone();
+        lock(&self.config).workspace.path = config::contract_tilde(&path);
+        self.save_config();
+        self.start_watcher(app);
+        path_string(&path)
+    }
+}
+
+#[tauri::command]
+pub fn get_config(state: State<'_, AppState>) -> Config {
+    lock(&state.config).clone()
+}
+
+/// Persists the configuration. Window geometry and the workspace path are owned by the
+/// backend (see `set_workspace`) and are kept as they are.
+#[tauri::command]
+pub fn set_config(state: State<'_, AppState>, cfg: Config) {
+    {
+        let mut current = lock(&state.config);
+        let window = current.window.clone();
+        let path = current.workspace.path.clone();
+        *current = cfg;
+        current.window = window;
+        current.workspace.path = path;
+    }
+    state.save_config();
+}
+
+#[tauri::command]
+pub fn get_workspace(state: State<'_, AppState>) -> String {
+    path_string(&lock(&state.workspace))
+}
+
+/// Changes the workspace to a folder previously picked by the user, or to the default one.
+#[tauri::command]
+pub fn set_workspace(app: AppHandle, state: State<'_, AppState>, path: String) -> CmdResult<String> {
+    let p = canonical(Path::new(&path));
+    let default = canonical(&workspace::default_workspace());
+    if p != default && !lock(&state.allowed).contains(&p) {
+        return Err(format!("access denied: {}", p.display()));
+    }
+    if !p.is_dir() {
+        return Err(format!("{} is not a folder", p.display()));
+    }
+    Ok(state.switch_workspace(&app, &p))
+}
+
+#[tauri::command]
+pub fn reset_workspace(app: AppHandle, state: State<'_, AppState>) -> CmdResult<String> {
+    let default = workspace::default_workspace();
+    std::fs::create_dir_all(&default).map_err(err)?;
+    Ok(state.switch_workspace(&app, &default))
+}
+
+#[tauri::command]
+pub fn take_notice(state: State<'_, AppState>) -> Option<String> {
+    lock(&state.notice).take()
+}
+
+#[tauri::command]
+pub async fn list_dir(state: State<'_, AppState>, path: String) -> CmdResult<Vec<Entry>> {
+    let p = state.authorize(&path)?;
+    let show_hidden = lock(&state.config).workspace.show_hidden_files;
+    workspace::list_dir(&p, show_hidden).map_err(err)
+}
+
+/// Reads a file and starts watching it for external changes.
+#[tauri::command]
+pub async fn read_file(state: State<'_, AppState>, path: String) -> CmdResult<String> {
+    let p = state.authorize(&path)?;
+    let text = fs_ops::read_file(&p).map_err(err)?;
+    if let Some(w) = lock(&state.watcher).as_mut() {
+        w.watch_file(&p);
+    }
+    Ok(text)
+}
+
+#[tauri::command]
+pub async fn write_file(state: State<'_, AppState>, path: String, contents: String) -> CmdResult<()> {
+    let p = state.authorize(&path)?;
+    fs_ops::write_atomic(&p, &contents).map_err(err)
+}
+
+#[tauri::command]
+pub async fn create_file(state: State<'_, AppState>, path: String) -> CmdResult<String> {
+    let p = state.authorize(&path)?;
+    fs_ops::create_file(&p).map_err(err)?;
+    Ok(path_string(&p))
+}
+
+#[tauri::command]
+pub async fn create_dir(state: State<'_, AppState>, path: String) -> CmdResult<String> {
+    let p = state.authorize(&path)?;
+    fs_ops::create_dir(&p).map_err(err)?;
+    Ok(path_string(&p))
+}
+
+#[tauri::command]
+pub async fn rename(state: State<'_, AppState>, from: String, to: String) -> CmdResult<String> {
+    let from = state.authorize(&from)?;
+    let to = state.authorize(&to)?;
+    fs_ops::rename(&from, &to).map_err(err)?;
+    Ok(path_string(&to))
+}
+
+#[tauri::command]
+pub async fn trash(state: State<'_, AppState>, path: String) -> CmdResult<()> {
+    let p = state.authorize(&path)?;
+    if p == *lock(&state.workspace) {
+        return Err("cannot trash the workspace itself".into());
+    }
+    fs_ops::trash(&p)
+}
+
+#[tauri::command]
+pub async fn reveal(state: State<'_, AppState>, path: String) -> CmdResult<()> {
+    let p = state.authorize(&path)?;
+    tauri_plugin_opener::reveal_item_in_dir(p).map_err(err)
+}
+
+/// Opens web / mail links in the default application.
+#[tauri::command]
+pub async fn open_external(url: String) -> CmdResult<()> {
+    let lower = url.to_ascii_lowercase();
+    if !["http://", "https://", "mailto:"].iter().any(|s| lower.starts_with(s)) {
+        return Err(format!("refusing to open {url}"));
+    }
+    tauri_plugin_opener::open_url(url, None::<&str>).map_err(err)
+}
+
+/// Renders sanitized HTML; `base` is the directory relative links are resolved against.
+#[tauri::command]
+pub async fn render_markdown(text: String, base: Option<String>) -> String {
+    markdown::render(&text, base.as_deref().map(Path::new))
+}
+
+/// Shows or hides the native traffic lights together with the hover title bar.
+#[tauri::command]
+pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
+    crate::chrome::set_traffic_lights_visible(&window, visible);
+}
+
+#[tauri::command]
+pub async fn open_file_dialog(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Option<String>> {
+    let dir = lock(&state.workspace).clone();
+    let picked = app.dialog().file().set_directory(dir).blocking_pick_file();
+    Ok(picked
+        .and_then(|f| f.into_path().ok())
+        .map(|p| path_string(&state.allow(&app, &p))))
+}
+
+#[tauri::command]
+pub async fn save_file_dialog(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    directory: Option<String>,
+    file_name: String,
+) -> CmdResult<Option<String>> {
+    let dir = directory
+        .map(PathBuf::from)
+        .filter(|d| d.is_dir())
+        .unwrap_or_else(|| lock(&state.workspace).clone());
+    let picked = app
+        .dialog()
+        .file()
+        .set_directory(dir)
+        .set_file_name(file_name)
+        .blocking_save_file();
+    Ok(picked
+        .and_then(|f| f.into_path().ok())
+        .map(|p| path_string(&state.allow(&app, &p))))
+}
+
+/// Lets the user pick a new workspace folder and switches to it.
+#[tauri::command]
+pub async fn pick_workspace(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Option<String>> {
+    let dir = lock(&state.workspace).clone();
+    let picked = app.dialog().file().set_directory(dir).blocking_pick_folder();
+    let Some(path) = picked.and_then(|f| f.into_path().ok()) else {
+        return Ok(None);
+    };
+    Ok(Some(state.switch_workspace(&app, &path)))
+}
+
+/// Native "unsaved changes" prompt. Returns `"save"`, `"discard"` or `"cancel"`.
+#[tauri::command]
+pub async fn confirm_unsaved(app: AppHandle, name: String) -> String {
+    let result = app
+        .dialog()
+        .message("Your changes will be lost if you don't save them.")
+        .title(format!("Do you want to save the changes made to “{name}”?"))
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::YesNoCancelCustom(
+            "Save".into(),
+            "Don't Save".into(),
+            "Cancel".into(),
+        ))
+        .blocking_show_with_result();
+    match result {
+        MessageDialogResult::Yes => "save",
+        MessageDialogResult::No => "discard",
+        MessageDialogResult::Custom(label) if label == "Save" => "save",
+        MessageDialogResult::Custom(label) if label == "Don't Save" => "discard",
+        _ => "cancel",
+    }
+    .into()
+}
+
+/// Native "move to Trash?" prompt. Returns true if the user confirmed.
+#[tauri::command]
+pub async fn confirm_trash(app: AppHandle, name: String) -> bool {
+    let result = app
+        .dialog()
+        .message("You can restore it from the Trash later.")
+        .title(format!("Move “{name}” to the Trash?"))
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Move to Trash".into(),
+            "Cancel".into(),
+        ))
+        .blocking_show_with_result();
+    match result {
+        MessageDialogResult::Ok => true,
+        MessageDialogResult::Custom(label) => label == "Move to Trash",
+        _ => false,
+    }
+}
+
+#[derive(Deserialize)]
+pub struct ContextMenuItem {
+    /// `None` renders a separator.
+    id: Option<String>,
+    #[serde(default)]
+    label: String,
+}
+
+/// Shows a native context menu; the chosen item arrives as a `menu` event with its id.
+#[tauri::command]
+pub fn show_context_menu(app: AppHandle, window: WebviewWindow, items: Vec<ContextMenuItem>) -> CmdResult<()> {
+    let menu = Menu::new(&app).map_err(err)?;
+    for item in items {
+        match item.id {
+            Some(id) => menu
+                .append(&MenuItem::with_id(&app, id, item.label, true, None::<&str>).map_err(err)?)
+                .map_err(err)?,
+            None => menu
+                .append(&PredefinedMenuItem::separator(&app).map_err(err)?)
+                .map_err(err)?,
+        }
+    }
+    window.popup_menu(&menu).map_err(err)
+}

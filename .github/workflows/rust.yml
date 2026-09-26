@@ -16,11 +16,22 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    # Apple Silicon (aarch64-apple-darwin) only — see SPEC.md §3.
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+    - name: Install frontend dependencies
+      run: npm ci
+    - name: Build frontend
+      run: npm run build
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Bundle app
+      run: npx tauri build --target aarch64-apple-darwin --bundles app

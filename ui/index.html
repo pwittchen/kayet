@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>kayet</title>
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar" hidden>
+        <div id="tree" tabindex="0" aria-label="Files"></div>
+      </aside>
+      <div id="sidebar-divider" class="divider" hidden></div>
+
+      <main id="editor-pane">
+        <div id="banner" role="alert" hidden>
+          <span>File changed on disk</span>
+          <span class="sep">—</span>
+          <button id="banner-reload" type="button">Reload</button>
+          <span class="sep">/</span>
+          <button id="banner-keep" type="button">Keep mine</button>
+        </div>
+        <div id="editor"></div>
+      </main>
+
+      <div id="preview-divider" class="divider" hidden></div>
+      <section id="preview-pane" hidden>
+        <article id="preview" class="markdown-body"></article>
+      </section>
+    </div>
+
+    <header id="titlebar" data-tauri-drag-region>
+      <div id="doc-title" data-tauri-drag-region>
+        <span id="doc-name" data-tauri-drag-region></span>
+        <span id="doc-edited" data-tauri-drag-region hidden>— edited</span>
+      </div>
+      <nav class="controls">
+        <button id="btn-pin" type="button" title="Keep title bar visible (⌘.)" aria-label="Keep title bar visible" aria-pressed="false"></button>
+        <button id="btn-zen" type="button" title="Zen mode (⌘⇧J)" aria-label="Zen mode" aria-pressed="false"></button>
+        <button id="btn-sidebar" type="button" title="Toggle file tree (⌘\)" aria-label="Toggle file tree"></button>
+        <button id="btn-workspace" type="button" title="Change workspace (⌘⇧O)" aria-label="Change workspace"></button>
+        <button id="btn-theme" type="button" aria-label="Cycle theme"></button>
+        <button id="btn-preview" type="button" title="Toggle preview (⌘⇧P)" aria-label="Toggle preview" hidden></button>
+      </nav>
+    </header>
+
+    <button id="edge-handle" type="button" title="Show file tree (⌘\)" aria-label="Show file tree"></button>
+    <div id="toast" role="status" hidden></div>
+  </body>
+</html>

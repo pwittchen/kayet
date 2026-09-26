@@ -24,3 +24,10 @@ target
 # Added by cargo
 
 /target
+
+# Frontend
+node_modules
+/dist
+
+# Tauri
+/src-tauri/gen

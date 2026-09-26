@@ -120,6 +120,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):
   | Icon | Action | Shortcut |
   |------|--------|----------|
+  | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding | `⌘⇧J` |
   | Sidebar | Toggle file tree | `⌘\` |
   | Folder | Change workspace | `⌘⇧O` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
@@ -143,7 +144,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 
 - CodeMirror 6, no line numbers by default, no gutter, no minimap.
 - Soft wrap on by default; max readable line width (~72ch) centered in the pane.
-- Font: system UI for prose (`-apple-system`), optional monospace (`SF Mono`) setting.
+- Font: monospace by default (`SF Mono` via `ui-monospace`), optional system UI font (`-apple-system`) setting.
   Default size 15px, line height 1.6.
 - Markdown syntax highlighting is subtle (weight/opacity changes, muted accent for links/code).
 - Standard shortcuts: `⌘S` save, `⌘⇧S` save as, `⌘Z/⌘⇧Z` undo/redo, `⌘F` find, `⌘⌥F` replace,
@@ -208,11 +209,12 @@ show_hidden_files = false
 [ui]
 theme = "system"          # "system" | "light" | "dark"
 sidebar_visible = false
+zen_mode = false
 sidebar_width = 240
 preview_split = 0.5
 
 [editor]
-font_family = "system"    # "system" | "mono"
+font_family = "mono"      # "mono" | "system"
 font_size = 15
 line_height = 1.6
 soft_wrap = true

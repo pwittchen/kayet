@@ -1,0 +1,230 @@
+// CodeMirror 6 setup: no gutter, soft wrap, centered readable column, subtle Markdown.
+
+import { Compartment, EditorState, Extension, Text } from "@codemirror/state";
+import { EditorView, drawSelection, highlightSpecialChars, keymap } from "@codemirror/view";
+import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
+import { HighlightStyle, LanguageSupport, indentOnInput, syntaxHighlighting } from "@codemirror/language";
+import { markdownLanguage } from "@codemirror/lang-markdown";
+import { SearchQuery, highlightSelectionMatches, openSearchPanel, search, searchKeymap, setSearchQuery } from "@codemirror/search";
+import { tags as t } from "@lezer/highlight";
+
+export interface EditorSettings {
+  fontFamily: "system" | "mono";
+  fontSize: number;
+  lineHeight: number;
+  softWrap: boolean;
+  maxLineWidth: number;
+}
+
+export interface EditorCallbacks {
+  onChange: () => void;
+  onScroll: () => void;
+  onType: () => void;
+}
+
+const markdownHighlight = HighlightStyle.define([
+  { tag: t.heading, fontWeight: "600" },
+  { tag: t.strong, fontWeight: "600" },
+  { tag: t.emphasis, fontStyle: "italic" },
+  { tag: t.strikethrough, textDecoration: "line-through", opacity: "0.6" },
+  { tag: [t.link, t.url], color: "var(--accent)" },
+  { tag: t.monospace, fontFamily: "var(--font-mono)", fontSize: "0.92em", color: "var(--code-text)" },
+  { tag: t.quote, color: "var(--text-muted)" },
+  { tag: [t.processingInstruction, t.meta, t.contentSeparator, t.labelName], color: "var(--text-muted)", opacity: "0.7" },
+]);
+
+/**
+ * Typewriter scrolling: after typing or keyboard navigation, scroll so the cursor sits in
+ * the vertical center. Pointer selections are left alone so clicking/dragging never jumps.
+ */
+const typewriter = EditorState.transactionExtender.of((tr) => {
+  if (!tr.docChanged && !tr.selection) return null;
+  if (tr.isUserEvent("select.pointer")) return null;
+  return { effects: EditorView.scrollIntoView(tr.newSelection.main.head, { y: "center" }) };
+});
+
+/** Detects the file's line separator so saving writes back what was found. */
+function detectLineSeparator(text: string): string {
+  const crlf = text.indexOf("\r\n");
+  if (crlf !== -1) return "\r\n";
+  if (text.includes("\r")) return "\r";
+  return "\n";
+}
+
+export class Editor {
+  readonly view: EditorView;
+  private readonly language = new Compartment();
+  private readonly wrap = new Compartment();
+  private readonly lineSep = new Compartment();
+  private readonly look = new Compartment();
+  private readonly zen = new Compartment();
+  private zenOn = false;
+  private settings: EditorSettings;
+  private zoom = 0;
+
+  constructor(parent: HTMLElement, settings: EditorSettings, private readonly cb: EditorCallbacks) {
+    this.settings = settings;
+    this.view = new EditorView({ parent, state: this.createState("", false) });
+    this.view.scrollDOM.addEventListener("scroll", () => this.cb.onScroll(), { passive: true });
+    this.view.contentDOM.addEventListener("keydown", (e) => {
+      if (!e.metaKey && !e.ctrlKey && !["Shift", "Alt", "Control", "Meta", "CapsLock"].includes(e.key)) {
+        this.cb.onType();
+      }
+    });
+    this.view.contentDOM.setAttribute("spellcheck", "true");
+  }
+
+  private createState(text: string, isMarkdown: boolean): EditorState {
+    const extensions: Extension[] = [
+      this.lineSep.of(EditorState.lineSeparator.of(detectLineSeparator(text))),
+      history(),
+      // Slower blink than the 1200ms default.
+      drawSelection({ cursorBlinkRate: 2000 }),
+      highlightSpecialChars(),
+      indentOnInput(),
+      search({ top: true }),
+      highlightSelectionMatches(),
+      EditorState.allowMultipleSelections.of(false),
+      keymap.of([...searchKeymap, ...historyKeymap, ...defaultKeymap, indentWithTab]),
+      this.language.of(this.languageFor(isMarkdown)),
+      this.wrap.of(this.settings.softWrap ? EditorView.lineWrapping : []),
+      this.look.of(this.lookExtension()),
+      this.zen.of(this.zenOn ? typewriter : []),
+      EditorView.updateListener.of((u) => {
+        if (u.docChanged) this.cb.onChange();
+      }),
+      EditorView.contentAttributes.of({ "aria-label": "Editor" }),
+    ];
+    return EditorState.create({ doc: text, extensions });
+  }
+
+  private languageFor(isMarkdown: boolean): Extension {
+    return isMarkdown
+      ? // Bare GFM language: skips the embedded HTML/JS/CSS grammars and autocompletion.
+        [new LanguageSupport(markdownLanguage), syntaxHighlighting(markdownHighlight)]
+      : [];
+  }
+
+  private lookExtension(): Extension {
+    const s = this.settings;
+    const size = Math.max(9, Math.min(40, s.fontSize + this.zoom));
+    document.documentElement.style.setProperty("--editor-font-size", `${size}px`);
+    return EditorView.theme({
+      "&": { fontSize: `${size}px` },
+      ".cm-content": {
+        fontFamily: s.fontFamily === "mono" ? "var(--font-mono)" : "var(--font-ui)",
+        lineHeight: String(s.lineHeight),
+        // The readable column excludes the horizontal padding (48px each side).
+        maxWidth: s.softWrap ? `calc(${s.maxLineWidth}ch + 96px)` : "none",
+      },
+    });
+  }
+
+  /** Replaces the document; resets undo history. */
+  load(text: string, isMarkdown: boolean): void {
+    this.view.setState(this.createState(text, isMarkdown));
+    this.view.scrollDOM.scrollTop = 0;
+  }
+
+  /** Replaces the text while keeping history and (approximately) the cursor. */
+  replaceText(text: string): void {
+    const state = this.view.state;
+    const head = Math.min(state.selection.main.head, text.length);
+    this.view.dispatch({
+      changes: { from: 0, to: state.doc.length, insert: text },
+      selection: { anchor: head },
+      effects: this.lineSep.reconfigure(EditorState.lineSeparator.of(detectLineSeparator(text))),
+    });
+  }
+
+  setMarkdown(isMarkdown: boolean): void {
+    this.view.dispatch({ effects: this.language.reconfigure(this.languageFor(isMarkdown)) });
+  }
+
+  /** Zen mode: keeps the cursor line vertically centered (typewriter scrolling). */
+  setZen(on: boolean): void {
+    this.zenOn = on;
+    this.view.dispatch({ effects: this.zen.reconfigure(on ? typewriter : []) });
+    if (on) this.centerCursor();
+  }
+
+  centerCursor(): void {
+    // Wait for the padding change to be laid out before centering.
+    requestAnimationFrame(() => {
+      const head = this.view.state.selection.main.head;
+      this.view.dispatch({ effects: EditorView.scrollIntoView(head, { y: "center" }) });
+    });
+  }
+
+  applySettings(settings: EditorSettings): void {
+    this.settings = settings;
+    this.view.dispatch({
+      effects: [
+        this.wrap.reconfigure(settings.softWrap ? EditorView.lineWrapping : []),
+        this.look.reconfigure(this.lookExtension()),
+      ],
+    });
+  }
+
+  setZoom(step: number | "reset"): void {
+    this.zoom = step === "reset" ? 0 : Math.max(-6, Math.min(24, this.zoom + step));
+    this.view.dispatch({ effects: this.look.reconfigure(this.lookExtension()) });
+  }
+
+  get doc(): Text {
+    return this.view.state.doc;
+  }
+
+  text(): string {
+    return this.view.state.sliceDoc();
+  }
+
+  focus(): void {
+    this.view.focus();
+  }
+
+  undo(): void {
+    undo(this.view);
+  }
+
+  redo(): void {
+    redo(this.view);
+  }
+
+  find(): void {
+    openSearchPanel(this.view);
+  }
+
+  replace(): void {
+    openSearchPanel(this.view);
+    const selected = this.view.state.sliceDoc(
+      this.view.state.selection.main.from,
+      this.view.state.selection.main.to,
+    );
+    if (selected && !selected.includes("\n")) {
+      this.view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: selected })) });
+    }
+    requestAnimationFrame(() => {
+      const field = this.view.dom.querySelector<HTMLInputElement>(".cm-search input[name=replace]");
+      field?.focus();
+      field?.select();
+    });
+  }
+
+  /** Source line (0-based, fractional) at the top of the viewport, for scroll sync. */
+  topLine(): number {
+    const view = this.view;
+    const padding = parseFloat(getComputedStyle(view.contentDOM).paddingTop) || 0;
+    const height = Math.max(0, view.scrollDOM.scrollTop - padding);
+    const block = view.lineBlockAtHeight(height);
+    const line = view.state.doc.lineAt(block.from).number - 1;
+    const fraction = block.height > 0 ? (height - block.top) / block.height : 0;
+    return line + Math.max(0, Math.min(1, fraction));
+  }
+
+  /** Whether the editor is scrolled to (or near) the very end. */
+  atBottom(): boolean {
+    const s = this.view.scrollDOM;
+    return s.scrollTop > 0 && s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
+  }
+}
