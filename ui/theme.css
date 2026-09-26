@@ -628,6 +628,87 @@ button:focus-visible {
   transform: translate(-50%, 0);
 }
 
+/* ---- command palette (⌘K) ---- */
+
+#palette {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 18vh 20px 20px;
+  animation: palette-in var(--fade);
+}
+
+.palette-box {
+  width: min(560px, 100%);
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bar-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow), 0 16px 48px rgb(0 0 0 / 12%);
+  overflow: hidden;
+}
+
+.palette-box input {
+  flex: none;
+  width: 100%;
+  padding: 14px 16px;
+  font: 16px var(--font-ui);
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  outline: none;
+  caret-color: var(--caret);
+}
+
+.palette-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.palette-box ul {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.palette-box li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  color: var(--text);
+}
+
+.palette-box li[aria-selected="true"] {
+  background: var(--pill);
+}
+
+.palette-box li.empty {
+  color: var(--text-muted);
+}
+
+.palette-box kbd {
+  font: 12px var(--font-ui);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@keyframes palette-in {
+  from {
+    opacity: 0;
+  }
+}
+
 /* ---- markdown preview ---- */
 
 .markdown-body {

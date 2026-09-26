@@ -11,6 +11,7 @@ import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
+import { Palette, PaletteCommand } from "./palette";
 import { Preview } from "./preview";
 import { FileTree } from "./tree";
 
@@ -31,6 +32,7 @@ const els = {
   docTitle: $("doc-title"),
   docName: $("doc-name"),
   docEdited: $("doc-edited"),
+  btnPalette: $<HTMLButtonElement>("btn-palette"),
   btnPin: $<HTMLButtonElement>("btn-pin"),
   btnZen: $<HTMLButtonElement>("btn-zen"),
   btnSidebar: $<HTMLButtonElement>("btn-sidebar"),
@@ -556,7 +558,64 @@ const commands: Record<string, () => unknown> = {
   "zoom-in": () => zoom(1),
   "zoom-out": () => zoom(-1),
   "zoom-reset": () => zoom("reset"),
+  palette: togglePalette,
 };
+
+// ---- command palette ----
+
+const palette = new Palette(
+  (id) => run(id),
+  () => editor.focus(),
+);
+
+/** Everything the palette offers, in menu order; context-only commands appear when they apply. */
+function paletteCommands(): PaletteCommand[] {
+  const md = isMarkdown(doc.path);
+  const code = isCode(doc.path);
+  const list: (PaletteCommand | false)[] = [
+    { id: "new", label: "New File", shortcut: "⌘N" },
+    { id: "open", label: "Open File…", shortcut: "⌘O" },
+    { id: "open-workspace", label: "Open Workspace…", shortcut: "⌘⇧O" },
+    { id: "reset-workspace", label: "Reset to Default Workspace" },
+    { id: "save", label: "Save", shortcut: "⌘S" },
+    { id: "save-as", label: "Save As…", shortcut: "⌘⇧S" },
+    !!doc.path && { id: "close-file", label: "Close File" },
+    { id: "undo", label: "Undo", shortcut: "⌘Z" },
+    { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },
+    { id: "find", label: "Find…", shortcut: "⌘F" },
+    { id: "replace", label: "Replace…", shortcut: "⌘⌥F" },
+    {
+      id: "toggle-tree",
+      label: cfg.ui.sidebar_visible ? "Hide File Tree" : "Show File Tree",
+      shortcut: "⌘\\",
+    },
+    md && {
+      id: "toggle-preview",
+      label: previewVisible() ? "Hide Preview" : "Show Preview",
+      shortcut: "⌘⇧P",
+    },
+    { id: "cycle-theme", label: "Cycle Theme", shortcut: "⌘⇧L" },
+    { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
+    { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
+    code && {
+      id: "toggle-syntax",
+      label: cfg.editor.syntax_highlighting ? "Disable Syntax Highlighting" : "Enable Syntax Highlighting",
+    },
+    { id: "zoom-in", label: "Zoom In", shortcut: "⌘+" },
+    { id: "zoom-out", label: "Zoom Out", shortcut: "⌘−" },
+    { id: "zoom-reset", label: "Actual Size", shortcut: "⌘0" },
+    { id: "open-settings", label: "Settings…", shortcut: "⌘," },
+    { id: "close", label: "Close Window", shortcut: "⌘W" },
+    { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
+  ];
+  return list.filter((c): c is PaletteCommand => !!c);
+}
+
+async function togglePalette(): Promise<void> {
+  if (palette.isOpen) return palette.close();
+  // Keeps the title bar up while the palette is open, if it was showing.
+  await chrome.hold(palette.open(paletteCommands()));
+}
 
 function zoom(step: number | "reset"): void {
   editor.setZoom(step);
@@ -569,6 +628,7 @@ function run(id: string): void {
   if (command) Promise.resolve(command()).catch(showError);
 }
 
+els.btnPalette.addEventListener("click", () => run("palette"));
 els.btnPin.addEventListener("click", () => run("toggle-chrome"));
 els.btnZen.addEventListener("click", () => run("toggle-zen"));
 els.btnSidebar.addEventListener("click", () => run("toggle-tree"));
@@ -580,6 +640,7 @@ els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
 els.btnCloseFile.addEventListener("click", () => run("close-file"));
 els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 
+els.btnPalette.innerHTML = icons.command;
 els.btnPin.innerHTML = icons.pin;
 els.btnZen.innerHTML = icons.zen;
 els.btnSidebar.innerHTML = icons.sidebar;

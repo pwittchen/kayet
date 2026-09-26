@@ -123,6 +123,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Icon | Action | Shortcut |
   |------|--------|----------|
   | × (close) | Close the open file — **only shown when a file is open** | — |
+  | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
   | Sidebar | Toggle file tree | `⌘\` |
   | Folder | Change workspace | `⌘⇧O` |
@@ -130,6 +131,14 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
+
+### 5.4 Command palette
+- Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
+  `View → Command Palette…` or the title bar command icon.
+- Lists every command with its shortcut; context-only commands (Close File, preview,
+  syntax highlighting) appear only when they apply.
+- Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
+  `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
 
 ## 6. File Tree
 
@@ -309,6 +318,7 @@ kayet/
 | Toggle file tree       | `⌘\`      |
 | Toggle preview (.md)   | `⌘⇧P`     |
 | Settings (config file) | `⌘,`      |
+| Command palette        | `⌘K`      |
 | Cycle theme            | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘⌥F` |
 | Zoom in / out / reset  | `⌘+` / `⌘-` / `⌘0` |
@@ -333,7 +343,6 @@ kayet/
 
 ## 15. Future Ideas (post-v1)
 - Tabs / multiple windows.
-- Command palette (`⌘K`), Linear-style.
 - Fuzzy file finder (`⌘P`).
 - Word count / reading time in the hover title bar.
 - Export Markdown to PDF/HTML.

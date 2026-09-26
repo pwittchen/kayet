@@ -75,6 +75,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         "View",
         true,
         &[
+            &item("palette", "Command Palette…", Some("CmdOrCtrl+K"))?,
+            &sep()?,
             &item("toggle-tree", "Toggle File Tree", Some("CmdOrCtrl+\\"))?,
             &item("toggle-preview", "Toggle Preview", Some("CmdOrCtrl+Shift+P"))?,
             &item("cycle-theme", "Cycle Theme", Some("CmdOrCtrl+Shift+L"))?,
