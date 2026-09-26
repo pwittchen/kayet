@@ -70,7 +70,7 @@ in CI or releases.
 - Files are opened from the file tree, via `⌘O`, or by drag-and-drop onto the window.
 - Encoding: UTF-8. Line endings are preserved as found in the file.
 - New untitled document: `⌘N`. On first save, the default location is the current workspace.
-- `File → Close File` closes the open document (asking to save unsaved changes first) and
+- `File → Close File` (`⌘W`) closes the open document (asking to save unsaved changes first) and
   leaves an empty untitled document; the closed file is no longer restored on next launch.
 
 ## 5. Window & Layout
@@ -315,6 +315,7 @@ kayet/
 | Open file              | `⌘O`      |
 | Open workspace         | `⌘⇧O`     |
 | Save / Save as         | `⌘S` / `⌘⇧S` |
+| Close file / window    | `⌘W` / `⌘⇧W` |
 | Toggle file tree       | `⌘\`      |
 | Toggle preview (.md)   | `⌘⇧P`     |
 | Settings (config file) | `⌘,`      |

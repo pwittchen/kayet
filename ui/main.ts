@@ -579,7 +579,7 @@ function paletteCommands(): PaletteCommand[] {
     { id: "reset-workspace", label: "Reset to Default Workspace" },
     { id: "save", label: "Save", shortcut: "⌘S" },
     { id: "save-as", label: "Save As…", shortcut: "⌘⇧S" },
-    !!doc.path && { id: "close-file", label: "Close File" },
+    !!doc.path && { id: "close-file", label: "Close File", shortcut: "⌘W" },
     { id: "undo", label: "Undo", shortcut: "⌘Z" },
     { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },
     { id: "find", label: "Find…", shortcut: "⌘F" },
@@ -605,7 +605,7 @@ function paletteCommands(): PaletteCommand[] {
     { id: "zoom-out", label: "Zoom Out", shortcut: "⌘−" },
     { id: "zoom-reset", label: "Actual Size", shortcut: "⌘0" },
     { id: "open-settings", label: "Settings…", shortcut: "⌘," },
-    { id: "close", label: "Close Window", shortcut: "⌘W" },
+    { id: "close", label: "Close Window", shortcut: "⌘⇧W" },
     { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
   ];
   return list.filter((c): c is PaletteCommand => !!c);

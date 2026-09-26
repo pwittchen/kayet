@@ -46,8 +46,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &item("save", "Save", Some("CmdOrCtrl+S"))?,
             &item("save-as", "Save As…", Some("CmdOrCtrl+Shift+S"))?,
             &sep()?,
-            &item("close-file", "Close File", None)?,
-            &item("close", "Close Window", Some("CmdOrCtrl+W"))?,
+            &item("close-file", "Close File", Some("CmdOrCtrl+W"))?,
+            &item("close", "Close Window", Some("CmdOrCtrl+Shift+W"))?,
         ],
     )?;
 
