@@ -89,7 +89,11 @@ in CI or releases.
 Three regions, left to right:
 1. **File tree** (optional, hidden by default).
 2. **Editor** (always present).
-3. **Preview pane** (optional, only for `.md` / `.markdown` files).
+3. **Preview pane** (optional, hidden by default, only for `.md` / `.markdown` files).
+
+Both the file tree and the preview pane can be hidden at any time and are **hidden by default**,
+so a fresh window shows only the editor. Each is shown on demand via its title bar control or
+keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidden again the same way.
 
 ### 5.1 Hidden chrome (default state)
 - By default **everything except the text is hidden**, including the title bar.
@@ -123,7 +127,8 @@ Three regions, left to right:
 
 ## 6. File Tree
 
-- Hidden by default; toggle state persisted in config.
+- Hidden by default; can be shown and hidden at any time (`⌘\` or the sidebar control).
+  Toggle state persisted in config.
 - Shows the workspace root name as a muted header.
 - Directories first, then files, both alphabetical (case-insensitive).
 - Hidden files (dotfiles) not shown by default; toggle in config.
@@ -152,7 +157,9 @@ Three regions, left to right:
 
 - A **preview icon** (eye) appears in the title bar controls **only when the active file is
   `.md` or `.markdown`**.
-- Clicking it opens the **right pane** with a rendered preview of the current document.
+- The preview is **hidden by default**, including when a Markdown file is opened.
+- Clicking it opens the **right pane** with a rendered preview of the current document;
+  clicking it again (or `⌘⇧P`) hides the pane.
 - Split is 50/50 by default, resizable via 1px divider, persisted.
 - Preview updates live while typing (debounced ~150ms).
 - Rendering pipeline: frontend sends text → Rust command `render_markdown(text) -> html`
@@ -296,7 +303,8 @@ kayet/
 
 ## 14. Acceptance Criteria (v1)
 1. On first launch, `~/.kayet/workspace/` is created and set as the workspace.
-2. Launching the app shows only the editor text area — no title bar, no traffic lights, no sidebar.
+2. Launching the app shows only the editor text area — no title bar, no traffic lights, no file tree, no preview.
+   The file tree and preview are hidden by default and can each be shown and hidden again.
 3. Hovering the top edge reveals the title bar with traffic lights and controls; they fade out after the mouse leaves.
 4. The file tree can be toggled and shows the workspace contents; changing the workspace updates the tree and is remembered across restarts.
 5. Theme defaults to System and follows macOS appearance live; Light/Dark can be forced and are persisted.
