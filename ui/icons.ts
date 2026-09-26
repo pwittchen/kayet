@@ -10,6 +10,9 @@ export const icons = {
   folder: svg(
     `<path d="M1.75 4.5a1.5 1.5 0 0 1 1.5-1.5h2.6l1.5 1.6h5.4a1.5 1.5 0 0 1 1.5 1.5v5.9a1.5 1.5 0 0 1-1.5 1.5h-9.5a1.5 1.5 0 0 1-1.5-1.5z"/>`,
   ),
+  settings: svg(
+    `<path d="M1.75 4.5h7M12.5 4.5h1.75M1.75 11.5h1.75M7 11.5h7.25"/><circle cx="10.75" cy="4.5" r="1.75"/><circle cx="5.25" cy="11.5" r="1.75"/>`,
+  ),
   themeSystem: svg(
     `<circle cx="8" cy="8" r="5.75"/><path d="M8 2.25a5.75 5.75 0 0 1 0 11.5z" fill="currentColor" stroke="none"/>`,
   ),

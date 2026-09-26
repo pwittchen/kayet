@@ -175,11 +175,16 @@ pub fn contract_tilde(path: &Path) -> String {
     path.display().to_string()
 }
 
+/// Parses config text; missing keys fall back to defaults.
+pub fn parse(text: &str) -> Result<Config, toml::de::Error> {
+    toml::from_str(text)
+}
+
 /// Loads the config from `path`. Missing files or keys fall back to defaults, which are
 /// written back. A file that fails to parse is left untouched and defaults are used.
 pub fn load_from(path: &Path) -> Config {
     match fs::read_to_string(path) {
-        Ok(text) => match toml::from_str::<Config>(&text) {
+        Ok(text) => match parse(&text) {
             Ok(cfg) => {
                 let on_disk = toml::from_str::<toml::Table>(&text).ok();
                 let complete = toml::Table::try_from(&cfg).ok();

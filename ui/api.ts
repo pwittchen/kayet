@@ -42,6 +42,8 @@ export interface MenuItemSpec {
 export const api = {
   getConfig: () => invoke<Config>("get_config"),
   setConfig: (cfg: Config) => invoke<void>("set_config", { cfg }),
+  configFile: () => invoke<string>("config_file"),
+  reloadConfig: () => invoke<Config>("reload_config"),
   getWorkspace: () => invoke<string>("get_workspace"),
   setWorkspace: (path: string) => invoke<string>("set_workspace", { path }),
   resetWorkspace: () => invoke<string>("reset_workspace"),

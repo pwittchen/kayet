@@ -92,6 +92,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::set_config,
+            commands::config_file,
+            commands::reload_config,
             commands::get_workspace,
             commands::set_workspace,
             commands::reset_workspace,

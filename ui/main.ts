@@ -35,6 +35,7 @@ const els = {
   btnZen: $<HTMLButtonElement>("btn-zen"),
   btnSidebar: $<HTMLButtonElement>("btn-sidebar"),
   btnWorkspace: $<HTMLButtonElement>("btn-workspace"),
+  btnSettings: $<HTMLButtonElement>("btn-settings"),
   btnTheme: $<HTMLButtonElement>("btn-theme"),
   btnPreview: $<HTMLButtonElement>("btn-preview"),
   btnSyntax: $<HTMLButtonElement>("btn-syntax"),
@@ -49,6 +50,8 @@ const els = {
 // ---- state ----
 
 let cfg: Config;
+/** `~/.kayet/config.toml`; saving it from the editor reloads the settings. */
+let configPath = "";
 let workspace = "";
 /** Currently open document; `path === null` means untitled. */
 const doc = {
@@ -131,6 +134,32 @@ function editorSettings(): EditorSettings {
 
 function saveConfig(): void {
   void api.setConfig(cfg).catch((e) => console.error("set_config failed", e));
+}
+
+/** Opens the config file in the editor. */
+async function openSettings(): Promise<void> {
+  configPath = await api.configFile();
+  await openFile(configPath);
+}
+
+/** Applies the config file after it was saved from the editor. */
+async function reloadConfig(): Promise<void> {
+  let next: Config;
+  try {
+    next = await api.reloadConfig();
+  } catch (e) {
+    return notify(String(e));
+  }
+  const hiddenChanged = next.workspace.show_hidden_files !== cfg.workspace.show_hidden_files;
+  const pinnedChanged = next.ui.titlebar_pinned !== cfg.ui.titlebar_pinned;
+  cfg = next;
+  applyTheme();
+  if (pinnedChanged) chrome.setPinned(cfg.ui.titlebar_pinned);
+  editor.applySettings(editorSettings());
+  applyZen();
+  updateLayout();
+  await applySyntax();
+  if (hiddenChanged) await tree.refresh();
 }
 
 function rememberLastFile(path: string | null): void {
@@ -383,6 +412,7 @@ async function writeDoc(path: string): Promise<boolean> {
   doc.saved = snapshot;
   hideBanner();
   updateTitle();
+  if (path === configPath) await reloadConfig();
   return true;
 }
 
@@ -518,6 +548,7 @@ const commands: Record<string, () => unknown> = {
   replace: () => editor.replace(),
   "toggle-tree": toggleTree,
   "toggle-preview": togglePreview,
+  "open-settings": openSettings,
   "cycle-theme": cycleTheme,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
@@ -542,6 +573,7 @@ els.btnPin.addEventListener("click", () => run("toggle-chrome"));
 els.btnZen.addEventListener("click", () => run("toggle-zen"));
 els.btnSidebar.addEventListener("click", () => run("toggle-tree"));
 els.btnWorkspace.addEventListener("click", () => run("open-workspace"));
+els.btnSettings.addEventListener("click", () => run("open-settings"));
 els.btnTheme.addEventListener("click", () => run("cycle-theme"));
 els.btnPreview.addEventListener("click", () => run("toggle-preview"));
 els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
@@ -552,6 +584,7 @@ els.btnPin.innerHTML = icons.pin;
 els.btnZen.innerHTML = icons.zen;
 els.btnSidebar.innerHTML = icons.sidebar;
 els.btnWorkspace.innerHTML = icons.folder;
+els.btnSettings.innerHTML = icons.settings;
 els.btnPreview.innerHTML = icons.eye;
 els.btnSyntax.innerHTML = icons.code;
 els.btnCloseFile.innerHTML = icons.closeFile;
@@ -571,6 +604,7 @@ window.addEventListener("resize", () => preview.measure());
 async function init(): Promise<void> {
   cfg = await api.getConfig();
   workspace = await api.getWorkspace();
+  configPath = await api.configFile();
   systemTheme = systemDark.matches ? "dark" : "light";
   applyTheme();
   if (cfg.ui.titlebar_pinned) chrome.setPinned(true);

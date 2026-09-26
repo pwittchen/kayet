@@ -127,6 +127,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Sidebar | Toggle file tree | `⌘\` |
   | Folder | Change workspace | `⌘⇧O` |
   | Code | Toggle syntax highlighting — **only shown for code and data/config files** | — |
+  | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
 
@@ -240,6 +241,9 @@ y = 0
 ```
 
 - Missing file or keys → defaults are used and written back.
+- The file can be edited in kayet itself (`kayet → Settings…`, `⌘,`, or the title bar sliders icon);
+  saving it applies the changes immediately. Window geometry, the workspace path and the session
+  are owned by the running app and are not reloaded.
 - Last opened file is restored on launch (if it still exists).
 
 ## 11. Architecture
@@ -304,6 +308,7 @@ kayet/
 | Save / Save as         | `⌘S` / `⌘⇧S` |
 | Toggle file tree       | `⌘\`      |
 | Toggle preview (.md)   | `⌘⇧P`     |
+| Settings (config file) | `⌘,`      |
 | Cycle theme            | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘⌥F` |
 | Zoom in / out / reset  | `⌘+` / `⌘-` / `⌘0` |

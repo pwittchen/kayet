@@ -20,6 +20,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         &[
             &PredefinedMenuItem::about(app, Some("About kayet"), Some(AboutMetadata::default()))?,
             &sep()?,
+            &item("open-settings", "Settings…", Some("CmdOrCtrl+,"))?,
+            &sep()?,
             &PredefinedMenuItem::services(app, None)?,
             &sep()?,
             &PredefinedMenuItem::hide(app, None)?,

@@ -126,6 +126,33 @@ pub fn set_config(state: State<'_, AppState>, cfg: Config) {
     state.save_config();
 }
 
+/// Returns the config file path (creating the file if missing) and allows access to it.
+#[tauri::command]
+pub fn config_file(app: AppHandle, state: State<'_, AppState>) -> String {
+    let path = config::config_path();
+    if !path.exists() {
+        state.save_config();
+    }
+    path_string(&state.allow(&app, &path))
+}
+
+/// Re-reads the config file after the user edited it. Window geometry, the workspace path
+/// and the session are owned by the running app and are kept as they are.
+#[tauri::command]
+pub fn reload_config(state: State<'_, AppState>) -> CmdResult<Config> {
+    let text = std::fs::read_to_string(config::config_path()).map_err(err)?;
+    let cfg = config::parse(&text).map_err(|e| format!("Invalid config: {}", e.message()))?;
+    let mut current = lock(&state.config);
+    let window = current.window.clone();
+    let path = current.workspace.path.clone();
+    let session = current.session.clone();
+    *current = cfg;
+    current.window = window;
+    current.workspace.path = path;
+    current.session = session;
+    Ok(current.clone())
+}
+
 #[tauri::command]
 pub fn get_workspace(state: State<'_, AppState>) -> String {
     path_string(&lock(&state.workspace))

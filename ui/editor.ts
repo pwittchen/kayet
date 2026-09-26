@@ -203,14 +203,34 @@ export class Editor {
     this.view.scrollDOM.scrollTop = 0;
   }
 
-  /** Replaces the text while keeping history and (approximately) the cursor. */
+  /** Replaces the text while keeping history, the cursor and the scroll position. */
   replaceText(text: string): void {
     const state = this.view.state;
-    const head = Math.min(state.selection.main.head, text.length);
+    const sep = detectLineSeparator(text);
+    if (sep !== state.lineBreak) {
+      const head = Math.min(state.selection.main.head, text.length);
+      this.view.dispatch({
+        changes: { from: 0, to: state.doc.length, insert: text },
+        selection: { anchor: head },
+        effects: this.lineSep.reconfigure(EditorState.lineSeparator.of(sep)),
+      });
+      return;
+    }
+    // Only replace the changed middle so unchanged text (and the view on it) stays put.
+    const old = state.sliceDoc();
+    const max = Math.min(old.length, text.length);
+    let start = 0;
+    while (start < max && old.charCodeAt(start) === text.charCodeAt(start)) start++;
+    let end = 0;
+    while (
+      end < max - start &&
+      old.charCodeAt(old.length - 1 - end) === text.charCodeAt(text.length - 1 - end)
+    ) {
+      end++;
+    }
+    if (start === old.length && start === text.length) return;
     this.view.dispatch({
-      changes: { from: 0, to: state.doc.length, insert: text },
-      selection: { anchor: head },
-      effects: this.lineSep.reconfigure(EditorState.lineSeparator.of(detectLineSeparator(text))),
+      changes: { from: start, to: old.length - end, insert: text.slice(start, text.length - end) },
     });
   }
 
