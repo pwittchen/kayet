@@ -134,6 +134,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Directories first, then files, both alphabetical (case-insensitive).
 - Hidden files (dotfiles) not shown by default; toggle in config.
 - Expand/collapse folders with click or `→` / `←`; open files with click or `Enter`.
+- Double-clicking a file name renames it inline (`Enter` confirms, `Esc` cancels).
 - Active file is highlighted with a subtle background pill.
 - Context menu (right-click): New File, New Folder, Rename, Reveal in Finder, Move to Trash.
 - Live updates via `notify` when files change on disk.

@@ -1,4 +1,4 @@
-// File tree: lazy directory loading, keyboard navigation, inline create/rename, context menu.
+// File tree: lazy directory loading, keyboard navigation, inline create/rename (incl. double-click), context menu.
 
 import { api, basename, dirname, Entry, isWithin, join } from "./api";
 import { icons } from "./icons";
@@ -37,6 +37,7 @@ export class FileTree {
   ) {
     el.addEventListener("keydown", (e) => this.onKeyDown(e));
     el.addEventListener("contextmenu", (e) => this.onContextMenu(e));
+    el.addEventListener("dblclick", (e) => this.onDoubleClick(e));
   }
 
   async setRoot(root: string): Promise<void> {
@@ -193,10 +194,11 @@ export class FileTree {
       row.append(remove);
     }
 
-    row.addEventListener("click", () => {
+    row.addEventListener("click", (e) => {
       this.selected = entry.path;
       if (entry.is_dir) void this.toggle(entry.path);
-      else {
+      else if (e.detail < 2) {
+        // Only the first click opens the file; a second one is part of a rename double-click.
         this.cb.openFile(entry.path);
         this.render();
       }
@@ -273,6 +275,18 @@ export class FileTree {
     }
     await this.refresh();
     this.el.focus();
+  }
+
+  /** Double-clicking a file name starts an inline rename. */
+  private onDoubleClick(e: MouseEvent): void {
+    if (this.editing) return;
+    // Rows are re-rendered on click, so resolve the row under the pointer rather than e.target.
+    const nameEl = document.elementFromPoint(e.clientX, e.clientY)?.closest(".tree-row:not(.dir) .name");
+    const path = nameEl?.closest<HTMLElement>(".tree-row")?.dataset.path;
+    if (!path) return;
+    e.preventDefault();
+    this.selected = path;
+    this.startEdit({ kind: "rename", path });
   }
 
   private async trash(entry: Entry): Promise<void> {
