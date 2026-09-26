@@ -10,7 +10,7 @@ the minimalistic text editor for macOS
 
 </div>
 
-See [SPEC.md](SPEC.md) for the full specification.
+See [SPEC.md](SPEC.md) for the full specification and [ROADMAP.md](ROADMAP.md) for planned work.
 
 ## Development
 
