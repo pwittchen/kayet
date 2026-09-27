@@ -10,6 +10,8 @@ the minimalistic text editor for macOS
 
 </div>
 
+![kayet screenshot](screenshot.png)
+
 See [SPEC.md](SPEC.md) for the full specification and [ROADMAP.md](ROADMAP.md) for planned work.
 
 ## Development
