@@ -80,6 +80,11 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &sep()?,
             &item("find", "Find…", Some("CmdOrCtrl+F"))?,
             &item("replace", "Replace…", Some("CmdOrCtrl+Alt+F"))?,
+            &item(
+                "find-in-workspace",
+                "Find in Workspace…",
+                Some("CmdOrCtrl+Shift+F"),
+            )?,
         ],
     )?;
 

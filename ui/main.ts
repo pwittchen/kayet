@@ -6,7 +6,19 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Text } from "@codemirror/state";
 
-import { api, Backup, basename, Config, dirname, isMarkdown, isWithin, Opened, relativeTo, ThemeMode } from "./api";
+import {
+  api,
+  Backup,
+  basename,
+  Config,
+  dirname,
+  isMarkdown,
+  isWithin,
+  Opened,
+  relativeTo,
+  SearchMatch,
+  ThemeMode,
+} from "./api";
 import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
@@ -424,13 +436,19 @@ async function confirmDiscard(): Promise<boolean> {
   return choice === "discard";
 }
 
-async function openFile(path: string): Promise<void> {
-  if (path === doc.path) return editor.focus();
-  if (!(await confirmDiscard())) return;
+/** Opens `path` (asking to save unsaved changes first). Resolves to whether it is now open. */
+async function openFile(path: string): Promise<boolean> {
+  if (path === doc.path) {
+    editor.focus();
+    return true;
+  }
+  if (!(await confirmDiscard())) return false;
   try {
     loadDoc(path, await api.readFile(path));
+    return true;
   } catch (e) {
     notify(String(e));
+    return false;
   }
 }
 
@@ -711,6 +729,7 @@ const commands: Record<string, () => unknown> = {
   "zoom-reset": () => zoom("reset"),
   palette: togglePalette,
   "go-to-file": toggleFileFinder,
+  "find-in-workspace": toggleWorkspaceSearch,
 };
 
 // ---- command palette ----
@@ -734,6 +753,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },
     { id: "find", label: "Find…", shortcut: "⌘F" },
     { id: "replace", label: "Replace…", shortcut: "⌘⌥F" },
+    { id: "find-in-workspace", label: "Find in Workspace…", shortcut: "⌘⇧F" },
     {
       id: "toggle-tree",
       label: cfg.ui.sidebar_visible ? "Hide File Tree" : "Show File Tree",
@@ -800,6 +820,33 @@ async function toggleFileFinder(): Promise<void> {
     empty: files.length ? "No matching files" : "No files in the workspace",
     pick: (path) => void openFile(path),
     rank: (item, query) => fileScore(paths.get(item.id)!, query),
+  });
+}
+
+/** Workspace-wide search: each matching line, with its file and line number aside. */
+function toggleWorkspaceSearch(): Promise<void> {
+  const found = new Map<string, SearchMatch>();
+  let query = "";
+  return showPalette([], {
+    kind: "search",
+    placeholder: "Find in workspace…",
+    prompt: "Type to search all files in the workspace",
+    empty: "No results",
+    search: async (q) => {
+      const matches = await api.searchWorkspace(q);
+      query = q;
+      found.clear();
+      return matches.map((m) => {
+        const id = `${m.path}:${m.line}`;
+        found.set(id, m);
+        return { id, label: m.text, match: [m.start, m.end], aside: `${relativeTo(workspace, m.path) ?? m.path}:${m.line}` };
+      });
+    },
+    pick: (id) => {
+      const m = found.get(id);
+      if (!m) return;
+      void openFile(m.path).then((open) => open && editor.revealMatch(m.line, m.column, m.length, query));
+    },
   });
 }
 
@@ -917,7 +964,7 @@ init()
     if (!benchDir) return;
     await runBench(benchDir, {
       firstPaint,
-      openFile,
+      openFile: async (path) => void (await openFile(path)),
       docLength: () => editor.doc.length,
       showPreview: async () => {
         if (!previewVisible()) await togglePreview();

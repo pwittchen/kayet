@@ -326,6 +326,24 @@ export class Editor {
     });
   }
 
+  /**
+   * Selects `length` characters at `column` of `line` (1-based), scrolled to the middle, and makes
+   * `query` the find query so ⌘G moves on to the next occurrence. Positions past the end are clamped.
+   */
+  revealMatch(line: number, column: number, length: number, query: string): void {
+    const doc = this.view.state.doc;
+    const at = doc.line(Math.max(1, Math.min(line, doc.lines)));
+    const from = Math.min(at.from + column, at.to);
+    const to = Math.min(from + length, at.to);
+    this.view.dispatch({
+      selection: { anchor: from, head: to },
+      effects: [
+        EditorView.scrollIntoView(from, { y: "center" }),
+        setSearchQuery.of(new SearchQuery({ search: query, caseSensitive: /\p{Lu}/u.test(query), literal: true })),
+      ],
+    });
+  }
+
   /** Source line (0-based, fractional) at the top of the viewport, for scroll sync. */
   topLine(): number {
     const view = this.view;

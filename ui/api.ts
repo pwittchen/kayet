@@ -35,6 +35,20 @@ export interface Entry {
 }
 
 /** A file and/or folder kayet was asked to open from Finder or the `kayet` command. */
+/** A line containing the searched text; columns and ranges count UTF-16 code units. */
+export interface SearchMatch {
+  path: string;
+  /** 1-based line number. */
+  line: number;
+  column: number;
+  length: number;
+  /** The line, or an excerpt of it around the match. */
+  text: string;
+  /** The match within `text`. */
+  start: number;
+  end: number;
+}
+
 export interface Opened {
   file: string | null;
   folder: string | null;
@@ -66,6 +80,7 @@ export const api = {
   installCli: () => invoke<string | null>("install_cli"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
   listFiles: () => invoke<string[]>("list_files"),
+  searchWorkspace: (query: string) => invoke<SearchMatch[]>("search_workspace", { query }),
   readFile: (path: string) => invoke<string>("read_file", { path }),
   writeFile: (path: string, contents: string) =>
     invoke<void>("write_file", { path, contents }),

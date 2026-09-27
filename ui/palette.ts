@@ -1,12 +1,16 @@
 // Spotlight-like palette: type to filter, ↑/↓ to move, Enter to pick, Esc to close.
-// Lists commands (⌘K) or workspace files (⌘P, the file finder).
+// Lists commands (⌘K), workspace files (⌘P, the file finder) or search results (⌘⇧F).
 
 export interface PaletteItem {
   id: string;
   label: string;
   /** Muted text after the label, e.g. the folder of a file. */
   detail?: string;
+  /** Muted text on the right, e.g. where a search result is. */
+  aside?: string;
   shortcut?: string;
+  /** Range of the label to highlight, e.g. the text a search matched. */
+  match?: [number, number];
 }
 
 export interface PaletteOptions {
@@ -19,7 +23,17 @@ export interface PaletteOptions {
   pick: (id: string) => void;
   /** Ranks an item against the lower-cased query; 0 means no match. Defaults to the label. */
   rank?: (item: PaletteItem, query: string) => number;
+  /**
+   * Looks items up for the (trimmed, original-case) query instead of filtering the given ones,
+   * shortly after typing pauses. `empty` is then shown only for a query without results.
+   */
+  search?: (query: string) => Promise<PaletteItem[]>;
+  /** Shown while the query is empty, in search mode. */
+  prompt?: string;
 }
+
+/** Typing pause after which a search runs. */
+const SEARCH_DELAY = 150;
 
 /** At most this many items are shown, so long file lists stay quick to filter. */
 const MAX_SHOWN = 100;
@@ -34,6 +48,9 @@ export class Palette {
   private selected = 0;
   private closed: Promise<void> = Promise.resolve();
   private done: (() => void) | null = null;
+  private searchTimer: number | undefined;
+  /** Bumped by each search and by `open`, so stale results are dropped. */
+  private searchId = 0;
 
   constructor(private readonly onClose: () => void) {
     this.root = document.createElement("div");
@@ -49,7 +66,7 @@ export class Palette {
     this.list = this.root.querySelector("ul")!;
     document.body.append(this.root);
 
-    this.input.addEventListener("input", () => this.filter());
+    this.input.addEventListener("input", () => this.onInput());
     this.input.addEventListener("keydown", (e) => this.onKeyDown(e));
     this.input.addEventListener("blur", () => this.close());
     // Keep focus in the input while clicking items.
@@ -89,6 +106,8 @@ export class Palette {
     this.input.placeholder = options.placeholder;
     this.root.querySelector(".palette-box")!.setAttribute("aria-label", options.placeholder);
     this.input.value = "";
+    this.searchId++;
+    window.clearTimeout(this.searchTimer);
     if (!this.isOpen) {
       this.root.hidden = false;
       this.closed = new Promise((resolve) => (this.done = resolve));
@@ -101,6 +120,8 @@ export class Palette {
   close(): void {
     if (!this.isOpen) return;
     this.root.hidden = true;
+    this.searchId++;
+    window.clearTimeout(this.searchTimer);
     this.done?.();
     this.done = null;
     this.onClose();
@@ -142,11 +163,37 @@ export class Palette {
     e.stopPropagation();
   }
 
+  private onInput(): void {
+    const search = this.options?.search;
+    if (!search) return this.filter();
+    window.clearTimeout(this.searchTimer);
+    const id = ++this.searchId;
+    const query = this.input.value.trim();
+    if (!query) {
+      this.items = [];
+      return this.filter();
+    }
+    this.searchTimer = window.setTimeout(() => {
+      search(query).then(
+        (items) => {
+          if (id !== this.searchId) return;
+          this.items = items;
+          this.filter();
+        },
+        () => {
+          if (id !== this.searchId) return;
+          this.items = [];
+          this.filter();
+        },
+      );
+    }, SEARCH_DELAY);
+  }
+
   private filter(): void {
     const query = this.input.value.trim().toLowerCase();
     const rank = this.options?.rank ?? ((item: PaletteItem, q: string) => score(item.label.toLowerCase(), q));
     this.matches = (
-      query
+      query && !this.options?.search
         ? this.items
             .map((item) => ({ item, score: rank(item, query) }))
             .filter((m) => m.score > 0)
@@ -162,7 +209,14 @@ export class Palette {
         li.dataset.index = String(i);
         const label = document.createElement("span");
         label.className = "label";
-        label.textContent = c.label;
+        if (c.match) {
+          const [from, to] = c.match;
+          const mark = document.createElement("mark");
+          mark.textContent = c.label.slice(from, to);
+          label.append(c.label.slice(0, from), mark, c.label.slice(to));
+        } else {
+          label.textContent = c.label;
+        }
         if (c.detail) {
           const detail = document.createElement("span");
           detail.className = "detail";
@@ -170,6 +224,12 @@ export class Palette {
           label.append(detail);
         }
         li.append(label);
+        if (c.aside) {
+          const aside = document.createElement("span");
+          aside.className = "aside";
+          aside.textContent = c.aside;
+          li.append(aside);
+        }
         if (c.shortcut) {
           const kbd = document.createElement("kbd");
           kbd.textContent = c.shortcut;
@@ -181,7 +241,8 @@ export class Palette {
     if (!this.matches.length) {
       const empty = document.createElement("li");
       empty.className = "empty";
-      empty.textContent = this.options?.empty ?? "";
+      const prompt = this.options?.search && !query ? this.options.prompt : undefined;
+      empty.textContent = prompt ?? this.options?.empty ?? "";
       this.list.append(empty);
     }
     this.select(0);

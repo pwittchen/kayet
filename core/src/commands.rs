@@ -23,6 +23,7 @@ use crate::config::{self, Config};
 use crate::fs_ops::{self, canonical};
 use crate::markdown;
 use crate::recovery;
+use crate::search::{self, Match};
 use crate::workspace::{self, Entry, FsWatcher};
 
 type CmdResult<T> = Result<T, String>;
@@ -268,6 +269,18 @@ pub async fn list_files(state: State<'_, AppState>) -> CmdResult<Vec<String>> {
         show_hidden,
         workspace::MAX_FILES,
     ))
+}
+
+/// Lines containing `query` across the workspace, for workspace-wide search.
+#[tauri::command]
+pub async fn search_workspace(state: State<'_, AppState>, query: String) -> CmdResult<Vec<Match>> {
+    let root = lock(&state.workspace).clone();
+    let show_hidden = lock(&state.config).workspace.show_hidden_files;
+    tauri::async_runtime::spawn_blocking(move || {
+        search::search(&root, &query, show_hidden, search::MAX_RESULTS)
+    })
+    .await
+    .map_err(err)
 }
 
 /// Reads a file and starts watching it for external changes.

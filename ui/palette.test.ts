@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
 
@@ -95,5 +95,60 @@ describe("Palette", () => {
     key("Enter");
     expect(pickCommand).toHaveBeenCalledWith("save");
     expect(pickFile).not.toHaveBeenCalled();
+  });
+
+  describe("search mode", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    const results: Record<string, PaletteItem[]> = {
+      todo: [
+        { id: "a.md:3", label: "- [ ] todo item", match: [6, 10], aside: "a.md:3" },
+        { id: "b.md:1", label: "TODO", match: [0, 4], aside: "b.md:1" },
+      ],
+    };
+    const searchOptions = (search: (q: string) => Promise<PaletteItem[]>, pick = vi.fn()): PaletteOptions => ({
+      kind: "search",
+      placeholder: "Find in workspace…",
+      prompt: "Type to search",
+      empty: "No results",
+      search,
+      pick,
+    });
+    const emptyText = () => document.querySelector("#palette li.empty")?.textContent;
+
+    it("prompts, searches after a pause and highlights matches", async () => {
+      const search = vi.fn((q: string) => Promise.resolve(results[q] ?? []));
+      const pick = vi.fn();
+      palette.open([], searchOptions(search, pick));
+      expect(emptyText()).toBe("Type to search");
+      type("to");
+      type("todo");
+      await vi.advanceTimersByTimeAsync(200);
+      expect(search).toHaveBeenCalledExactlyOnceWith("todo");
+      expect(labels()).toEqual(["- [ ] todo itema.md:3", "TODOb.md:1"]);
+      expect(document.querySelector("#palette mark")?.textContent).toBe("todo");
+      key("ArrowDown");
+      key("Enter");
+      expect(pick).toHaveBeenCalledWith("b.md:1");
+    });
+
+    it("shows the empty text for a query without results and drops stale results", async () => {
+      let resolveSlow: (items: PaletteItem[]) => void = () => {};
+      const search = vi.fn((q: string) =>
+        q === "slow" ? new Promise<PaletteItem[]>((r) => (resolveSlow = r)) : Promise.resolve(results[q] ?? []),
+      );
+      palette.open([], searchOptions(search));
+      type("slow");
+      await vi.advanceTimersByTimeAsync(200);
+      type("zzz");
+      await vi.advanceTimersByTimeAsync(200);
+      expect(emptyText()).toBe("No results");
+      resolveSlow(results.todo);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(labels()).toEqual([]);
+      type("");
+      expect(emptyText()).toBe("Type to search");
+    });
   });
 });

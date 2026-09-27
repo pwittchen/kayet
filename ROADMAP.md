@@ -32,7 +32,7 @@ items here move into the spec once they are picked up.
   - Pasting a URL over selected text creates a link.
   - Pasting an image saves it next to the file and inserts `![](…)`.
 - [x] **Fuzzy file finder** (`⌘P`).
-- [ ] **Workspace-wide search.**
+- [x] **Workspace-wide search** (`⌘⇧F`).
 - [x] **Command palette** (`⌘K`), Linear-style.
 - [ ] **Word count / reading time** in the hover title bar.
 - [ ] **Open Recent** menu.

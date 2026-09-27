@@ -67,7 +67,7 @@ in CI or releases.
 
 ### 4.2 Document
 - One active document at a time.
-- Files are opened from the file tree, the file finder (`⌘P`, see 5.5), via `⌘O`, by drag-and-drop onto the window, from
+- Files are opened from the file tree, the file finder (`⌘P`, see 5.5), workspace search (`⌘⇧F`, see 5.6), via `⌘O`, by drag-and-drop onto the window, from
   Finder or from the terminal (see 4.3).
 - Encoding: UTF-8. Line endings are preserved as found in the file.
 - New untitled document: `⌘N`. On first save, the default location is the current workspace.
@@ -163,6 +163,18 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   query containing `/` matches against the whole relative path, spaces are ignored.
 - `↑` / `↓` move the selection, `Enter` or a click opens the file (asking to save unsaved changes
   first), `Esc`, `⌘P` again or a click outside closes it.
+
+### 5.6 Workspace search
+- `⌘⇧F` (`Edit → Find in Workspace…` or the command palette) opens the same floating panel to
+  search the text of every file the file finder lists (see 5.5).
+- The query is matched literally, ignoring case unless it contains an upper-case letter; the search
+  runs ~150ms after typing pauses. Binary, non-UTF-8 and files over 5MB are skipped; files are
+  searched as saved on disk.
+- Each matching line is one result (at most 200, in path order): the line with the match highlighted
+  (long lines are cut around it), and its workspace-relative path and line number muted on the right.
+- `↑` / `↓` move the selection, `Enter` or a click opens the file (asking to save unsaved changes
+  first), selects the match with the line centered and makes the query the find query, so `⌘G`
+  continues to the next occurrence. `Esc`, `⌘⇧F` again or a click outside closes it.
 
 ## 6. File Tree
 
@@ -305,6 +317,7 @@ kayet/
 │   │   ├── commands.rs      # #[tauri::command] handlers
 │   │   ├── workspace.rs     # workspace resolution, tree listing, watcher
 │   │   ├── fs_ops.rs        # read/write/rename/create/trash
+│   │   ├── search.rs        # workspace-wide text search
 │   │   ├── markdown.rs      # pulldown-cmark + ammonia rendering
 │   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
 │   │   └── config.rs        # load/save ~/.kayet/config.toml
@@ -318,7 +331,7 @@ kayet/
 │   ├── markdown.ts          # smart Markdown editing (lists, ⌘B / ⌘I, pasting)
 │   ├── languages.ts         # code languages by file extension (lazy-loaded)
 │   ├── tree.ts              # file tree component
-│   ├── palette.ts           # command palette (⌘K) and file finder (⌘P)
+│   ├── palette.ts           # command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F)
 │   ├── preview.ts           # preview pane
 │   ├── chrome.ts            # hover reveal logic, title bar
 │   └── theme.css
@@ -335,6 +348,7 @@ kayet/
 | `set_workspace(path)`          | Change workspace, restart watcher             |
 | `list_dir(path) -> Vec<Entry>` | List directory entries (lazy tree loading)    |
 | `list_files() -> Vec<String>`  | Every workspace file, for the file finder     |
+| `search_workspace(query) -> Vec<Match>` | Lines containing the query, for workspace search |
 | `read_file(path) -> String`    | Read file contents                            |
 | `write_file(path, contents)`   | Atomic write (temp file + rename)             |
 | `save_image(document, bytes)`  | Save a pasted image next to the document      |
@@ -374,6 +388,7 @@ kayet/
 | Command palette        | `⌘K`      |
 | Cycle theme            | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘⌥F` |
+| Find in workspace      | `⌘⇧F`     |
 | Bold / italic (.md)    | `⌘B` / `⌘I` |
 | Zoom in / out / reset  | `⌘+` / `⌘-` / `⌘0` |
 | Show chrome (keyboard) | `⌘.` (hold/toggle) |

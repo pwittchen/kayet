@@ -9,6 +9,7 @@ mod fs_ops;
 mod markdown;
 mod menu;
 mod recovery;
+mod search;
 mod workspace;
 
 use serde::Serialize;
@@ -81,6 +82,7 @@ fn main() {
             commands::install_cli,
             commands::list_dir,
             commands::list_files,
+            commands::search_workspace,
             commands::read_file,
             commands::write_file,
             commands::save_image,
