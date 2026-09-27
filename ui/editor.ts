@@ -1,4 +1,5 @@
-// CodeMirror 6 setup: no gutter, soft wrap, centered readable column, subtle Markdown.
+// CodeMirror 6 setup: no gutter, soft wrap, centered readable column, subtle Markdown
+// (or, in code editor mode, line numbers and no wrapping at the left edge).
 
 import { Annotation, Compartment, EditorSelection, EditorState, Extension, RangeSetBuilder, Text, Transaction } from "@codemirror/state";
 import {
@@ -8,11 +9,14 @@ import {
   ViewPlugin,
   ViewUpdate,
   drawSelection,
+  highlightActiveLine,
+  highlightActiveLineGutter,
   highlightSpecialChars,
   keymap,
+  lineNumbers,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
-import { HighlightStyle, Language, LanguageSupport, indentOnInput, syntaxHighlighting } from "@codemirror/language";
+import { HighlightStyle, Language, LanguageSupport, bracketMatching, indentOnInput, syntaxHighlighting } from "@codemirror/language";
 import { markdownLanguage } from "@codemirror/lang-markdown";
 import { SearchQuery, highlightSelectionMatches, searchKeymap, setSearchQuery } from "@codemirror/search";
 import { tags as t } from "@lezer/highlight";
@@ -135,6 +139,15 @@ const focusParagraph = [
 
 const zenMode = [typewriter, focusParagraph];
 
+/** Code editor mode: line numbers, the cursor line highlighted, matching brackets marked. */
+const codeMode = [
+  lineNumbers(),
+  highlightActiveLine(),
+  highlightActiveLineGutter(),
+  bracketMatching(),
+  EditorView.editorAttributes.of({ class: "cm-code-mode" }),
+];
+
 const spellCheck = (on: boolean) => EditorView.contentAttributes.of({ spellcheck: String(on) });
 
 /** Lets pending WebKit timers (such as the one checking spelling after a caret move) run. */
@@ -156,7 +169,9 @@ export class Editor {
   private readonly look = new Compartment();
   private readonly zen = new Compartment();
   private readonly spell = new Compartment();
+  private readonly code = new Compartment();
   private zenOn = false;
+  private codeOn = false;
   private spellOn = false;
   private spellSeq = 0;
   /** Where the caret was before the running spell check sweep (see `checkSpelling`). */
@@ -205,8 +220,9 @@ export class Editor {
       EditorState.allowMultipleSelections.of(false),
       keymap.of([...searchKeymap, ...historyKeymap, ...defaultKeymap, indentWithTab]),
       this.language.of(this.languageFor(syntax)),
-      this.wrap.of(this.settings.softWrap ? EditorView.lineWrapping : []),
+      this.wrap.of(this.wrapExtension()),
       this.look.of(this.lookExtension()),
+      this.code.of(this.codeOn ? codeMode : []),
       this.zen.of(this.zenOn ? zenMode : []),
       this.spell.of(spellCheck(this.spellOn)),
       EditorView.updateListener.of((u) => {
@@ -229,10 +245,22 @@ export class Editor {
     return syntax ? [new LanguageSupport(syntax), syntaxHighlighting(codeHighlight)] : [];
   }
 
+  /** Soft wrap per the settings; code editor mode never wraps. */
+  private wrapExtension(): Extension {
+    return this.settings.softWrap && !this.codeOn ? EditorView.lineWrapping : [];
+  }
+
   private lookExtension(): Extension {
     const s = this.settings;
     const size = Math.max(9, Math.min(40, s.fontSize + this.zoom));
     document.documentElement.style.setProperty("--editor-font-size", `${size}px`);
+    if (this.codeOn) {
+      // Code editor mode: monospace, tighter lines, no readable column.
+      return EditorView.theme({
+        "&": { fontSize: `${size}px` },
+        ".cm-content, .cm-gutters": { fontFamily: "var(--font-mono)", lineHeight: "1.5" },
+      });
+    }
     return EditorView.theme({
       "&": { fontSize: `${size}px` },
       ".cm-content": {
@@ -242,6 +270,11 @@ export class Editor {
         maxWidth: s.softWrap ? `calc(${s.maxLineWidth}ch + 96px)` : "none",
       },
     });
+  }
+
+  /** Reapplies wrapping and the look after the settings, zoom or code editor mode changed. */
+  private layoutEffects() {
+    return [this.wrap.reconfigure(this.wrapExtension()), this.look.reconfigure(this.lookExtension())];
   }
 
   /** Replaces the document; resets undo history. */
@@ -264,8 +297,8 @@ export class Editor {
     this.view.setState(snapshot.state);
     this.view.dispatch({
       effects: [
-        this.wrap.reconfigure(this.settings.softWrap ? EditorView.lineWrapping : []),
-        this.look.reconfigure(this.lookExtension()),
+        ...this.layoutEffects(),
+        this.code.reconfigure(this.codeOn ? codeMode : []),
         this.zen.reconfigure(this.zenOn ? zenMode : []),
         this.spell.reconfigure(spellCheck(this.spellOn)),
       ],
@@ -315,6 +348,13 @@ export class Editor {
     this.zenOn = on;
     this.view.dispatch({ effects: this.zen.reconfigure(on ? zenMode : []) });
     if (on) this.centerCursor();
+  }
+
+  /** Code editor mode: line numbers, no wrapping, the text at the left edge instead of a centered column. */
+  setCodeMode(on: boolean): void {
+    if (on === this.codeOn) return;
+    this.codeOn = on;
+    this.view.dispatch({ effects: [this.code.reconfigure(on ? codeMode : []), ...this.layoutEffects()] });
   }
 
   /** Spell check by the web view (red underlines, suggestions in the context menu); no autocorrect. */
@@ -413,12 +453,7 @@ export class Editor {
 
   applySettings(settings: EditorSettings): void {
     this.settings = settings;
-    this.view.dispatch({
-      effects: [
-        this.wrap.reconfigure(settings.softWrap ? EditorView.lineWrapping : []),
-        this.look.reconfigure(this.lookExtension()),
-      ],
-    });
+    this.view.dispatch({ effects: this.layoutEffects() });
   }
 
   setZoom(step: number | "reset"): void {

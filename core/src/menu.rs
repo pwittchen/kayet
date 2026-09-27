@@ -13,6 +13,8 @@ const RECENT: &str = "open-recent";
 const VIEW: &str = "view";
 const SYNTAX: &str = "toggle-syntax";
 const SPELL: &str = "toggle-spell-check";
+const ZEN: &str = "toggle-zen";
+const CODE_MODE: &str = "toggle-code-mode";
 const EXPORT_HTML: &str = "export-html";
 const EXPORT_PDF: &str = "export-pdf";
 
@@ -179,8 +181,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     Menu::with_items(app, &[&app_menu, &file, &edit, &view, &window])
 }
 
-/// The View menu, which carries the Syntax Highlighting and Check Spelling items updated by
-/// `set_check_item`.
+/// The View menu, which carries the Zen Mode, Code Editor Mode, Syntax Highlighting and Check
+/// Spelling items updated by `set_check_item`.
 fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
     let item =
         |id: &str, label: &str, accel: Option<&str>| MenuItem::with_id(app, id, label, true, accel);
@@ -206,7 +208,16 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 "Keep Title Bar Visible",
                 Some("CmdOrCtrl+."),
             )?,
-            &item("toggle-zen", "Zen Mode", Some("CmdOrCtrl+Shift+J"))?,
+            // Disabled by the frontend while code editor mode is on.
+            &CheckMenuItem::with_id(app, ZEN, "Zen Mode", true, false, Some("CmdOrCtrl+Shift+J"))?,
+            &CheckMenuItem::with_id(
+                app,
+                CODE_MODE,
+                "Code Editor Mode",
+                true,
+                false,
+                None::<&str>,
+            )?,
             &item("toggle-cursor-blink", "Toggle Cursor Blink", None)?,
             // Enabled by the frontend only while a code file is open.
             &CheckMenuItem::with_id(
@@ -217,7 +228,7 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 true,
                 None::<&str>,
             )?,
-            // Enabled by the frontend only while a prose file is open.
+            // Enabled by the frontend only while a prose file is open (and not in code editor mode).
             &CheckMenuItem::with_id(app, SPELL, "Check Spelling", false, false, None::<&str>)?,
             &sep()?,
             &item("zoom-in", "Zoom In", Some("CmdOrCtrl+="))?,
@@ -229,10 +240,11 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
     )
 }
 
-/// Updates a View menu check item: Syntax Highlighting (`toggle-syntax`) or Check Spelling
+/// Updates a View menu check item: Zen Mode (`toggle-zen`), Code Editor Mode
+/// (`toggle-code-mode`), Syntax Highlighting (`toggle-syntax`) or Check Spelling
 /// (`toggle-spell-check`); other ids are ignored.
 pub fn set_check_item<R: Runtime>(app: &AppHandle<R>, id: &str, enabled: bool, checked: bool) {
-    if id != SYNTAX && id != SPELL {
+    if ![ZEN, CODE_MODE, SYNTAX, SPELL].contains(&id) {
         return;
     }
     let Some(view) = app.menu().and_then(|m| m.get(VIEW)) else {

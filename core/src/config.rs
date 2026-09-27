@@ -55,6 +55,9 @@ pub struct UiConfig {
     /// Zen mode: cursor line kept vertically centered, extra top/bottom padding,
     /// all but the current paragraph dimmed.
     pub zen_mode: bool,
+    /// Code editor mode: line numbers, no paddings or wrapping; zen mode and spell check are
+    /// unavailable while it is on.
+    pub code_mode: bool,
     pub sidebar_width: u32,
     pub preview_split: f64,
     /// Open files in a new tab instead of in place of the current document.
@@ -68,6 +71,7 @@ impl Default for UiConfig {
             sidebar_visible: false,
             titlebar_pinned: false,
             zen_mode: false,
+            code_mode: false,
             sidebar_width: 240,
             preview_split: 0.5,
             open_in_new_tab: false,

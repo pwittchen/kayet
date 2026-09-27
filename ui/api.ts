@@ -11,6 +11,7 @@ export interface Config {
     sidebar_visible: boolean;
     titlebar_pinned: boolean;
     zen_mode: boolean;
+    code_mode: boolean;
     sidebar_width: number;
     preview_split: number;
     open_in_new_tab: boolean;
@@ -132,7 +133,7 @@ export const api = {
   setChromeVisible: (visible: boolean) =>
     invoke<void>("set_chrome_visible", { visible }),
   /** Updates the View menu's Syntax Highlighting or Check Spelling item. */
-  setMenuCheck: (id: "toggle-syntax" | "toggle-spell-check", enabled: boolean, checked: boolean) =>
+  setMenuCheck: (id: "toggle-zen" | "toggle-code-mode" | "toggle-syntax" | "toggle-spell-check", enabled: boolean, checked: boolean) =>
     invoke<void>("set_menu_check", { id, enabled, checked }),
   openFileDialog: () => invoke<string | null>("open_file_dialog"),
   saveFileDialog: (directory: string | null, fileName: string) =>

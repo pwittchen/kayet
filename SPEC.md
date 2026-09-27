@@ -179,7 +179,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   With more than one tab open, a tab strip takes its place: each tab by name (the active one on a
   subtle pill), a dot while it has unsaved changes that turns into a close × on hover; the strip
   scrolls sideways when the tabs don't fit.
-  For prose (Markdown, plain text, untitled — not code files) a muted `· 1,234 words · 6 min read`
+  For prose (Markdown, plain text, untitled — not code files, not in code editor mode) a muted `· 1,234 words · 6 min read`
   follows (200 words per minute, at least 1 min; hidden for an empty document). Words are runs of
   non-whitespace containing a letter or digit, so Markdown markers (`#`, `-`, `>`) don't count.
   The count is refreshed only while the title bar is visible.
@@ -190,11 +190,12 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | × (close) | Close the open file — **only shown when a file or more than one tab is open** | — |
   | + (new tab) | Open a new tab with an empty untitled document (see 4.4) | `⌘T` |
   | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
-  | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
+  | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed — **hidden in code editor mode** | `⌘⇧J` |
+  | Numbered lines | Toggle code editor mode (off by default, see 7) | — |
   | Cursor (I-beam) | Toggle text cursor blinking (on by default); when off the cursor stays still | — |
   | Folder | Change workspace | `⌘⇧O` |
-  | Code | Toggle syntax highlighting — **only shown for code and data/config files** | — |
-  | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled) | — |
+  | Code | Toggle syntax highlighting — **only shown for code and data/config files, or for any file in code editor mode** | — |
+  | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled), hidden in code editor mode | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
@@ -203,7 +204,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
   `View → Command Palette…` or the title bar command icon.
 - Lists every command with its shortcut; context-only commands (Close File, next / previous tab,
-  preview, export, syntax highlighting, spell check) appear only when they apply.
+  preview, export, syntax highlighting, spell check, Zen mode) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
 
@@ -247,6 +248,18 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 ## 7. Editor
 
 - CodeMirror 6, no line numbers by default, no gutter, no minimap.
+- Code editor mode, **off by default**: `View → Code Editor Mode`, the title bar numbered-lines
+  icon or the command palette toggle
+  it; the setting is global and persisted. It lays the text out like a typical code editor: line
+  numbers in a gutter, the cursor line and matching brackets highlighted, monospace font with
+  line height 1.5, no soft wrap, and no readable column or side / bottom paddings (the text starts
+  at the left edge; the top keeps the first line clear of the title bar). While it is on, Zen mode
+  and spell check cannot be enabled: their View menu items are disabled, their title bar icons and
+  palette commands are hidden, and both are off (their settings are kept and apply again once
+  code editor mode is turned off). Turning code editor mode on also turns syntax highlighting on,
+  and turning it off turns syntax highlighting off; in between, highlighting can still be toggled
+  as usual.
+  The title bar word count and reading time are hidden in this mode.
 - Soft wrap on by default; max readable line width (~72ch) centered in the pane.
 - Font: monospace by default (`SF Mono` via `ui-monospace`), optional system UI font (`-apple-system`) setting.
   Default size 15px, line height 1.6.
@@ -264,7 +277,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   `.csv`, `Dockerfile`) get syntax highlighting picked by file extension or well-known file name,
   using the same muted palette as preview code blocks. Grammars are loaded lazily per language.
 - `View → Syntax Highlighting` (or the title bar code icon) toggles highlighting for code files; the setting is global and
-  persisted. The item is disabled for plain text and Markdown files.
+  persisted. The item is disabled for plain text and Markdown files, except in code editor mode.
 - Spell check for prose (Markdown, plain text, untitled — not code files), **off by default**:
   `View → Check Spelling`, the title bar spell check icon or the command palette toggle it; the
   setting is global and persisted. It uses the web view's built-in (macOS) spell checker:
@@ -360,6 +373,7 @@ show_hidden_files = false
 theme = "system"          # "system" | "light" | "dark"
 sidebar_visible = false
 zen_mode = false
+code_mode = false         # code editor mode: line numbers, no paddings / wrapping (see 7)
 sidebar_width = 240
 preview_split = 0.5
 open_in_new_tab = false   # open files (and ⌘N) in a new tab instead of in place of the open one

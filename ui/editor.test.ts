@@ -62,3 +62,40 @@ describe("spell check sweep", () => {
     expect(editor.view.state.selection.main.head).toBe(3);
   });
 });
+
+describe("code editor mode", () => {
+  const gutter = (editor: Editor) => editor.view.dom.querySelector(".cm-lineNumbers");
+  const wraps = (editor: Editor) => editor.view.contentDOM.classList.contains("cm-lineWrapping");
+
+  it("is off by default and toggles line numbers, wrapping and its class", () => {
+    const editor = new Editor(document.createElement("div"), settings, callbacks);
+    expect(gutter(editor)).toBeNull();
+    expect(wraps(editor)).toBe(true);
+    editor.setCodeMode(true);
+    expect(gutter(editor)).not.toBeNull();
+    expect(wraps(editor)).toBe(false);
+    expect(editor.view.dom.classList.contains("cm-code-mode")).toBe(true);
+    editor.setCodeMode(false);
+    expect(gutter(editor)).toBeNull();
+    expect(wraps(editor)).toBe(true);
+    expect(editor.view.dom.classList.contains("cm-code-mode")).toBe(false);
+  });
+
+  it("stays on when another document is loaded or restored", () => {
+    const editor = new Editor(document.createElement("div"), settings, callbacks);
+    const snapshot = editor.snapshot();
+    editor.setCodeMode(true);
+    editor.load("fn main() {}", null);
+    expect(gutter(editor)).not.toBeNull();
+    editor.restore(snapshot);
+    expect(gutter(editor)).not.toBeNull();
+    expect(wraps(editor)).toBe(false);
+  });
+
+  it("keeps wrapping off when the settings change", () => {
+    const editor = new Editor(document.createElement("div"), settings, callbacks);
+    editor.setCodeMode(true);
+    editor.applySettings({ ...settings, softWrap: true });
+    expect(wraps(editor)).toBe(false);
+  });
+});

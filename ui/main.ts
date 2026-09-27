@@ -54,6 +54,7 @@ const els = {
   btnPalette: $<HTMLButtonElement>("btn-palette"),
   btnPin: $<HTMLButtonElement>("btn-pin"),
   btnZen: $<HTMLButtonElement>("btn-zen"),
+  btnCode: $<HTMLButtonElement>("btn-code"),
   btnBlink: $<HTMLButtonElement>("btn-blink"),
   btnSidebar: $<HTMLButtonElement>("btn-sidebar"),
   btnWorkspace: $<HTMLButtonElement>("btn-workspace"),
@@ -213,10 +214,12 @@ async function reloadConfig(): Promise<void> {
   applyTheme();
   if (pinnedChanged) chrome.setPinned(cfg.ui.titlebar_pinned);
   editor.applySettings(editorSettings());
+  applyCodeMode();
   applyZen();
   applyCursorBlink();
   updateLayout();
   applySpellCheck();
+  updateStats();
   await applySyntax();
   if (hiddenChanged) await tree.refresh();
 }
@@ -364,11 +367,14 @@ function renderTabs(): void {
   els.tabs.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
-/** Title bar word count and reading time, for prose (not code files); counted only while the title bar shows. */
+/**
+ * Title bar word count and reading time, for prose (not code files, not in code editor mode);
+ * counted only while the title bar shows.
+ */
 function updateStats(): void {
   window.clearTimeout(statsTimer);
   statsTimer = undefined;
-  const stats = isCode(doc.path) ? "" : formatStats(countWords(editor.text()));
+  const stats = isCode(doc.path) || cfg?.ui.code_mode ? "" : formatStats(countWords(editor.text()));
   els.docStats.textContent = stats;
   els.docStats.hidden = !stats;
 }
@@ -405,17 +411,45 @@ function updateAll(): void {
   tree.setActive(doc.path);
 }
 
+/** Zen mode per the setting; unavailable in code editor mode. */
 function applyZen(): void {
-  const on = cfg.ui.zen_mode;
+  const code = cfg.ui.code_mode;
+  const on = cfg.ui.zen_mode && !code;
+  void api.setMenuCheck("toggle-zen", !code, on).catch(() => {});
   els.app.classList.toggle("zen", on);
+  els.btnZen.hidden = code;
   els.btnZen.classList.toggle("on", on);
   els.btnZen.setAttribute("aria-pressed", String(on));
   editor.setZen(on);
 }
 
 function toggleZen(): void {
+  if (cfg.ui.code_mode) return;
   cfg.ui.zen_mode = !cfg.ui.zen_mode;
   applyZen();
+  saveConfig();
+  editor.focus();
+}
+
+/** Code editor mode: line numbers, no paddings or wrapping; zen mode and spell check are off meanwhile. */
+function applyCodeMode(): void {
+  const on = cfg.ui.code_mode;
+  void api.setMenuCheck("toggle-code-mode", true, on).catch(() => {});
+  els.btnCode.classList.toggle("on", on);
+  els.btnCode.setAttribute("aria-pressed", String(on));
+  els.btnCode.title = on ? "Code editor mode: on" : "Code editor mode: off";
+  editor.setCodeMode(on);
+}
+
+/** Toggles code editor mode, turning syntax highlighting on or off with it. */
+function toggleCodeMode(): void {
+  cfg.ui.code_mode = !cfg.ui.code_mode;
+  cfg.editor.syntax_highlighting = cfg.ui.code_mode;
+  applyCodeMode();
+  applyZen();
+  applySpellCheck();
+  void applySyntax().catch(showError);
+  updateStats();
   saveConfig();
   editor.focus();
 }
@@ -508,14 +542,16 @@ let syntaxSeq = 0;
 
 /**
  * Highlights the open document: Markdown always, code files per the syntax highlighting
- * setting. Code grammars load lazily, so they are applied once ready.
+ * setting. Code grammars load lazily, so they are applied once ready. The toggle is offered
+ * for code files, and for every file in code editor mode.
  */
 async function applySyntax(): Promise<void> {
   const seq = ++syntaxSeq;
   const code = isCode(doc.path);
+  const available = code || cfg.ui.code_mode;
   const on = cfg.editor.syntax_highlighting;
-  void api.setMenuCheck("toggle-syntax", code, on).catch(() => {});
-  els.btnSyntax.hidden = !code;
+  void api.setMenuCheck("toggle-syntax", available, on).catch(() => {});
+  els.btnSyntax.hidden = !available;
   els.btnSyntax.classList.toggle("on", on);
   els.btnSyntax.setAttribute("aria-pressed", String(on));
   if (isMarkdown(doc.path)) return editor.setSyntax("markdown");
@@ -524,16 +560,19 @@ async function applySyntax(): Promise<void> {
 }
 
 function toggleSyntax(): void {
-  if (!isCode(doc.path)) return;
+  if (!isCode(doc.path) && !cfg.ui.code_mode) return;
   cfg.editor.syntax_highlighting = !cfg.editor.syntax_highlighting;
   saveConfig();
   void applySyntax();
 }
 
-/** Spell check for prose (Markdown, plain text, untitled — not code files), per the setting. */
+/**
+ * Spell check for prose (Markdown, plain text, untitled — not code files), per the setting;
+ * unavailable in code editor mode.
+ */
 function applySpellCheck(): void {
-  const prose = !isCode(doc.path);
-  const on = cfg.editor.spell_check;
+  const prose = !isCode(doc.path) && !cfg.ui.code_mode;
+  const on = cfg.editor.spell_check && !cfg.ui.code_mode;
   void api.setMenuCheck("toggle-spell-check", prose, on).catch(() => {});
   els.btnSpell.hidden = !prose;
   els.btnSpell.classList.toggle("on", on);
@@ -543,7 +582,7 @@ function applySpellCheck(): void {
 }
 
 function toggleSpellCheck(): void {
-  if (isCode(doc.path)) return;
+  if (isCode(doc.path) || cfg.ui.code_mode) return;
   cfg.editor.spell_check = !cfg.editor.spell_check;
   applySpellCheck();
   saveConfig();
@@ -996,6 +1035,7 @@ const commands: Record<string, () => unknown> = {
   "cycle-theme": cycleTheme,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
+  "toggle-code-mode": toggleCodeMode,
   "toggle-cursor-blink": toggleCursorBlink,
   "toggle-syntax": toggleSyntax,
   "toggle-spell-check": toggleSpellCheck,
@@ -1016,6 +1056,7 @@ const palette = new Palette(() => editor.focus());
 function paletteCommands(): PaletteItem[] {
   const md = isMarkdown(doc.path);
   const code = isCode(doc.path);
+  const codeMode = cfg.ui.code_mode;
   const list: (PaletteItem | false)[] = [
     { id: "new", label: "New File", shortcut: "⌘N" },
     { id: "new-tab", label: "New Tab", shortcut: "⌘T" },
@@ -1048,16 +1089,17 @@ function paletteCommands(): PaletteItem[] {
     },
     { id: "cycle-theme", label: "Cycle Theme", shortcut: "⌘⇧L" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
-    { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
+    !codeMode && { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
+    { id: "toggle-code-mode", label: codeMode ? "Exit Code Editor Mode" : "Code Editor Mode" },
     {
       id: "toggle-cursor-blink",
       label: cfg.editor.cursor === "blink" ? "Disable Cursor Blink" : "Enable Cursor Blink",
     },
-    code && {
+    (code || codeMode) && {
       id: "toggle-syntax",
       label: cfg.editor.syntax_highlighting ? "Disable Syntax Highlighting" : "Enable Syntax Highlighting",
     },
-    !code && {
+    !code && !codeMode && {
       id: "toggle-spell-check",
       label: cfg.editor.spell_check ? "Disable Spell Check" : "Enable Spell Check",
     },
@@ -1167,6 +1209,7 @@ function run(id: string): void {
 els.btnPalette.addEventListener("click", () => run("palette"));
 els.btnPin.addEventListener("click", () => run("toggle-chrome"));
 els.btnZen.addEventListener("click", () => run("toggle-zen"));
+els.btnCode.addEventListener("click", () => run("toggle-code-mode"));
 els.btnBlink.addEventListener("click", () => run("toggle-cursor-blink"));
 els.btnSidebar.addEventListener("click", () => run("toggle-tree"));
 els.btnWorkspace.addEventListener("click", () => run("open-workspace"));
@@ -1183,6 +1226,7 @@ els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 els.btnPalette.innerHTML = icons.command;
 els.btnPin.innerHTML = icons.pin;
 els.btnZen.innerHTML = icons.zen;
+els.btnCode.innerHTML = icons.lineNumbers;
 els.btnBlink.innerHTML = icons.cursor;
 els.btnSidebar.innerHTML = icons.sidebar;
 els.btnWorkspace.innerHTML = icons.folder;
@@ -1247,6 +1291,7 @@ async function init(): Promise<void> {
   applyTheme();
   if (cfg.ui.titlebar_pinned) chrome.setPinned(true);
   editor.applySettings(editorSettings());
+  applyCodeMode();
   applyZen();
   applyCursorBlink();
   updateAll();

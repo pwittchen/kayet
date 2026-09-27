@@ -331,6 +331,7 @@ body.resizing * {
 
 #btn-pin.on,
 #btn-zen.on,
+#btn-code.on,
 #btn-blink.on,
 #btn-syntax.on,
 #btn-spell.on {
@@ -511,6 +512,52 @@ button:focus-visible {
 
 #editor .cm-line {
   padding: 0;
+}
+
+/* Code editor mode: the text starts at the left edge next to the line numbers, with no
+   readable column and no extra room below; the top keeps the first line clear of the title bar. */
+#editor .cm-code-mode .cm-scroller {
+  scrollbar-gutter: stable;
+}
+
+#editor .cm-code-mode .cm-content {
+  width: auto;
+  margin: 0;
+  flex-grow: 1;
+  padding: var(--titlebar-height) 16px 8px 8px;
+}
+
+#editor .cm-gutters {
+  background: var(--bg);
+  border: none;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#editor .cm-lineNumbers .cm-gutterElement {
+  padding: 0 4px 0 16px;
+  min-width: 4ch;
+}
+
+#editor .cm-activeLine,
+#editor .cm-activeLineGutter {
+  background: var(--hover);
+}
+
+#editor .cm-activeLineGutter {
+  color: var(--text);
+}
+
+#editor .cm-matchingBracket,
+#editor .cm-focused .cm-matchingBracket {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: inherit;
+}
+
+#editor .cm-nonmatchingBracket,
+#editor .cm-focused .cm-nonmatchingBracket {
+  background: color-mix(in srgb, var(--hl-number) 25%, transparent);
+  color: inherit;
 }
 
 /* Zen mode focus: dim every line except the paragraph under the cursor. */
