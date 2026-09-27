@@ -771,7 +771,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "undo", label: "Undo", shortcut: "⌘Z" },
     { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },
     { id: "find", label: "Find…", shortcut: "⌘F" },
-    { id: "replace", label: "Replace…", shortcut: "⌘⌥F" },
+    { id: "replace", label: "Replace…", shortcut: "⌘R" },
     { id: "find-in-workspace", label: "Find in Workspace…", shortcut: "⌘⇧F" },
     {
       id: "toggle-tree",

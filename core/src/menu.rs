@@ -79,7 +79,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &PredefinedMenuItem::select_all(app, None)?,
             &sep()?,
             &item("find", "Find…", Some("CmdOrCtrl+F"))?,
-            &item("replace", "Replace…", Some("CmdOrCtrl+Alt+F"))?,
+            &item("replace", "Replace…", Some("CmdOrCtrl+R"))?,
             &item(
                 "find-in-workspace",
                 "Find in Workspace…",

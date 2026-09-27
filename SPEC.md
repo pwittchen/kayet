@@ -216,8 +216,14 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   using the same muted palette as preview code blocks. Grammars are loaded lazily per language.
 - `View → Syntax Highlighting` (or the title bar code icon) toggles highlighting for code files; the setting is global and
   persisted. The item is disabled for plain text and Markdown files.
-- Standard shortcuts: `⌘S` save, `⌘⇧S` save as, `⌘Z/⌘⇧Z` undo/redo, `⌘F` find, `⌘⌥F` replace,
+- Standard shortcuts: `⌘S` save, `⌘⇧S` save as, `⌘Z/⌘⇧Z` undo/redo, `⌘F` find, `⌘R` replace,
   `⌘+/⌘-/⌘0` zoom.
+- Find / replace (Firefox-style): `⌘F` docks a slim bar across the bottom of the editor with the
+  find field, previous / next (`⇧↩` / `↩`, `⇧⌘G` / `⌘G`), toggles for match case (`Aa`), regular
+  expression (`.*`) and whole words (`W`), the match count ("3 of 12", "No matches") and a close
+  button (`Esc`). Typing jumps to the first match from the cursor; the field turns red when nothing
+  matches. `⌘R` shows the same bar with a replace field after the options (`↩` replace, `⌘↩` / All
+  replace all); `⌘F` hides it again. A selected single-line text becomes the query.
 - Autosave: off by default; optional setting to autosave after 1s of inactivity.
 - Unsaved changes prompt on close / switching file (native dialog).
 - Crash recovery: while the document (a file or untitled) has unsaved changes, a backup is kept in
@@ -391,7 +397,7 @@ kayet/
 | Settings (config file) | `⌘,`      |
 | Command palette        | `⌘K`      |
 | Cycle theme            | `⌘⇧L`     |
-| Find / Replace         | `⌘F` / `⌘⌥F` |
+| Find / Replace         | `⌘F` / `⌘R`  |
 | Find in workspace      | `⌘⇧F`     |
 | Bold / italic (.md)    | `⌘B` / `⌘I` |
 | Zoom in / out / reset  | `⌘+` / `⌘-` / `⌘0` |

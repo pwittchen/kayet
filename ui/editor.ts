@@ -14,9 +14,10 @@ import {
 import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
 import { HighlightStyle, Language, LanguageSupport, indentOnInput, syntaxHighlighting } from "@codemirror/language";
 import { markdownLanguage } from "@codemirror/lang-markdown";
-import { SearchQuery, highlightSelectionMatches, openSearchPanel, search, searchKeymap, setSearchQuery } from "@codemirror/search";
+import { SearchQuery, highlightSelectionMatches, searchKeymap, setSearchQuery } from "@codemirror/search";
 import { tags as t } from "@lezer/highlight";
 
+import { findBar, openFind } from "./find";
 import { ImageSaver, markdownEditing } from "./markdown";
 
 export interface EditorSettings {
@@ -152,16 +153,6 @@ export class Editor {
       }
     });
     this.view.contentDOM.setAttribute("spellcheck", "true");
-    // WebKit's text checking auto-capitalizes the first letter typed into a field. The search panel
-    // is rebuilt on every open, so turn it off on its inputs as they gain focus.
-    this.view.dom.addEventListener("focusin", (e) => {
-      const target = e.target;
-      if (target instanceof HTMLInputElement && target.closest(".cm-search")) {
-        target.autocapitalize = "off";
-        target.setAttribute("autocorrect", "off");
-        target.spellcheck = false;
-      }
-    });
   }
 
   private createState(text: string, syntax: Syntax): EditorState {
@@ -172,7 +163,7 @@ export class Editor {
       drawSelection({ cursorBlinkRate: 2000 }),
       highlightSpecialChars(),
       indentOnInput(),
-      search({ top: true }),
+      findBar(),
       highlightSelectionMatches(),
       EditorState.allowMultipleSelections.of(false),
       keymap.of([...searchKeymap, ...historyKeymap, ...defaultKeymap, indentWithTab]),
@@ -307,23 +298,11 @@ export class Editor {
   }
 
   find(): void {
-    openSearchPanel(this.view);
+    openFind(this.view, false);
   }
 
   replace(): void {
-    openSearchPanel(this.view);
-    const selected = this.view.state.sliceDoc(
-      this.view.state.selection.main.from,
-      this.view.state.selection.main.to,
-    );
-    if (selected && !selected.includes("\n")) {
-      this.view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: selected })) });
-    }
-    requestAnimationFrame(() => {
-      const field = this.view.dom.querySelector<HTMLInputElement>(".cm-search input[name=replace]");
-      field?.focus();
-      field?.select();
-    });
+    openFind(this.view, true);
   }
 
   /**
