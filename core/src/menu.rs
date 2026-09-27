@@ -17,7 +17,16 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         "kayet",
         true,
         &[
-            &PredefinedMenuItem::about(app, Some("About kayet"), Some(AboutMetadata::default()))?,
+            &PredefinedMenuItem::about(
+                app,
+                Some("About kayet"),
+                Some(AboutMetadata {
+                    // Explicit so the panel shows the app icon even when running unbundled
+                    // (`tauri dev`), where macOS would fall back to a generic icon.
+                    icon: Some(tauri::include_image!("icons/128x128@2x.png")),
+                    ..AboutMetadata::default()
+                }),
+            )?,
             &sep()?,
             &item("open-settings", "Settings…", Some("CmdOrCtrl+,"))?,
             &item("install-cli", "Install ‘kayet’ Command", None)?,
