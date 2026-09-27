@@ -7,12 +7,15 @@
     "dev": "node scripts/dev.mjs",
     "build": "tsc --noEmit && vite build",
     "tauri": "tauri",
-    "bench": "node scripts/bench.mjs"
+    "bench": "node scripts/bench.mjs",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.0",
+    "happy-dom": "^20.14.5",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

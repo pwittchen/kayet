@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 
 // https://v2.tauri.app/start/frontend/vite/
@@ -16,5 +17,8 @@ export default defineConfig({
     target: "safari15",
     minify: !process.env.TAURI_ENV_DEBUG,
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
+  },
+  test: {
+    environment: "happy-dom",
   },
 });

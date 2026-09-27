@@ -36,6 +36,7 @@ npm install
 npm run tauri dev      # run with hot reload
 npm run tauri build    # build kayet.app / .dmg
 cargo test             # backend tests
+npm test               # frontend tests (Vitest + happy-dom)
 ```
 
 ### Running in dev mode

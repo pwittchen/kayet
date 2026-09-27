@@ -21,8 +21,8 @@ items here move into the spec once they are picked up.
 - [x] **Performance checks** — a small benchmark script for the targets in SPEC §13
       (cold start < 300ms, opening a 5MB file without freezing, preview render < 16ms):
       `npm run bench`.
-- [ ] **Frontend tests** — cover hover-reveal / fade timing in `chrome.ts` and keyboard
-      navigation in `tree.ts`.
+- [x] **Frontend tests** — cover hover-reveal / fade timing in `chrome.ts` and keyboard
+      navigation in `tree.ts`: `npm test`.
 
 ## Features
 
