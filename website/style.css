@@ -333,6 +333,7 @@ section { padding: 0 24px; }
 .keys div:first-child { border-top: 1px solid var(--border); }
 .keys dt { font-size: 16px; }
 .keys dd { margin: 0; display: flex; gap: 4px; }
+.keys dd .or { color: var(--text-muted); padding: 0 4px; }
 kbd {
   min-width: 26px;
   padding: 3px 7px;
