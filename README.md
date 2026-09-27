@@ -27,7 +27,8 @@ kayet .            # use the current folder as the workspace
 
 `.md` and `.txt` files can also be opened from Finder via **Open With → kayet**.
 
-See [SPEC.md](SPEC.md) for the full specification and [ROADMAP.md](ROADMAP.md) for planned work.
+See [SPEC.md](SPEC.md) for the full specification, [ARCH.md](ARCH.md) for the architecture
+and [ROADMAP.md](ROADMAP.md) for planned work.
 
 ## Development
 
@@ -67,7 +68,7 @@ CARGO_HOME=~/.cargo RUSTUP_HOME=~/.rustup HOME=$(mktemp -d) npm run tauri dev
 
 Layout: `core/` is the Rust backend (Tauri commands, config, workspace watcher,
 Markdown rendering), `ui/` is the TypeScript frontend (CodeMirror 6 editor, file tree,
-preview, hover chrome).
+preview, hover chrome). See [ARCH.md](ARCH.md) for architecture diagrams and data flows.
 
 Configuration lives in `~/.kayet/config.toml`; the default workspace is `~/.kayet/workspace/`.
 

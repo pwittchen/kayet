@@ -2,6 +2,7 @@
 
 kayet is a minimalistic macOS text editor built with Rust + Tauri 2 and a CodeMirror 6 frontend.
 `SPEC.md` is the source of truth for product behavior and design — read it before changing features.
+`ARCH.md` describes the architecture (modules, IPC, data flows) — keep it in sync when changing them.
 
 ## Layout
 
