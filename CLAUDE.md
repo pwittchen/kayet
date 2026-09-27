@@ -29,6 +29,10 @@ npx tauri build --target aarch64-apple-darwin --bundles app
 npx tauri build --no-bundle && npm run bench   # SPEC §13 performance checks (scripts/bench.mjs)
 ```
 
+Releases: pushing a `vX.Y.Z` tag (done by the user) runs `.github/workflows/release.yml`, which
+signs with the Developer ID, notarizes and publishes a `.dmg` to GitHub Releases.
+Regular CI (`rust.yml`) builds stay unsigned.
+
 The Rust crate embeds `dist/` at compile time, so always build the frontend first.
 Target platform is Apple Silicon macOS only.
 

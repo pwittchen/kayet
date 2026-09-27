@@ -5,7 +5,7 @@ items here move into the spec once they are picked up.
 
 ## Distribution
 
-- [ ] **Code signing & notarization** — tag-triggered release workflow: sign with a Developer ID,
+- [x] **Code signing & notarization** — tag-triggered release workflow: sign with a Developer ID,
       notarize via `notarytool`, publish a `.dmg` to GitHub Releases. Unsigned builds are
       blocked by Gatekeeper on other Macs.
 - [ ] Release the project website and connect download buttons with released, signed, notarized app

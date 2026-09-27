@@ -123,3 +123,24 @@ Tips for reliable numbers:
 - Close heavy apps and plug in the power adapter; the first launch after a build is
   usually slower (cold disk and web view caches), which is why the median is reported.
 - Timings are rounded to 1ms by WebKit.
+
+### Releasing
+
+Pushing a version tag triggers `.github/workflows/release.yml`:
+
+```sh
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The workflow bumps the version in `core/Cargo.toml`, `Cargo.lock`, `core/tauri.conf.json`,
+`package.json` and `package-lock.json` to match the tag (committed to `master`). It then
+builds `kayet.app` and signs it with the Developer ID (hardened runtime,
+`core/entitlements.plist`). The app is notarized with `notarytool` and stapled, packaged
+into `kayet-macos-aarch64.dmg` (which is signed, notarized and stapled too), and published
+to GitHub Releases with a changelog of the commits since the previous tag. Regular CI
+builds (`rust.yml`) stay unsigned.
+
+The workflow needs these repository secrets: `MACOS_CERTIFICATE` (base64-encoded Developer ID
+Application `.p12`), `MACOS_CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD` (any random string),
+`APPLE_SIGNING_IDENTITY` (e.g. `Developer ID Application: Name (TEAMID)`), `APPLE_ID`,
+`APPLE_PASSWORD` (an app-specific password) and `APPLE_TEAM_ID`.
