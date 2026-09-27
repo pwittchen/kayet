@@ -38,6 +38,7 @@ jobs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         targets: aarch64-apple-darwin
+        components: rustfmt, clippy
 
     - uses: Swatinem/rust-cache@v2
 
@@ -47,6 +48,12 @@ jobs:
     # The Rust crate embeds dist/ at compile time, so the frontend must be built first.
     - name: Build frontend
       run: npm run build
+
+    - name: Check formatting
+      run: cargo fmt --check
+
+    - name: Lint
+      run: cargo clippy --locked --all-targets -- -D warnings -W clippy::pedantic
 
     - name: Build
       run: cargo build --locked

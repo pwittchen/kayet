@@ -20,6 +20,8 @@ npm ci                 # install frontend deps
 npm run build          # type-check + build frontend into dist/ (required before cargo build)
 cargo build --locked
 cargo test --locked
+cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings -W clippy::pedantic
 npx tauri dev          # run the app in dev mode
 npx tauri build --target aarch64-apple-darwin --bundles app
 ```

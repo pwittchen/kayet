@@ -12,7 +12,7 @@ mod workspace;
 
 use serde::Serialize;
 use tauri::{
-    DragDropEvent, Emitter, LogicalPosition, LogicalSize, Manager, Theme, WebviewWindow,
+    DragDropEvent, Emitter, LogicalPosition, LogicalSize, Manager, Theme, WebviewWindow, Window,
     WindowEvent,
 };
 
@@ -62,34 +62,7 @@ fn main() {
             window.show()?;
             Ok(())
         })
-        .on_window_event(|window, event| {
-            let app = window.app_handle();
-            let state = app.state::<AppState>();
-            match event {
-                WindowEvent::Moved(_) | WindowEvent::Resized(_) => {
-                    if let Some(w) = app.get_webview_window(window.label()) {
-                        remember_geometry(&w, &state);
-                    }
-                }
-                WindowEvent::Destroyed => state.save_config(),
-                WindowEvent::ThemeChanged(theme) => {
-                    let name = if *theme == Theme::Dark { "dark" } else { "light" };
-                    let _ = app.emit("theme://changed", name);
-                }
-                WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) => {
-                    if let Some(file) = paths.iter().find(|p| p.is_file()) {
-                        let path = state.allow(app, file);
-                        let _ = app.emit(
-                            "file://dropped",
-                            Dropped {
-                                path: path.to_string_lossy().into_owned(),
-                            },
-                        );
-                    }
-                }
-                _ => {}
-            }
-        })
+        .on_window_event(on_window_event)
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::set_config,
@@ -136,6 +109,39 @@ fn main() {
             #[cfg(not(target_os = "macos"))]
             let _ = (app, event);
         });
+}
+
+fn on_window_event(window: &Window, event: &WindowEvent) {
+    let app = window.app_handle();
+    let state = app.state::<AppState>();
+    match event {
+        WindowEvent::Moved(_) | WindowEvent::Resized(_) => {
+            if let Some(w) = app.get_webview_window(window.label()) {
+                remember_geometry(&w, &state);
+            }
+        }
+        WindowEvent::Destroyed => state.save_config(),
+        WindowEvent::ThemeChanged(theme) => {
+            let name = if *theme == Theme::Dark {
+                "dark"
+            } else {
+                "light"
+            };
+            let _ = app.emit("theme://changed", name);
+        }
+        WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) => {
+            if let Some(file) = paths.iter().find(|p| p.is_file()) {
+                let path = state.allow(app, file);
+                let _ = app.emit(
+                    "file://dropped",
+                    Dropped {
+                        path: path.to_string_lossy().into_owned(),
+                    },
+                );
+            }
+        }
+        _ => {}
+    }
 }
 
 fn restore_geometry(window: &WebviewWindow, state: &AppState) {

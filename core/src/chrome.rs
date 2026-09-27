@@ -53,7 +53,9 @@ fn inset_traffic_lights(ns_window: &objc2_app_kit::NSWindow, x: f64, y: f64) {
     .into_iter()
     .filter_map(|kind| ns_window.standardWindowButton(kind))
     .collect();
-    let [close, miniaturize, ..] = buttons.as_slice() else { return };
+    let [close, miniaturize, ..] = buttons.as_slice() else {
+        return;
+    };
     // SAFETY: called on the main thread; the window buttons live inside the titlebar
     // container view for the lifetime of the window.
     let container = unsafe { close.superview().and_then(|v| v.superview()) };
@@ -66,10 +68,12 @@ fn inset_traffic_lights(ns_window: &objc2_app_kit::NSWindow, x: f64, y: f64) {
     container.setFrame(container_rect);
 
     let spacing = miniaturize.frame().origin.x - close_rect.origin.x;
-    for (i, button) in buttons.iter().enumerate() {
+    let mut offset = x;
+    for button in &buttons {
         let mut origin = button.frame().origin;
-        origin.x = x + i as f64 * spacing;
+        origin.x = offset;
         button.setFrameOrigin(origin);
+        offset += spacing;
     }
 }
 

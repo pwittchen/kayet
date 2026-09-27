@@ -14,7 +14,9 @@ use std::sync::{Mutex, MutexGuard};
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
-use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult};
+use tauri_plugin_dialog::{
+    DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult,
+};
 
 use crate::config::{self, Config};
 use crate::fs_ops::{self, canonical};
@@ -204,7 +206,11 @@ pub fn get_workspace(state: State<'_, AppState>) -> String {
 
 /// Changes the workspace to a folder previously picked by the user, or to the default one.
 #[tauri::command]
-pub fn set_workspace(app: AppHandle, state: State<'_, AppState>, path: String) -> CmdResult<String> {
+pub fn set_workspace(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    path: String,
+) -> CmdResult<String> {
     let p = canonical(Path::new(&path));
     let default = canonical(&workspace::default_workspace());
     if p != default && !lock(&state.allowed).contains(&p) {
@@ -262,7 +268,11 @@ pub async fn read_file(state: State<'_, AppState>, path: String) -> CmdResult<St
 }
 
 #[tauri::command]
-pub async fn write_file(state: State<'_, AppState>, path: String, contents: String) -> CmdResult<()> {
+pub async fn write_file(
+    state: State<'_, AppState>,
+    path: String,
+    contents: String,
+) -> CmdResult<()> {
     let p = state.authorize(&path)?;
     fs_ops::write_atomic(&p, &contents).map_err(err)
 }
@@ -308,7 +318,10 @@ pub async fn reveal(state: State<'_, AppState>, path: String) -> CmdResult<()> {
 #[tauri::command]
 pub async fn open_external(url: String) -> CmdResult<()> {
     let lower = url.to_ascii_lowercase();
-    if !["http://", "https://", "mailto:"].iter().any(|s| lower.starts_with(s)) {
+    if !["http://", "https://", "mailto:"]
+        .iter()
+        .any(|s| lower.starts_with(s))
+    {
         return Err(format!("refusing to open {url}"));
     }
     tauri_plugin_opener::open_url(url, None::<&str>).map_err(err)
@@ -332,7 +345,10 @@ pub fn set_syntax_menu(app: AppHandle, enabled: bool, checked: bool) {
 }
 
 #[tauri::command]
-pub async fn open_file_dialog(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Option<String>> {
+pub async fn open_file_dialog(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CmdResult<Option<String>> {
     let dir = lock(&state.workspace).clone();
     let picked = app.dialog().file().set_directory(dir).blocking_pick_file();
     Ok(picked
@@ -364,9 +380,16 @@ pub async fn save_file_dialog(
 
 /// Lets the user pick a new workspace folder and switches to it.
 #[tauri::command]
-pub async fn pick_workspace(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Option<String>> {
+pub async fn pick_workspace(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CmdResult<Option<String>> {
     let dir = lock(&state.workspace).clone();
-    let picked = app.dialog().file().set_directory(dir).blocking_pick_folder();
+    let picked = app
+        .dialog()
+        .file()
+        .set_directory(dir)
+        .blocking_pick_folder();
     let Some(path) = picked.and_then(|f| f.into_path().ok()) else {
         return Ok(None);
     };
@@ -405,7 +428,10 @@ pub async fn confirm_save(app: AppHandle, name: String) -> bool {
         .message("Your changes will be written to disk.")
         .title(format!("Do you want to save the changes made to “{name}”?"))
         .kind(MessageDialogKind::Info)
-        .buttons(MessageDialogButtons::OkCancelCustom("Save".into(), "Cancel".into()))
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Save".into(),
+            "Cancel".into(),
+        ))
         .blocking_show_with_result();
     match result {
         MessageDialogResult::Ok => true,
@@ -444,7 +470,11 @@ pub struct ContextMenuItem {
 
 /// Shows a native context menu; the chosen item arrives as a `menu` event with its id.
 #[tauri::command]
-pub fn show_context_menu(app: AppHandle, window: WebviewWindow, items: Vec<ContextMenuItem>) -> CmdResult<()> {
+pub fn show_context_menu(
+    app: AppHandle,
+    window: WebviewWindow,
+    items: Vec<ContextMenuItem>,
+) -> CmdResult<()> {
     let menu = Menu::new(&app).map_err(err)?;
     for item in items {
         match item.id {

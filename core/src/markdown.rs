@@ -171,7 +171,10 @@ mod tests {
         assert!(html.contains("data-line=\"0\""));
         assert!(html.contains("data-line=\"2\""));
         assert!(html.contains("data-line=\"4\""));
-        assert!(!html.contains("data-line=\"5\""), "nested items get no anchor");
+        assert!(
+            !html.contains("data-line=\"5\""),
+            "nested items get no anchor"
+        );
     }
 
     #[test]
@@ -198,7 +201,10 @@ mod tests {
             "![i](img/a%20b.png) [n](../other.md#top) [w](https://example.com) [f](#frag)",
             Some(base),
         );
-        assert!(html.contains("src=\"/notes/drafts/img/a%20b.png\""), "{html}");
+        assert!(
+            html.contains("src=\"/notes/drafts/img/a%20b.png\""),
+            "{html}"
+        );
         assert!(html.contains("href=\"/notes/other.md#top\""), "{html}");
         assert!(html.contains("href=\"https://example.com\""));
         assert!(html.contains("href=\"#frag\""));

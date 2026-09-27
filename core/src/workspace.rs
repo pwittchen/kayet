@@ -84,13 +84,14 @@ pub struct FsWatcher {
 impl FsWatcher {
     pub fn start(app: AppHandle, root: &Path) -> notify::Result<Self> {
         let (tx, rx) = mpsc::channel::<notify::Event>();
-        let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
-            if let Ok(event) = res
-                && !matches!(event.kind, EventKind::Access(_))
-            {
-                let _ = tx.send(event);
-            }
-        })?;
+        let mut watcher =
+            notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
+                if let Ok(event) = res
+                    && !matches!(event.kind, EventKind::Access(_))
+                {
+                    let _ = tx.send(event);
+                }
+            })?;
         watcher.watch(root, RecursiveMode::Recursive)?;
 
         // Debounce thread: exits when the watcher (and with it the sender) is dropped.
@@ -130,7 +131,10 @@ impl FsWatcher {
             let _ = self.watcher.unwatch(&old);
         }
         if let Some(dir) = wanted
-            && self.watcher.watch(&dir, RecursiveMode::NonRecursive).is_ok()
+            && self
+                .watcher
+                .watch(&dir, RecursiveMode::NonRecursive)
+                .is_ok()
         {
             self.extra = Some(dir);
         }

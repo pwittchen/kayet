@@ -8,9 +8,8 @@ const VIEW: &str = "view";
 const SYNTAX: &str = "toggle-syntax";
 
 pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
-    let item = |id: &str, label: &str, accel: Option<&str>| {
-        MenuItem::with_id(app, id, label, true, accel)
-    };
+    let item =
+        |id: &str, label: &str, accel: Option<&str>| MenuItem::with_id(app, id, label, true, accel);
     let sep = || PredefinedMenuItem::separator(app);
 
     let app_menu = Submenu::with_items(
@@ -41,7 +40,11 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         &[
             &item("new", "New", Some("CmdOrCtrl+N"))?,
             &item("open", "Open…", Some("CmdOrCtrl+O"))?,
-            &item("open-workspace", "Open Workspace…", Some("CmdOrCtrl+Shift+O"))?,
+            &item(
+                "open-workspace",
+                "Open Workspace…",
+                Some("CmdOrCtrl+Shift+O"),
+            )?,
             &item("reset-workspace", "Reset to Default Workspace", None)?,
             &sep()?,
             &item("save", "Save", Some("CmdOrCtrl+S"))?,
@@ -70,29 +73,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         ],
     )?;
 
-    let view = Submenu::with_id_and_items(
-        app,
-        VIEW,
-        "View",
-        true,
-        &[
-            &item("palette", "Command Palette…", Some("CmdOrCtrl+K"))?,
-            &sep()?,
-            &item("toggle-tree", "Toggle File Tree", Some("CmdOrCtrl+\\"))?,
-            &item("toggle-preview", "Toggle Preview", Some("CmdOrCtrl+Shift+P"))?,
-            &item("cycle-theme", "Cycle Theme", Some("CmdOrCtrl+Shift+L"))?,
-            &item("toggle-chrome", "Keep Title Bar Visible", Some("CmdOrCtrl+."))?,
-            &item("toggle-zen", "Zen Mode", Some("CmdOrCtrl+Shift+J"))?,
-            // Enabled by the frontend only while a code file is open.
-            &CheckMenuItem::with_id(app, SYNTAX, "Syntax Highlighting", false, true, None::<&str>)?,
-            &sep()?,
-            &item("zoom-in", "Zoom In", Some("CmdOrCtrl+="))?,
-            &item("zoom-out", "Zoom Out", Some("CmdOrCtrl+-"))?,
-            &item("zoom-reset", "Actual Size", Some("CmdOrCtrl+0"))?,
-            &sep()?,
-            &PredefinedMenuItem::fullscreen(app, None)?,
-        ],
-    )?;
+    let view = view_menu(app)?;
 
     let window = Submenu::with_items(
         app,
@@ -105,6 +86,52 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     )?;
 
     Menu::with_items(app, &[&app_menu, &file, &edit, &view, &window])
+}
+
+/// The View menu, which carries the Syntax Highlighting item updated by `set_syntax_item`.
+fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
+    let item =
+        |id: &str, label: &str, accel: Option<&str>| MenuItem::with_id(app, id, label, true, accel);
+    let sep = || PredefinedMenuItem::separator(app);
+
+    Submenu::with_id_and_items(
+        app,
+        VIEW,
+        "View",
+        true,
+        &[
+            &item("palette", "Command Palette…", Some("CmdOrCtrl+K"))?,
+            &sep()?,
+            &item("toggle-tree", "Toggle File Tree", Some("CmdOrCtrl+\\"))?,
+            &item(
+                "toggle-preview",
+                "Toggle Preview",
+                Some("CmdOrCtrl+Shift+P"),
+            )?,
+            &item("cycle-theme", "Cycle Theme", Some("CmdOrCtrl+Shift+L"))?,
+            &item(
+                "toggle-chrome",
+                "Keep Title Bar Visible",
+                Some("CmdOrCtrl+."),
+            )?,
+            &item("toggle-zen", "Zen Mode", Some("CmdOrCtrl+Shift+J"))?,
+            // Enabled by the frontend only while a code file is open.
+            &CheckMenuItem::with_id(
+                app,
+                SYNTAX,
+                "Syntax Highlighting",
+                false,
+                true,
+                None::<&str>,
+            )?,
+            &sep()?,
+            &item("zoom-in", "Zoom In", Some("CmdOrCtrl+="))?,
+            &item("zoom-out", "Zoom Out", Some("CmdOrCtrl+-"))?,
+            &item("zoom-reset", "Actual Size", Some("CmdOrCtrl+0"))?,
+            &sep()?,
+            &PredefinedMenuItem::fullscreen(app, None)?,
+        ],
+    )
 }
 
 /// Updates the View → Syntax Highlighting item.

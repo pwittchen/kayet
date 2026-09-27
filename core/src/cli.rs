@@ -16,7 +16,9 @@ pub fn install(script: &Path) -> Result<bool, String> {
     let link = Path::new(LINK);
     match link_script(script, link) {
         Ok(()) => Ok(true),
-        Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => install_as_admin(script, link),
+        Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+            install_as_admin(script, link)
+        }
         Err(e) => Err(format!("cannot install {LINK}: {e}")),
     }
 }
@@ -70,7 +72,7 @@ fn sh_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', r"'\''"))
 }
 
-/// Quotes `s` as an AppleScript string literal.
+/// Quotes `s` as an `AppleScript` string literal.
 fn applescript_string(s: &str) -> String {
     format!("\"{}\"", s.replace('\\', r"\\").replace('"', "\\\""))
 }
@@ -81,12 +83,18 @@ mod tests {
 
     #[test]
     fn shell_quoting() {
-        assert_eq!(sh_quote("/Applications/kayet.app"), "'/Applications/kayet.app'");
+        assert_eq!(
+            sh_quote("/Applications/kayet.app"),
+            "'/Applications/kayet.app'"
+        );
         assert_eq!(sh_quote("it's here"), r"'it'\''s here'");
     }
 
     #[test]
     fn applescript_quoting() {
-        assert_eq!(applescript_string(r#"ln -sf 'a"b\c'"#), r#""ln -sf 'a\"b\\c'""#);
+        assert_eq!(
+            applescript_string(r#"ln -sf 'a"b\c'"#),
+            r#""ln -sf 'a\"b\\c'""#
+        );
     }
 }
