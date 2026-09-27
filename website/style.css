@@ -421,6 +421,7 @@ kbd {
 }
 .config-notes p { margin: 0; font-size: 15px; color: var(--text-muted); }
 .config-notes strong { display: block; margin-bottom: 4px; color: var(--text); font-weight: 600; }
+.config-lead code, .config-notes code { font: 0.9em var(--font-mono); color: var(--text); }
 
 /* ---- download ---- */
 .download {

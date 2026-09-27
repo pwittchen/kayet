@@ -27,6 +27,7 @@
       <a href="#features" aria-label="Features"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 1.75c.45 3.1 1.4 4.05 4.5 4.5-3.1.45-4.05 1.4-4.5 4.5-.45-3.1-1.4-4.05-4.5-4.5 3.1-.45 4.05-1.4 4.5-4.5z"/><path d="M12.25 10.25v4M10.25 12.25h4"/></svg><span>Features</span></a>
       <a href="#shortcuts" aria-label="Shortcuts"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6V4.25A1.75 1.75 0 1 0 4.25 6H6zm0 0h4M6 6v4m4-4V4.25A1.75 1.75 0 1 1 11.75 6H10zm0 0v4m0 0h1.75A1.75 1.75 0 1 1 10 11.75V10zm0 0H6m0 0v1.75A1.75 1.75 0 1 1 4.25 10H6z"/></svg><span>Shortcuts</span></a>
       <a href="#config" aria-label="Config"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h7M12 4.5h2M2 11.5h2M7 11.5h7"/><circle cx="10.5" cy="4.5" r="1.5"/><circle cx="5.5" cy="11.5" r="1.5"/></svg><span>Config</span></a>
+      <a href="#cli" aria-label="CLI"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.75 4.25 6.5 8l-3.75 3.75M8.5 11.75h4.75"/></svg><span>CLI</span></a>
       <a href="#contact" aria-label="Contact"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.75" y="3.25" width="12.5" height="9.5" rx="1.5"/><path d="M2.25 4.25 8 8.75l5.75-4.5"/></svg><span>Contact</span></a>
       <a href="https://github.com/pwittchen/kayet" aria-label="GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
       <button class="theme-toggle" type="button" aria-label="Theme: System" title="Theme: System">
@@ -178,6 +179,25 @@ y = <span class="t-num">0</span></code></pre>
         <p><strong>Created on first launch.</strong> Missing keys are filled in with their defaults and written back, so the file always lists every option.</p>
         <p><strong>Remembers your layout.</strong> Theme, file tree, zen mode, split sizes, window position and the last open file are saved as you use the app.</p>
         <p><strong>Edit it in kayet.</strong> Open it with <kbd>⌘</kbd><kbd>,</kbd> or the sliders icon — changes apply as soon as you save. A file that fails to parse is left untouched and defaults are used.</p>
+      </div>
+    </section>
+
+    <section id="cli" class="config">
+      <h2 class="reveal">Open from the terminal.</h2>
+      <p class="config-lead reveal">The <code>kayet</code> command opens a file or a whole folder straight from your shell.</p>
+      <div class="window config-window reveal">
+        <div class="config-bar">
+          <span class="lights"><i></i><i></i><i></i></span>
+          <span class="window-title">Terminal</span>
+        </div>
+        <pre class="config-code"><code><span class="t-com">$</span> kayet notes.md          <span class="t-com"># open a file, created empty if missing</span>
+<span class="t-com">$</span> kayet ~/Documents/blog  <span class="t-com"># make a folder the workspace</span>
+<span class="t-com">$</span> kayet                   <span class="t-com"># bring kayet to the front</span></code></pre>
+      </div>
+      <div class="config-notes reveal">
+        <p><strong>One-click install.</strong> Choose <em>kayet → Install ‘kayet’ Command</em> from the menu or the command palette. It links the launcher into <code>/usr/local/bin</code>, asking for your password if needed.</p>
+        <p><strong>Reuses the open window.</strong> Files open in the running instance, or kayet launches if it isn’t running yet.</p>
+        <p><strong>Nothing lost.</strong> If the current document has unsaved changes, kayet asks before replacing it.</p>
       </div>
     </section>
 
