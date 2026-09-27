@@ -115,6 +115,7 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 Some("CmdOrCtrl+."),
             )?,
             &item("toggle-zen", "Zen Mode", Some("CmdOrCtrl+Shift+J"))?,
+            &item("toggle-cursor-blink", "Toggle Cursor Blink", None)?,
             // Enabled by the frontend only while a code file is open.
             &CheckMenuItem::with_id(
                 app,

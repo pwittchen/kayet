@@ -139,6 +139,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | × (close) | Close the open file — **only shown when a file is open** | — |
   | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
+  | Cursor (I-beam) | Toggle text cursor blinking (on by default); when off the cursor stays still | — |
   | Folder | Change workspace | `⌘⇧O` |
   | Code | Toggle syntax highlighting — **only shown for code and data/config files** | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
@@ -259,6 +260,7 @@ soft_wrap = true
 max_line_width = 72
 autosave = false
 syntax_highlighting = true  # code and data/config files
+cursor = "blink"            # "blink" | "steady" (no blinking)
 
 [window]
 width = 1000

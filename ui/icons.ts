@@ -38,6 +38,7 @@ export const icons = {
   zen: svg(
     `<path d="M12.9 5.2A5.75 5.75 0 1 0 13.75 8.3"/><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none"/>`,
   ),
+  cursor: svg(`<path d="M5.75 2.25c1.25 0 2.25.5 2.25 1.5 0-1 1-1.5 2.25-1.5M5.75 13.75c1.25 0 2.25-.5 2.25-1.5 0 1 1 1.5 2.25 1.5M8 3.75v8.5M6.25 8h3.5"/>`),
   close: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"/></svg>`,
   chevron: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 2.25 6.5 5 3.75 7.75"/></svg>`,
 };

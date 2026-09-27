@@ -22,6 +22,7 @@ export interface Config {
     max_line_width: number;
     autosave: boolean;
     syntax_highlighting: boolean;
+    cursor: "blink" | "steady";
   };
   window: { width: number; height: number; x: number; y: number };
   session: { last_file?: string | null };

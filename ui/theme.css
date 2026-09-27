@@ -227,6 +227,7 @@ body.resizing * {
 
 #btn-pin.on,
 #btn-zen.on,
+#btn-blink.on,
 #btn-syntax.on {
   background: var(--pill);
 }
@@ -439,6 +440,12 @@ button:focus-visible {
   0%, 35% { opacity: 1; }
   55%, 85% { opacity: 0; }
   100% { opacity: 1; }
+}
+
+/* Cursor blink turned off: the caret stays still. */
+#app.steady-cursor #editor .cm-cursorLayer {
+  animation: none !important;
+  opacity: 1;
 }
 
 #editor .cm-cursor {

@@ -36,6 +36,7 @@ const els = {
   btnPalette: $<HTMLButtonElement>("btn-palette"),
   btnPin: $<HTMLButtonElement>("btn-pin"),
   btnZen: $<HTMLButtonElement>("btn-zen"),
+  btnBlink: $<HTMLButtonElement>("btn-blink"),
   btnSidebar: $<HTMLButtonElement>("btn-sidebar"),
   btnWorkspace: $<HTMLButtonElement>("btn-workspace"),
   btnSettings: $<HTMLButtonElement>("btn-settings"),
@@ -165,6 +166,7 @@ async function reloadConfig(): Promise<void> {
   if (pinnedChanged) chrome.setPinned(cfg.ui.titlebar_pinned);
   editor.applySettings(editorSettings());
   applyZen();
+  applyCursorBlink();
   updateLayout();
   await applySyntax();
   if (hiddenChanged) await tree.refresh();
@@ -276,6 +278,21 @@ function applyZen(): void {
 function toggleZen(): void {
   cfg.ui.zen_mode = !cfg.ui.zen_mode;
   applyZen();
+  saveConfig();
+  editor.focus();
+}
+
+function applyCursorBlink(): void {
+  const on = cfg.editor.cursor === "blink";
+  els.app.classList.toggle("steady-cursor", !on);
+  els.btnBlink.classList.toggle("on", on);
+  els.btnBlink.setAttribute("aria-pressed", String(on));
+  els.btnBlink.title = on ? "Cursor blink: on" : "Cursor blink: off";
+}
+
+function toggleCursorBlink(): void {
+  cfg.editor.cursor = cfg.editor.cursor === "blink" ? "steady" : "blink";
+  applyCursorBlink();
   saveConfig();
   editor.focus();
 }
@@ -669,6 +686,7 @@ const commands: Record<string, () => unknown> = {
   "cycle-theme": cycleTheme,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
+  "toggle-cursor-blink": toggleCursorBlink,
   "toggle-syntax": toggleSyntax,
   "zoom-in": () => zoom(1),
   "zoom-out": () => zoom(-1),
@@ -712,6 +730,10 @@ function paletteCommands(): PaletteCommand[] {
     { id: "cycle-theme", label: "Cycle Theme", shortcut: "⌘⇧L" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
     { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
+    {
+      id: "toggle-cursor-blink",
+      label: cfg.editor.cursor === "blink" ? "Disable Cursor Blink" : "Enable Cursor Blink",
+    },
     code && {
       id: "toggle-syntax",
       label: cfg.editor.syntax_highlighting ? "Disable Syntax Highlighting" : "Enable Syntax Highlighting",
@@ -747,6 +769,7 @@ function run(id: string): void {
 els.btnPalette.addEventListener("click", () => run("palette"));
 els.btnPin.addEventListener("click", () => run("toggle-chrome"));
 els.btnZen.addEventListener("click", () => run("toggle-zen"));
+els.btnBlink.addEventListener("click", () => run("toggle-cursor-blink"));
 els.btnSidebar.addEventListener("click", () => run("toggle-tree"));
 els.btnWorkspace.addEventListener("click", () => run("open-workspace"));
 els.btnSettings.addEventListener("click", () => run("open-settings"));
@@ -760,6 +783,7 @@ els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 els.btnPalette.innerHTML = icons.command;
 els.btnPin.innerHTML = icons.pin;
 els.btnZen.innerHTML = icons.zen;
+els.btnBlink.innerHTML = icons.cursor;
 els.btnSidebar.innerHTML = icons.sidebar;
 els.btnWorkspace.innerHTML = icons.folder;
 els.btnSettings.innerHTML = icons.settings;
@@ -800,6 +824,7 @@ async function init(): Promise<void> {
   if (cfg.ui.titlebar_pinned) chrome.setPinned(true);
   editor.applySettings(editorSettings());
   applyZen();
+  applyCursorBlink();
   updateAll();
 
   await Promise.all([

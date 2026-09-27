@@ -77,6 +77,15 @@ pub enum FontFamily {
     Mono,
 }
 
+/// Text cursor: blinking, or steady (always visible, no animation).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Cursor {
+    #[default]
+    Blink,
+    Steady,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct EditorConfig {
@@ -88,6 +97,7 @@ pub struct EditorConfig {
     pub autosave: bool,
     /// Syntax highlighting for source code and data/config files (Markdown is always highlighted).
     pub syntax_highlighting: bool,
+    pub cursor: Cursor,
 }
 
 impl Default for EditorConfig {
@@ -100,6 +110,7 @@ impl Default for EditorConfig {
             max_line_width: 72,
             autosave: false,
             syntax_highlighting: true,
+            cursor: Cursor::Blink,
         }
     }
 }
