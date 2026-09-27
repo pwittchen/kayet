@@ -80,6 +80,7 @@ real release build:
 |---|---|---|
 | Cold start | process launch → first paint of the UI (median of all runs) | < 350ms |
 | Opening a 5MB file | longest frame while a 5MB text file loads (worst run) | < 100ms (no UI freeze) |
+| Typing in it | longest frame while typing in it with the title bar shown, and for 3s after (worst run) | < 100ms (no UI freeze) |
 | Preview render | re-rendering the preview of a ~50KB Markdown document (median) | < 16ms |
 
 Build the release binary first (the benchmark needs the embedded frontend, so a plain
@@ -94,6 +95,7 @@ Options (pass them after `--`):
 
 ```sh
 npm run bench -- --runs 10              # number of app launches (default 5)
+npm run bench -- --large 50             # size of the large file in MB (default 5)
 npm run bench -- --build                # build the release binary first
 npm run bench -- --app path/to/kayet    # benchmark another binary, e.g. from a .app bundle
 ```

@@ -4,11 +4,14 @@
 // itself (ui/bench.ts) and prints one JSON report line before quitting:
 //   - cold start: process spawn → first paint of the UI              (< 350ms)
 //   - opening a 5MB text file: the longest frame while it loads     (no UI freeze)
+//   - typing in it (title bar shown): the longest frame, including the work each edit
+//     schedules (word count, crash recovery backup)                (no UI freeze)
 //   - preview render of a typical ~50KB Markdown document            (< 16ms)
 //
 // Each launch uses a throwaway HOME, so ~/.kayet (config, session, recovery) is untouched.
 //
-// Usage: node scripts/bench.mjs [--runs N] [--app path/to/kayet] [--build]
+// Usage: node scripts/bench.mjs [--runs N] [--large MB] [--app path/to/kayet] [--build]
+//   --large  size of the large file in MB (default 5, the SPEC §13 target)
 //   --build  runs `npx tauri build --no-bundle` first (the binary embeds dist/)
 // Exits non-zero if a target is missed.
 import { execFileSync, spawn } from "node:child_process";
@@ -26,18 +29,20 @@ const TARGETS = {
   freezeMs: 100,
   previewMs: 16,
 };
-const LARGE_BYTES = 5 * 1024 * 1024;
 const TYPICAL_BYTES = 48 * 1024;
 const RUN_TIMEOUT_MS = 60_000;
 
 const { values: opts } = parseArgs({
   options: {
     runs: { type: "string", default: "5" },
+    large: { type: "string", default: "5" },
     app: { type: "string", default: join(root, "target/release/kayet") },
     build: { type: "boolean", default: false },
   },
 });
 const runs = Math.max(1, Number.parseInt(opts.runs, 10) || 1);
+const largeMb = Math.max(1, Number.parseFloat(opts.large) || 5);
+const LARGE_BYTES = largeMb * 1024 * 1024;
 
 if (opts.build) {
   execFileSync("npx", ["tauri", "build", "--no-bundle"], { cwd: root, stdio: "inherit" });
@@ -177,6 +182,7 @@ const coldStart = results.map((r) => r.firstPaint - r.spawned);
 const webviewStart = results.map((r) => r.timeOrigin - r.spawned);
 const openMs = results.map((r) => r.largeFile.openMs);
 const longestFrame = results.map((r) => r.largeFile.longestFrameMs);
+const typingFrame = results.map((r) => r.typing.longestFrameMs);
 const renders = results.flatMap((r) => r.preview.renderMs);
 const markdown = results.flatMap((r) => r.preview.markdownMs);
 const previewKb = results[0].preview.bytes / 1024;
@@ -189,10 +195,16 @@ const checks = [
     detail: `median of ${results.length}; first ${ms(coldStart[0])}, max ${ms(Math.max(...coldStart))}; webview up after ${ms(median(webviewStart))}`,
   },
   {
-    name: "Open 5MB file: longest frame",
+    name: `Open ${largeMb}MB file: longest frame`,
     value: Math.max(...longestFrame),
     target: TARGETS.freezeMs,
     detail: `worst of ${results.length}; open → painted median ${ms(median(openMs))}`,
+  },
+  {
+    name: `Type in ${largeMb}MB file: longest frame`,
+    value: Math.max(...typingFrame),
+    target: TARGETS.freezeMs,
+    detail: `worst of ${results.length}; median ${ms(median(typingFrame))}`,
   },
   {
     name: `Preview render (${previewKb.toFixed(0)}KB)`,

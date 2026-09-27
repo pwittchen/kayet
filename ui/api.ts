@@ -75,6 +75,9 @@ export interface MenuItemSpec {
   label?: string;
 }
 
+/** Keeps a byte order mark, so saving writes it back. */
+const utf8 = new TextDecoder("utf-8", { ignoreBOM: true });
+
 export const api = {
   getConfig: () => invoke<Config>("get_config"),
   setConfig: (cfg: Config) => invoke<void>("set_config", { cfg }),
@@ -98,9 +101,12 @@ export const api = {
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
   listFiles: () => invoke<string[]>("list_files"),
   searchWorkspace: (query: string) => invoke<SearchMatch[]>("search_workspace", { query }),
-  readFile: (path: string) => invoke<string>("read_file", { path }),
+  /** File text travels as raw UTF-8 bytes: encoding and parsing large files as JSON strings takes long. */
+  readFile: async (path: string) => utf8.decode(await invoke<ArrayBuffer>("read_file", { path })),
   writeFile: (path: string, contents: string) =>
-    invoke<void>("write_file", { path, contents }),
+    invoke<void>("write_file", new TextEncoder().encode(contents), {
+      headers: { "kayet-path": encodeURIComponent(path) },
+    }),
   /** Saves image bytes next to `document`; returns the new file's name. */
   saveImage: (document: string, extension: string, bytes: Uint8Array) =>
     invoke<string>("save_image", bytes, {
@@ -110,7 +116,21 @@ export const api = {
       },
     }),
   /** Backs up the buffers with unsaved changes (one per tab). */
-  writeRecovery: (backups: Backup[]) => invoke<void>("write_recovery", { backups }),
+  writeRecovery: (backups: Backup[]) => {
+    // The texts go one after another as raw bytes (see `readFile`), their paths and lengths in a header.
+    const encoder = new TextEncoder();
+    const texts = backups.map((b) => encoder.encode(b.text));
+    const body = new Uint8Array(texts.reduce((n, t) => n + t.length, 0));
+    let at = 0;
+    for (const t of texts) {
+      body.set(t, at);
+      at += t.length;
+    }
+    const parts = backups.map((b, i) => ({ path: b.path, bytes: texts[i].length }));
+    return invoke<void>("write_recovery", body, {
+      headers: { "kayet-backups": encodeURIComponent(JSON.stringify(parts)) },
+    });
+  },
   clearRecovery: () => invoke<void>("clear_recovery"),
   loadRecovery: () => invoke<Backup[]>("load_recovery"),
   createFile: (path: string) => invoke<string>("create_file", { path }),

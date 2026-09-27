@@ -104,6 +104,15 @@ let exportEnabled: boolean | null = null;
 let autosaveTimer: number | undefined;
 let statsTimer: number | undefined;
 
+/**
+ * Documents longer than this (UTF-16 code units, ~10MB of text) are edited in large file mode:
+ * no preview, highlighting, Markdown editing helpers or word count, and backed up once typing
+ * pauses. Each of those goes over the whole text, which takes long enough to be felt.
+ */
+const LARGE_DOC = 10 * 1024 * 1024;
+/** Whether the shown document is large (see `LARGE_DOC`). */
+let largeDoc = false;
+
 /** The tab's text; a tab not shown yet has none. */
 const textOf = (tab: Tab) => (tab === doc ? editor.doc : (tab.editor?.state.doc ?? Text.empty));
 const isTabDirty = (tab: Tab) => !tab.saved || !textOf(tab).eq(tab.saved);
@@ -117,6 +126,7 @@ const isBlank = (tab: Tab) => !tab.path && !tab.savedOnce && textOf(tab).length 
 
 const editor = new Editor(els.editor, defaultEditorSettings(), {
   onChange: () => {
+    if (checkLarge()) applyLarge();
     updateTitle();
     if (previewVisible()) preview.update(() => editor.text(), doc.path);
     scheduleAutosave();
@@ -272,7 +282,7 @@ systemDark.addEventListener("change", (e) => {
 
 // ---- layout ----
 
-const previewVisible = () => previewOpen && isMarkdown(doc.path);
+const previewVisible = () => previewOpen && isMarkdown(doc.path) && !largeDoc;
 
 function updateLayout(): void {
   const ui = cfg.ui;
@@ -289,7 +299,7 @@ function updateLayout(): void {
     exportEnabled = md;
     void api.setExportEnabled(md).catch(() => {});
   }
-  els.btnPreview.hidden = !md;
+  els.btnPreview.hidden = !md || largeDoc;
   els.btnPreview.classList.toggle("on", previewVisible());
   els.previewPane.hidden = !previewVisible();
   els.previewDivider.hidden = !previewVisible();
@@ -368,13 +378,13 @@ function renderTabs(): void {
 }
 
 /**
- * Title bar word count and reading time, for prose (not code files, not in code editor mode);
- * counted only while the title bar shows.
+ * Title bar word count and reading time, for prose (not code files, not in code editor mode,
+ * not large files); counted only while the title bar shows.
  */
 function updateStats(): void {
   window.clearTimeout(statsTimer);
   statsTimer = undefined;
-  const stats = isCode(doc.path) || cfg?.ui.code_mode ? "" : formatStats(countWords(editor.text()));
+  const stats = isCode(doc.path) || cfg?.ui.code_mode || largeDoc ? "" : formatStats(countWords(editor.text()));
   els.docStats.textContent = stats;
   els.docStats.hidden = !stats;
 }
@@ -483,6 +493,7 @@ async function toggleTree(): Promise<void> {
 
 async function togglePreview(): Promise<void> {
   if (!isMarkdown(doc.path)) return;
+  if (largeDoc) return notify("Preview is off for large files");
   previewOpen = !previewOpen;
   updateLayout();
   if (previewVisible()) {
@@ -542,25 +553,26 @@ let syntaxSeq = 0;
 
 /**
  * Highlights the open document: Markdown always, code files per the syntax highlighting
- * setting. Code grammars load lazily, so they are applied once ready. The toggle is offered
- * for code files, and for every file in code editor mode.
+ * setting, large files never. Code grammars load lazily, so they are applied once ready. The
+ * toggle is offered for code files, and for every file in code editor mode.
  */
 async function applySyntax(): Promise<void> {
   const seq = ++syntaxSeq;
   const code = isCode(doc.path);
-  const available = code || cfg.ui.code_mode;
+  const available = (code || cfg.ui.code_mode) && !largeDoc;
   const on = cfg.editor.syntax_highlighting;
   void api.setMenuCheck("toggle-syntax", available, on).catch(() => {});
   els.btnSyntax.hidden = !available;
   els.btnSyntax.classList.toggle("on", on);
   els.btnSyntax.setAttribute("aria-pressed", String(on));
+  if (largeDoc) return editor.setSyntax(null);
   if (isMarkdown(doc.path)) return editor.setSyntax("markdown");
   const lang = code && on ? await codeLanguage(doc.path) : null;
   if (seq === syntaxSeq) editor.setSyntax(lang);
 }
 
 function toggleSyntax(): void {
-  if (!isCode(doc.path) && !cfg.ui.code_mode) return;
+  if ((!isCode(doc.path) && !cfg.ui.code_mode) || largeDoc) return;
   cfg.editor.syntax_highlighting = !cfg.editor.syntax_highlighting;
   saveConfig();
   void applySyntax();
@@ -589,13 +601,34 @@ function toggleSpellCheck(): void {
   editor.focus();
 }
 
+/** Updates `largeDoc` for the shown document; returns true if it changed. */
+function checkLarge(): boolean {
+  const large = editor.doc.length > LARGE_DOC;
+  if (large === largeDoc) return false;
+  largeDoc = large;
+  return true;
+}
+
+/** Switches the shown document into or out of large file mode after an edit. */
+function applyLarge(): void {
+  void applySyntax().catch(showError);
+  updateLayout();
+  if (largeDoc) notifyLarge();
+}
+
+function notifyLarge(): void {
+  notify("Large file: preview, highlighting and word count are off");
+}
+
 /** Shows `text` as the current document; `recent` records the file for File → Open Recent. */
 function loadDoc(path: string | null, text: string, recent = true): void {
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
   applySpellCheck();
-  editor.load(text, isMarkdown(path) ? "markdown" : null);
+  editor.load(text, isMarkdown(path) && text.length <= LARGE_DOC ? "markdown" : null);
+  checkLarge();
+  if (largeDoc) notifyLarge();
   void applySyntax().catch(showError);
   doc.saved = editor.doc;
   hideBanner();
@@ -635,6 +668,7 @@ async function activate(tab: Tab): Promise<void> {
   if (tab.editor) editor.restore(tab.editor);
   else editor.load("", null);
   tab.editor = null;
+  checkLarge();
   els.banner.hidden = tab.pendingDisk === null;
   applySpellCheck();
   void applySyntax().catch(showError);
@@ -813,9 +847,32 @@ function queueBackup(op: () => Promise<void>): Promise<void> {
   return backupQueue;
 }
 
-/** Backs up the buffer within a second of an edit, also while typing continuously. */
+/** When the first edit not backed up yet was made. */
+let backupPendingSince = 0;
+/** A large backup waits for this long a pause in typing, but at most `LARGE_BACKUP_MAX_WAIT_MS`. */
+const LARGE_BACKUP_IDLE_MS = 2000;
+const LARGE_BACKUP_MAX_WAIT_MS = 30_000;
+
+/**
+ * Backs up the buffer within a second of an edit, also while typing continuously. Large ones
+ * take long enough to back up to be felt, so they wait for typing to pause (but not forever).
+ */
 function scheduleBackup(): void {
-  if (backupTimer === undefined) backupTimer = window.setTimeout(syncBackup, 1000);
+  const pending = backupTimer !== undefined;
+  const large = largeBackup();
+  if (pending && !large) return;
+  const now = Date.now();
+  if (!pending) backupPendingSince = now;
+  window.clearTimeout(backupTimer);
+  const delay = large ? Math.min(LARGE_BACKUP_IDLE_MS, backupPendingSince + LARGE_BACKUP_MAX_WAIT_MS - now) : 1000;
+  backupTimer = window.setTimeout(syncBackup, Math.max(0, delay));
+}
+
+/** Whether the tabs with unsaved changes together make a large backup (see `LARGE_DOC`). */
+function largeBackup(): boolean {
+  let length = 0;
+  for (const tab of tabs) if (isTabDirty(tab)) length += textOf(tab).length;
+  return length > LARGE_DOC;
 }
 
 /** Backs up the tabs with unsaved changes and removes the backup once there are none. */
@@ -1082,7 +1139,7 @@ function paletteCommands(): PaletteItem[] {
       label: cfg.ui.sidebar_visible ? "Hide File Tree" : "Show File Tree",
       shortcut: "⌘\\",
     },
-    md && {
+    md && !largeDoc && {
       id: "toggle-preview",
       label: previewVisible() ? "Hide Preview" : "Show Preview",
       shortcut: "⌘⇧P",
@@ -1095,7 +1152,7 @@ function paletteCommands(): PaletteItem[] {
       id: "toggle-cursor-blink",
       label: cfg.editor.cursor === "blink" ? "Disable Cursor Blink" : "Enable Cursor Blink",
     },
-    (code || codeMode) && {
+    (code || codeMode) && !largeDoc && {
       id: "toggle-syntax",
       label: cfg.editor.syntax_highlighting ? "Disable Syntax Highlighting" : "Enable Syntax Highlighting",
     },
@@ -1350,6 +1407,8 @@ init()
         if (!previewVisible()) await togglePreview();
       },
       renderPreview: (text, path) => preview.render(text, path),
+      showChrome: () => chrome.setPinned(true),
+      type: (text) => editor.view.dispatch(editor.view.state.replaceSelection(text), { userEvent: "input.type" }),
     });
   })
   .catch((e) => {

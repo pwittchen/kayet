@@ -11,12 +11,21 @@ export interface BenchHooks {
   docLength: () => number;
   showPreview: () => Promise<void>;
   renderPreview: (text: string, path: string) => Promise<void>;
+  /** Keeps the title bar shown (so the word count is kept up to date, as while a user looks at it). */
+  showChrome: () => void;
+  /** Types `text` at the cursor, as the keyboard would. */
+  type: (text: string) => void;
 }
 
 const PREVIEW_WARMUP = 5;
 const PREVIEW_RUNS = 50;
 /** How long frames are still watched after the large file is on screen. */
 const SETTLE_MS = 1000;
+/** Typing in the large file: keystrokes, and the time between them. */
+const KEYSTROKES = 30;
+const KEYSTROKE_MS = 100;
+/** How long frames are still watched after typing, for work scheduled after an edit (backup, autosave). */
+const EDIT_SETTLE_MS = 3000;
 
 /** Resolves once the current frame has been painted (as a macrotask right after it). */
 export function afterPaint(): Promise<number> {
@@ -101,12 +110,29 @@ async function preview(dir: string, hooks: BenchHooks) {
   return { bytes: new TextEncoder().encode(text).length, renderMs: total, markdownMs: markdown };
 }
 
+/** Types into the large file (with the title bar shown); the longest frame covers the work each edit schedules. */
+async function largeFileTyping(dir: string, hooks: BenchHooks) {
+  await hooks.openFile(join(dir, "large.txt"));
+  hooks.showChrome();
+  await sleep(SETTLE_MS);
+  const watch = new FrameWatch();
+  watch.start();
+  for (let i = 0; i < KEYSTROKES; i++) {
+    hooks.type(i % 6 === 5 ? " " : "x");
+    await sleep(KEYSTROKE_MS);
+  }
+  await sleep(EDIT_SETTLE_MS);
+  return { longestFrameMs: watch.stop() };
+}
+
 export async function runBench(dir: string, hooks: BenchHooks): Promise<void> {
   const report: Record<string, unknown> = { timeOrigin: performance.timeOrigin };
   try {
     report.firstPaint = await framesOrFail(hooks.firstPaint);
     report.largeFile = await largeFile(dir, hooks);
     report.preview = await preview(dir, hooks);
+    // Last: leaves unsaved changes behind.
+    report.typing = await largeFileTyping(dir, hooks);
   } catch (e) {
     report.error = String(e);
   }

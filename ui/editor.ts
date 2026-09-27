@@ -89,15 +89,26 @@ const typewriter = EditorState.transactionExtender.of((tr) => {
 
 const focusLine = Decoration.line({ class: "cm-focus-paragraph" });
 
-/** Line range of the paragraph (run of non-blank lines) around `pos`; a blank line stands alone. */
+/**
+ * Lines looked at around the cursor for the ends of its paragraph, so a file without blank
+ * lines (a large log, say) is not walked through on every cursor move.
+ */
+const MAX_PARAGRAPH_LINES = 1000;
+
+/**
+ * Line range of the paragraph (run of non-blank lines) around `pos`, cut off
+ * `MAX_PARAGRAPH_LINES` away; a blank line stands alone.
+ */
 function paragraphAt(doc: Text, pos: number): { first: number; last: number } {
   const line = doc.lineAt(pos).number;
   const blank = (n: number) => doc.line(n).text.trim() === "";
   if (blank(line)) return { first: line, last: line };
+  const top = Math.max(1, line - MAX_PARAGRAPH_LINES);
+  const bottom = Math.min(doc.lines, line + MAX_PARAGRAPH_LINES);
   let first = line;
   let last = line;
-  while (first > 1 && !blank(first - 1)) first--;
-  while (last < doc.lines && !blank(last + 1)) last++;
+  while (first > top && !blank(first - 1)) first--;
+  while (last < bottom && !blank(last + 1)) last++;
   return { first, last };
 }
 

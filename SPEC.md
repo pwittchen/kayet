@@ -295,11 +295,17 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Autosave: off by default; optional setting to autosave after 1s of inactivity.
 - Unsaved changes prompt on close / switching file (native dialog).
 - Crash recovery: while any document (a file or untitled, in any tab) has unsaved changes, a backup
-  of those documents is kept in `~/.kayet/recovery/` (written at most ~1s after an edit). It is
+  of those documents is kept in `~/.kayet/recovery/` (written at most ~1s after an edit; when
+  they add up to over ~10MB, once typing pauses for 2s, but at most 30s after an edit). It is
   removed once all changes are saved or discarded and when the window closes normally, so a backup
   found at launch means kayet did not exit cleanly: a native dialog offers to **Restore** the changes
   (each reopens in a tab as unsaved edits to its file, or as an untitled document, in place of the
   start documents) or **Discard** them.
+- Large files (over ~10MB of text) open in **large file mode**: no Markdown preview (its icon and
+  palette command are hidden), no syntax highlighting (the toggle is disabled), no smart Markdown
+  editing and no word count, since each of those goes over the whole text on every edit. Opening
+  one shows a toast: "Large file: preview, highlighting and word count are off". The mode follows
+  the document's length, so it also turns on / off when an edit crosses the limit.
 - External file change detection: if the file changed on disk and the buffer is clean,
   reload silently; if dirty, show a small inline banner: "File changed on disk — Reload / Keep mine".
   A document in a tab that is not shown is checked when its tab is shown.
@@ -454,10 +460,10 @@ kayet/
 | `list_dir(path) -> Vec<Entry>` | List directory entries (lazy tree loading)    |
 | `list_files() -> Vec<String>`  | Every workspace file, for the file finder     |
 | `search_workspace(query) -> Vec<Match>` | Lines containing the query, for workspace search |
-| `read_file(path) -> String`    | Read file contents                            |
-| `write_file(path, contents)`   | Atomic write (temp file + rename)             |
+| `read_file(path) -> bytes`     | Read file contents (UTF-8, as raw bytes)      |
+| `write_file(path, bytes)`      | Atomic write (temp file + rename); the text as raw bytes |
 | `save_image(document, bytes)`  | Save a pasted image next to the document      |
-| `write_recovery(backups) / clear_recovery` | Keep / remove the crash recovery backup of the unsaved tabs |
+| `write_recovery(backups, bytes) / clear_recovery` | Keep / remove the crash recovery backup of the unsaved tabs |
 | `load_recovery() -> Vec<Backup>` | Buffers backed up before an unclean exit (empty if none) |
 | `create_file / create_dir`     | Create entries                                |
 | `rename(from, to)`             | Rename / move                                 |
@@ -514,6 +520,7 @@ kayet/
 - Cold start < 300ms to first paint on Apple Silicon.
 - Idle memory < 80MB.
 - Opening a 5MB text file without UI freeze.
+- Typing in it (title bar shown) without UI freeze, including the work each edit schedules.
 - Preview render for a typical document (< 50KB) < 16ms.
 
 ## 14. Acceptance Criteria (v1)

@@ -366,25 +366,31 @@ pub async fn search_workspace(state: State<'_, AppState>, query: String) -> CmdR
     .map_err(err)
 }
 
-/// Reads a file and starts watching it for external changes.
+/// Reads a (UTF-8) file and starts watching it for external changes. The text is returned
+/// as raw bytes rather than a JSON string, which large files would take long to encode and parse.
 #[tauri::command]
-pub async fn read_file(state: State<'_, AppState>, path: String) -> CmdResult<String> {
+pub async fn read_file(
+    state: State<'_, AppState>,
+    path: String,
+) -> CmdResult<tauri::ipc::Response> {
     let p = state.authorize(&path)?;
     let text = fs_ops::read_file(&p).map_err(err)?;
     if let Some(w) = lock(&state.watcher).as_mut() {
         w.watch_file(&p);
     }
-    Ok(text)
+    Ok(tauri::ipc::Response::new(text.into_bytes()))
 }
 
+/// Writes a file. The text is the raw request body (UTF-8, see `read_file`); the path comes
+/// in a percent-encoded header.
 #[tauri::command]
-pub async fn write_file(
-    state: State<'_, AppState>,
-    path: String,
-    contents: String,
-) -> CmdResult<()> {
-    let p = state.authorize(&path)?;
-    fs_ops::write_atomic(&p, &contents).map_err(err)
+pub async fn write_file(state: State<'_, AppState>, request: Request<'_>) -> CmdResult<()> {
+    let InvokeBody::Raw(bytes) = request.body() else {
+        return Err("expected raw file contents".into());
+    };
+    let p = state.authorize(&header(&request, "kayet-path")?)?;
+    let contents = std::str::from_utf8(bytes).map_err(err)?;
+    fs_ops::write_atomic(&p, contents).map_err(err)
 }
 
 /// Saves an image pasted into a document next to it. The image bytes are the raw request
@@ -395,19 +401,22 @@ pub async fn save_image(state: State<'_, AppState>, request: Request<'_>) -> Cmd
     let InvokeBody::Raw(bytes) = request.body() else {
         return Err("expected raw image bytes".into());
     };
-    let header = |name: &str| -> CmdResult<String> {
-        let value = request
-            .headers()
-            .get(name)
-            .ok_or_else(|| format!("missing {name} header"))?;
-        percent_decode(value.as_bytes()).map_err(err)
-    };
-    let document = state.authorize(&header("kayet-document")?)?;
-    let path = fs_ops::save_beside(&document, &header("kayet-extension")?, bytes).map_err(err)?;
+    let document = state.authorize(&header(&request, "kayet-document")?)?;
+    let extension = header(&request, "kayet-extension")?;
+    let path = fs_ops::save_beside(&document, &extension, bytes).map_err(err)?;
     Ok(path
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default())
+}
+
+/// A percent-encoded request header, decoded.
+fn header(request: &Request<'_>, name: &str) -> CmdResult<String> {
+    let value = request
+        .headers()
+        .get(name)
+        .ok_or_else(|| format!("missing {name} header"))?;
+    percent_decode(value.as_bytes()).map_err(err)
 }
 
 fn percent_decode(bytes: &[u8]) -> Result<String, std::str::Utf8Error> {
@@ -416,24 +425,40 @@ fn percent_decode(bytes: &[u8]) -> Result<String, std::str::Utf8Error> {
         .map(std::borrow::Cow::into_owned)
 }
 
-/// Backs up the unsaved buffers (one per tab with unsaved changes) for crash recovery. A
-/// path is only recorded if the buffer may be written there, since it is allowed again
-/// when the backup is restored.
+/// A buffer in a `write_recovery` request: its path and the length of its text in the body.
+#[derive(Deserialize)]
+struct BackupPart {
+    path: Option<String>,
+    bytes: usize,
+}
+
+/// Backs up the unsaved buffers (one per tab with unsaved changes) for crash recovery. Their
+/// texts are the raw request body, one after another (UTF-8, see `read_file`); their paths
+/// and lengths come in a percent-encoded JSON header. A path is only recorded if the buffer
+/// may be written there, since it is allowed again when the backup is restored.
 #[tauri::command]
-pub async fn write_recovery(
-    state: State<'_, AppState>,
-    backups: Vec<recovery::Backup>,
-) -> CmdResult<()> {
-    let backups: Vec<_> = backups
-        .into_iter()
-        .map(|b| recovery::Backup {
-            path: b
+pub async fn write_recovery(state: State<'_, AppState>, request: Request<'_>) -> CmdResult<()> {
+    let InvokeBody::Raw(body) = request.body() else {
+        return Err("expected raw backup texts".into());
+    };
+    let parts: Vec<BackupPart> =
+        serde_json::from_str(&header(&request, "kayet-backups")?).map_err(err)?;
+    let mut rest = body.as_slice();
+    let mut backups = Vec::with_capacity(parts.len());
+    for part in parts {
+        if part.bytes > rest.len() {
+            return Err("backup texts are shorter than announced".into());
+        }
+        let (text, tail) = rest.split_at(part.bytes);
+        rest = tail;
+        backups.push(recovery::Backup {
+            path: part
                 .path
                 .and_then(|p| state.authorize(&p).ok())
                 .map(|p| path_string(&p)),
-            text: b.text,
-        })
-        .collect();
+            text: std::str::from_utf8(text).map_err(err)?.to_owned(),
+        });
+    }
     recovery::write(&recovery::backup_path(), &backups).map_err(err)
 }
 
