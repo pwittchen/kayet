@@ -338,6 +338,23 @@ pub async fn confirm_unsaved(app: AppHandle, name: String) -> String {
     .into()
 }
 
+/// Native "save changes?" prompt. Returns true if the user confirmed.
+#[tauri::command]
+pub async fn confirm_save(app: AppHandle, name: String) -> bool {
+    let result = app
+        .dialog()
+        .message("Your changes will be written to disk.")
+        .title(format!("Do you want to save the changes made to “{name}”?"))
+        .kind(MessageDialogKind::Info)
+        .buttons(MessageDialogButtons::OkCancelCustom("Save".into(), "Cancel".into()))
+        .blocking_show_with_result();
+    match result {
+        MessageDialogResult::Ok => true,
+        MessageDialogResult::Custom(label) => label == "Save",
+        _ => false,
+    }
+}
+
 /// Native "move to Trash?" prompt. Returns true if the user confirmed.
 #[tauri::command]
 pub async fn confirm_trash(app: AppHandle, name: String) -> bool {

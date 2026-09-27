@@ -42,6 +42,7 @@ const els = {
   btnPreview: $<HTMLButtonElement>("btn-preview"),
   btnSyntax: $<HTMLButtonElement>("btn-syntax"),
   btnCloseFile: $<HTMLButtonElement>("btn-close-file"),
+  btnStatus: $<HTMLButtonElement>("btn-status"),
   edgeHandle: $("edge-handle"),
   banner: $("banner"),
   bannerReload: $<HTMLButtonElement>("banner-reload"),
@@ -61,6 +62,8 @@ const doc = {
   saved: null as Text | null,
   /** Last content known to be on disk, to tell our own writes from external ones. */
   disk: "",
+  /** Whether the document was saved since it was loaded; turns the edit status into a check. */
+  savedOnce: false,
 };
 let previewOpen = false; // remembered per session only
 let autosaveTimer: number | undefined;
@@ -229,6 +232,28 @@ function updateTitle(): void {
   const rel = doc.path ? relativeTo(workspace, doc.path) : null;
   els.docTitle.title = doc.path ? (rel ?? doc.path) : "Not saved yet";
   void appWindow.setTitle(`${docName()}${dirty ? " — edited" : ""}`).catch(() => {});
+  updateStatus(dirty);
+}
+
+let statusState: "hidden" | "edited" | "saved" = "hidden";
+
+/** Title bar edit status: a dot while there are unsaved changes, a check once they are saved. */
+function updateStatus(dirty: boolean): void {
+  const state = dirty ? "edited" : doc.savedOnce ? "saved" : "hidden";
+  if (state === statusState) return;
+  statusState = state;
+  const btn = els.btnStatus;
+  btn.hidden = state === "hidden";
+  btn.classList.toggle("edited", state === "edited");
+  btn.innerHTML = state === "edited" ? icons.edited : state === "saved" ? icons.saved : "";
+  btn.title = state === "edited" ? "Unsaved changes — click to save" : "Saved";
+  btn.setAttribute("aria-label", btn.title);
+}
+
+/** Asks whether to save the unsaved changes, then saves them. */
+async function promptSave(): Promise<void> {
+  if (isDirty() && (await chrome.hold(api.confirmSave(docName())))) await save();
+  editor.focus();
 }
 
 function updateAll(): void {
@@ -350,6 +375,7 @@ function toggleSyntax(): void {
 function loadDoc(path: string | null, text: string): void {
   doc.path = path;
   doc.disk = text;
+  doc.savedOnce = false;
   editor.load(text, isMarkdown(path) ? "markdown" : null);
   void applySyntax().catch(showError);
   doc.saved = editor.doc;
@@ -412,6 +438,7 @@ async function writeDoc(path: string): Promise<boolean> {
   }
   doc.disk = text;
   doc.saved = snapshot;
+  doc.savedOnce = true;
   hideBanner();
   updateTitle();
   if (path === configPath) await reloadConfig();
@@ -638,6 +665,7 @@ els.btnTheme.addEventListener("click", () => run("cycle-theme"));
 els.btnPreview.addEventListener("click", () => run("toggle-preview"));
 els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
 els.btnCloseFile.addEventListener("click", () => run("close-file"));
+els.btnStatus.addEventListener("click", () => void promptSave().catch(showError));
 els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 
 els.btnPalette.innerHTML = icons.command;

@@ -122,6 +122,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):
   | Icon | Action | Shortcut |
   |------|--------|----------|
+  | ● / ✓ (edit status) | ● appears once the document is edited and disappears when undone back to its original state; clicking it asks to save the changes, after which it turns into ✓ until the next edit — **hidden for an untouched document** | — |
   | × (close) | Close the open file — **only shown when a file is open** | — |
   | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |

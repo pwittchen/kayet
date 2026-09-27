@@ -114,6 +114,7 @@ fn main() {
             commands::save_file_dialog,
             commands::pick_workspace,
             commands::confirm_unsaved,
+            commands::confirm_save,
             commands::confirm_trash,
             commands::show_context_menu,
         ])

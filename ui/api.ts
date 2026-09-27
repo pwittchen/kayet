@@ -70,6 +70,7 @@ export const api = {
     invoke<string | null>("save_file_dialog", { directory, fileName }),
   confirmUnsaved: (name: string) =>
     invoke<"save" | "discard" | "cancel">("confirm_unsaved", { name }),
+  confirmSave: (name: string) => invoke<boolean>("confirm_save", { name }),
   confirmTrash: (name: string) => invoke<boolean>("confirm_trash", { name }),
   showContextMenu: (items: MenuItemSpec[]) =>
     invoke<void>("show_context_menu", { items }),

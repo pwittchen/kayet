@@ -25,6 +25,8 @@ export const icons = {
   eye: svg(
     `<path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>`,
   ),
+  edited: svg(`<circle cx="8" cy="8" r="4" fill="currentColor" stroke="none"/>`),
+  saved: svg(`<path d="M3.25 8.5 6.5 11.5l6.25-7"/>`),
   closeFile: svg(`<path d="M4 4l8 8M12 4l-8 8"/>`),
   code: svg(`<path d="M5.25 4.5 1.75 8l3.5 3.5M10.75 4.5 14.25 8l-3.5 3.5M9 3 7 13"/>`),
   command: svg(

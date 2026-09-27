@@ -221,6 +221,10 @@ body.resizing * {
   color: var(--text);
 }
 
+#btn-status.edited {
+  color: var(--text);
+}
+
 #btn-pin.on,
 #btn-zen.on,
 #btn-syntax.on {
