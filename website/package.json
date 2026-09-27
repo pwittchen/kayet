@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --hot ./index.html",
-    "build": "bun build ./index.html --outdir=dist --minify",
+    "build": "bun build ./index.html --outdir=dist --minify && cp llms.txt llms-full.txt dist/",
     "preview": "bun run build && bun ./serve.ts"
   }
 }

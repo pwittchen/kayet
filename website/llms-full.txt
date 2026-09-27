@@ -1,0 +1,98 @@
+# kayet
+
+> kayet is a quiet, distraction-free text editor for macOS (Apple Silicon), built with Rust and Tauri 2 with a CodeMirror 6 frontend. When you are writing, the only thing on screen is your text. It is free and open source under the Apache License 2.0, with no paid tiers, no feature gating and no telemetry.
+
+- Website: https://getkayet.app
+- Source code: https://github.com/pwittchen/kayet
+- Download: https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-aarch64.dmg (signed and notarized, requires macOS on Apple Silicon)
+- Specification: https://raw.githubusercontent.com/pwittchen/kayet/master/SPEC.md
+
+## Features
+
+- **Hidden chrome.** The title bar, traffic lights and controls stay out of sight until the cursor reaches the top of the window, then fade away again. Typing hides them immediately. `⌘.` shows them from the keyboard.
+- **Zen mode.** Keeps the current line vertically centered and dims everything but the paragraph being written.
+- **Live Markdown preview.** A resizable split pane that renders CommonMark plus GitHub tables, task lists, strikethrough and footnotes as you type, with scroll sync. Hidden by default; only available for `.md` / `.markdown` files.
+- **Workspace tree.** An optional file tree for a folder of notes (default `~/.kayet/workspace`), hidden by default. Supports creating, renaming, revealing in Finder and moving files to the Trash, and updates live when files change on disk.
+- **Tabs, only when needed.** With a second document open, a tab strip takes the place of the title. Each tab keeps its own undo history, selection and scroll position, and open tabs are restored on launch.
+- **Find anything.** Go to any workspace file with `⌘P`, search the text of the whole workspace with `⌘⇧F`, or find and replace (match case, regular expressions, whole words) in a slim bar at the bottom of the editor.
+- **Command palette.** `⌘K` lists every command with its shortcut; fuzzy search finds any command in a couple of keystrokes. Context commands appear only when they apply.
+- **Export to HTML and PDF.** Turns a Markdown document into a self-contained web page (images embedded) or a paginated PDF with the same typography as the preview.
+- **Markdown that keeps up.** Lists and block quotes continue on Enter, `⌘B` / `⌘I` toggle bold / italic, pasting a URL over selected text makes a link, and pasted images are saved next to the file.
+- **Code highlighting.** Source code and data/config files are highlighted by file extension with a muted palette; highlighting can be turned off.
+- **Never lose a word.** Unsaved changes in every tab are backed up as you type; if kayet quits unexpectedly, it offers to restore them on the next launch.
+- **Spell check.** Optional native macOS spelling underlines for prose (Markdown and plain text, never code). Nothing is corrected automatically.
+- **Light and dark.** Follows the system appearance, or pick a theme yourself.
+- **Terminal and Finder.** The `kayet` shell command (installed from the app menu) opens a file or makes a folder the workspace: `kayet notes.md`, `kayet .`. `.md` and `.txt` files open from Finder via Open With → kayet.
+- **App updates.** kayet checks GitHub Releases at launch and daily, and installs a new version in place after verifying its signature.
+- **Native and fast.** Rust and Tauri under the hood; starts instantly and stays small.
+
+## Keyboard shortcuts
+
+| Action | Shortcut |
+|---|---|
+| Command palette | `⌘K` |
+| New file | `⌘N` |
+| New tab | `⌘T` |
+| Next / previous tab | `⇧⌘]` / `⇧⌘[` |
+| Open file | `⌘O` |
+| Go to file | `⌘P` |
+| Open workspace | `⌘⇧O` |
+| Save / save as | `⌘S` / `⌘⇧S` |
+| Close file | `⌘W` |
+| Find / replace | `⌘F` / `⌘R` |
+| Find in workspace | `⌘⇧F` |
+| Toggle zen mode | `⌘⇧J` |
+| Toggle file tree | `⌘\` |
+| Toggle preview (Markdown) | `⌘⇧P` |
+| Bold / italic (Markdown) | `⌘B` / `⌘I` |
+| Cycle theme | `⌘⇧L` |
+| Settings (config file) | `⌘,` |
+| Show chrome | `⌘.` |
+| Zoom in / out / reset | `⌘+` / `⌘-` / `⌘0` |
+
+## Configuration
+
+Every setting lives in one TOML file, `~/.kayet/config.toml`. There is no preferences window. The file is created on first launch; missing keys are filled in with their defaults and written back. Open it in kayet with `⌘,` — changes apply as soon as it is saved. A file that fails to parse is left untouched and defaults are used.
+
+```toml
+[workspace]
+path = "~/.kayet/workspace"  # folder shown in the file tree
+show_hidden_files = false    # list dotfiles in the tree
+
+[ui]
+theme = "system"             # "system" | "light" | "dark"
+sidebar_visible = false      # file tree shown on launch
+titlebar_pinned = false      # keep the title bar visible
+zen_mode = false             # centered cursor, dimmed paragraphs
+sidebar_width = 240          # 180–400 px
+preview_split = 0.5          # editor share of the split, 0.2–0.8
+open_in_new_tab = false      # open files in a new tab
+
+[editor]
+font_family = "mono"         # "mono" | "system"
+font_size = 15               # px
+line_height = 1.6
+soft_wrap = true
+max_line_width = 72          # readable column, in characters
+autosave = false             # save after 1s of inactivity
+syntax_highlighting = true   # code and data/config files
+cursor = "blink"             # "blink" | "steady"
+spell_check = false          # prose files
+
+[window]
+width = 1000
+height = 700
+x = 0                        # 0, 0 = centered
+y = 0
+
+[updates]
+check_automatically = true   # look for a new release at launch and once a day
+```
+
+## Requirements
+
+macOS on Apple Silicon (M-series). Intel Macs are not supported.
+
+## Support and consulting
+
+kayet is built by Piotr Wittchen (https://wittchen.io), an independent software engineer available for custom features and integrations, desktop app development (Rust, Tauri), Rust development, Java / Kotlin / Android development and support contracts for teams using kayet. Contact: piotr@wittchen.io
