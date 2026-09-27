@@ -78,6 +78,41 @@ pub fn trash(path: &Path) -> Result<(), String> {
     ctx.delete(path).map_err(|e| e.to_string())
 }
 
+/// Writes `bytes` to a new file next to `document`, named after it (`notes-1.png`,
+/// `notes-2.png`, …) so it never overwrites an existing entry. Returns the new file's path.
+pub fn save_beside(document: &Path, extension: &str, bytes: &[u8]) -> io::Result<PathBuf> {
+    let invalid = |msg: &str| io::Error::new(io::ErrorKind::InvalidInput, msg.to_string());
+    if extension.is_empty() || !extension.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err(invalid("invalid file extension"));
+    }
+    let dir = document
+        .parent()
+        .ok_or_else(|| invalid("document has no parent folder"))?;
+    let stem = document
+        .file_stem()
+        .ok_or_else(|| invalid("document has no file name"))?
+        .to_string_lossy();
+    for n in 1..10_000 {
+        let path = dir.join(format!("{stem}-{n}.{extension}"));
+        match OpenOptions::new().write(true).create_new(true).open(&path) {
+            Ok(mut file) => {
+                let result = file.write_all(bytes).and_then(|()| file.sync_all());
+                if let Err(e) = result {
+                    let _ = fs::remove_file(&path);
+                    return Err(e);
+                }
+                return Ok(path);
+            }
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        "no free file name",
+    ))
+}
+
 /// Lexically normalizes a path (resolves `.` and `..`) without touching the file system.
 pub fn normalize(path: &Path) -> PathBuf {
     let mut out = PathBuf::new();
@@ -144,6 +179,20 @@ mod tests {
         assert!(!a.exists() && b.exists());
         create_file(&a).unwrap();
         assert!(rename(&a, &b).is_err());
+    }
+
+    #[test]
+    fn save_beside_picks_free_names() {
+        let dir = tempfile::tempdir().unwrap();
+        let doc = dir.path().join("my notes.md");
+        let first = save_beside(&doc, "png", b"one").unwrap();
+        assert_eq!(first, dir.path().join("my notes-1.png"));
+        let second = save_beside(&doc, "png", b"two").unwrap();
+        assert_eq!(second, dir.path().join("my notes-2.png"));
+        assert_eq!(fs::read(&first).unwrap(), b"one");
+        assert_eq!(fs::read(&second).unwrap(), b"two");
+        assert!(save_beside(&doc, "../x", b"").is_err());
+        assert!(save_beside(&doc, "", b"").is_err());
     }
 
     #[test]

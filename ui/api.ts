@@ -68,6 +68,14 @@ export const api = {
   readFile: (path: string) => invoke<string>("read_file", { path }),
   writeFile: (path: string, contents: string) =>
     invoke<void>("write_file", { path, contents }),
+  /** Saves image bytes next to `document`; returns the new file's name. */
+  saveImage: (document: string, extension: string, bytes: Uint8Array) =>
+    invoke<string>("save_image", bytes, {
+      headers: {
+        "kayet-document": encodeURIComponent(document),
+        "kayet-extension": encodeURIComponent(extension),
+      },
+    }),
   writeRecovery: (path: string | null, contents: string) =>
     invoke<void>("write_recovery", { path, contents }),
   clearRecovery: () => invoke<void>("clear_recovery"),

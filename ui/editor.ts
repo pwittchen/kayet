@@ -17,6 +17,8 @@ import { markdownLanguage } from "@codemirror/lang-markdown";
 import { SearchQuery, highlightSelectionMatches, openSearchPanel, search, searchKeymap, setSearchQuery } from "@codemirror/search";
 import { tags as t } from "@lezer/highlight";
 
+import { ImageSaver, markdownEditing } from "./markdown";
+
 export interface EditorSettings {
   fontFamily: "system" | "mono";
   fontSize: number;
@@ -32,6 +34,8 @@ export interface EditorCallbacks {
   onChange: () => void;
   onScroll: () => void;
   onType: () => void;
+  /** Saves an image pasted into a Markdown document (see `markdownEditing`). */
+  onPasteImage: ImageSaver;
 }
 
 const markdownHighlight = HighlightStyle.define([
@@ -187,7 +191,11 @@ export class Editor {
   private languageFor(syntax: Syntax): Extension {
     if (syntax === "markdown") {
       // Bare GFM language: skips the embedded HTML/JS/CSS grammars and autocompletion.
-      return [new LanguageSupport(markdownLanguage), syntaxHighlighting(markdownHighlight)];
+      return [
+        new LanguageSupport(markdownLanguage),
+        syntaxHighlighting(markdownHighlight),
+        markdownEditing((image) => this.cb.onPasteImage(image)),
+      ];
     }
     return syntax ? [new LanguageSupport(syntax), syntaxHighlighting(codeHighlight)] : [];
   }

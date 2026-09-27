@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
 use serde::{Deserialize, Serialize};
+use tauri::ipc::{InvokeBody, Request};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use tauri_plugin_dialog::{
@@ -276,6 +277,35 @@ pub async fn write_file(
 ) -> CmdResult<()> {
     let p = state.authorize(&path)?;
     fs_ops::write_atomic(&p, &contents).map_err(err)
+}
+
+/// Saves an image pasted into a document next to it. The image bytes are the raw request
+/// body; the document path and the file extension come in percent-encoded headers.
+/// Returns the new file's name, which is its path relative to the document.
+#[tauri::command]
+pub async fn save_image(state: State<'_, AppState>, request: Request<'_>) -> CmdResult<String> {
+    let InvokeBody::Raw(bytes) = request.body() else {
+        return Err("expected raw image bytes".into());
+    };
+    let header = |name: &str| -> CmdResult<String> {
+        let value = request
+            .headers()
+            .get(name)
+            .ok_or_else(|| format!("missing {name} header"))?;
+        percent_decode(value.as_bytes()).map_err(err)
+    };
+    let document = state.authorize(&header("kayet-document")?)?;
+    let path = fs_ops::save_beside(&document, &header("kayet-extension")?, bytes).map_err(err)?;
+    Ok(path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default())
+}
+
+fn percent_decode(bytes: &[u8]) -> Result<String, std::str::Utf8Error> {
+    percent_encoding::percent_decode(bytes)
+        .decode_utf8()
+        .map(std::borrow::Cow::into_owned)
 }
 
 /// Backs up the unsaved buffer for crash recovery. The path is only recorded if the

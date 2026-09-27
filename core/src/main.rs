@@ -82,6 +82,7 @@ fn main() {
             commands::list_dir,
             commands::read_file,
             commands::write_file,
+            commands::save_image,
             commands::write_recovery,
             commands::clear_recovery,
             commands::load_recovery,

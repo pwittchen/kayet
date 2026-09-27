@@ -10,6 +10,7 @@ import { api, Backup, basename, Config, dirname, isMarkdown, isWithin, Opened, r
 import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
+import { imageExtension } from "./markdown";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
 import { Palette, PaletteCommand } from "./palette";
@@ -84,6 +85,7 @@ const editor = new Editor(els.editor, defaultEditorSettings(), {
   },
   onScroll: () => syncPreview(),
   onType: () => chrome.onTyping(),
+  onPasteImage: (image) => pasteImage(image),
 });
 
 const tree = new FileTree(els.tree, {
@@ -641,6 +643,22 @@ async function resetWorkspace(): Promise<void> {
 // ---- notices ----
 
 let toastTimer: number | undefined;
+
+/** Saves a pasted image next to the open document; returns its relative path, or null. */
+async function pasteImage(image: File): Promise<string | null> {
+  const extension = imageExtension(image.type);
+  if (!extension) return null;
+  if (!doc.path) {
+    notify("Save the document before pasting images");
+    return null;
+  }
+  try {
+    return await api.saveImage(doc.path, extension, new Uint8Array(await image.arrayBuffer()));
+  } catch (e) {
+    notify(`Could not save the image: ${e}`);
+    return null;
+  }
+}
 
 function notify(message: string): void {
   els.toast.textContent = message;

@@ -176,6 +176,15 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Font: monospace by default (`SF Mono` via `ui-monospace`), optional system UI font (`-apple-system`) setting.
   Default size 15px, line height 1.6.
 - Markdown syntax highlighting is subtle (weight/opacity changes, muted accent for links/code).
+- Smart Markdown editing (Markdown files only, no UI of its own):
+  - `Enter` continues bullet, numbered (renumbered as needed) and task lists (a new item gets an
+    unchecked `[ ]` box) and block quotes; `Enter` on an empty item ends the list, `Backspace`
+    right after a list marker removes it.
+  - `⌘B` / `⌘I` wrap the selection in `**` / `*` (or insert an empty pair at the cursor) and
+    unwrap it again when it is already bold / italic.
+  - Pasting a URL over selected text turns it into a link: `[text](url)`.
+  - Pasting an image saves it next to the file as `<file name>-<n>.<ext>` (never overwriting) and
+    inserts `![](…)` pointing to it; an untitled document has to be saved first.
 - Source code and data/config files (e.g. `.rs`, `.ts`, `.py`, `.json`, `.toml`, `.yaml`, `.xml`,
   `.csv`, `Dockerfile`) get syntax highlighting picked by file extension or well-known file name,
   using the same muted palette as preview code blocks. Grammars are loaded lazily per language.
@@ -296,6 +305,7 @@ kayet/
 │   ├── index.html
 │   ├── main.ts
 │   ├── editor.ts            # CodeMirror setup
+│   ├── markdown.ts          # smart Markdown editing (lists, ⌘B / ⌘I, pasting)
 │   ├── languages.ts         # code languages by file extension (lazy-loaded)
 │   ├── tree.ts              # file tree component
 │   ├── preview.ts           # preview pane
@@ -315,6 +325,7 @@ kayet/
 | `list_dir(path) -> Vec<Entry>` | List directory entries (lazy tree loading)    |
 | `read_file(path) -> String`    | Read file contents                            |
 | `write_file(path, contents)`   | Atomic write (temp file + rename)             |
+| `save_image(document, bytes)`  | Save a pasted image next to the document      |
 | `write_recovery / clear_recovery` | Keep / remove the crash recovery backup  |
 | `load_recovery() -> Backup`    | Backup left by an unclean exit, if any        |
 | `create_file / create_dir`     | Create entries                                |
@@ -350,6 +361,7 @@ kayet/
 | Command palette        | `⌘K`      |
 | Cycle theme            | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘⌥F` |
+| Bold / italic (.md)    | `⌘B` / `⌘I` |
 | Zoom in / out / reset  | `⌘+` / `⌘-` / `⌘0` |
 | Show chrome (keyboard) | `⌘.` (hold/toggle) |
 

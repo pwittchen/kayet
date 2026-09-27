@@ -26,7 +26,7 @@ items here move into the spec once they are picked up.
 
 ## Features
 
-- [ ] **Smart Markdown editing** (no new UI):
+- [x] **Smart Markdown editing** (no new UI):
   - Enter continues lists and task-list checkboxes.
   - `⌘B` / `⌘I` for bold / italic.
   - Pasting a URL over selected text creates a link.
