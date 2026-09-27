@@ -1,7 +1,8 @@
 name: Release
 
 # Pushing a `vX.Y.Z` tag builds kayet, signs it with the Developer ID, notarizes it with
-# notarytool and publishes a .dmg to GitHub Releases. Regular pushes (rust.yml) stay unsigned.
+# notarytool and publishes a .dmg to GitHub Releases, then redeploys the website so its version
+# pill matches. Regular pushes (rust.yml) stay unsigned.
 on:
   push:
     tags:
@@ -37,10 +38,6 @@ jobs:
           fi
           current=$(sed -n 's/^version = "\(.*\)"$/\1/p' core/Cargo.toml | head -n 1)
           echo "current version: $current, tag version: $version"
-          if [ "$current" = "$version" ]; then
-            echo "version is already $version"
-            exit 0
-          fi
           export VERSION="$version"
           # core/Cargo.toml: the first `version =` line is the [package] one.
           perl -0pi -e 's/^version = "[^"]*"/version = "$ENV{VERSION}"/m' core/Cargo.toml
@@ -48,9 +45,15 @@ jobs:
           # Tauri reads its own `version` (Info.plist CFBundleShortVersionString) from tauri.conf.json.
           perl -0pi -e 's/^(  "version": ")[^"]*/$1$ENV{VERSION}/m' core/tauri.conf.json package.json
           perl -0pi -e 's/("name": "kayet",\s*"version": ")[^"]*/$1$ENV{VERSION}/g' package-lock.json
+          # website/index.html: the version pill in the hero (label and release link).
+          perl -pi -e 's/v\d+\.\d+\.\d+/v$ENV{VERSION}/g if /class="version-pill"/' website/index.html
+          if git diff --quiet; then
+            echo "version is already $version"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add core/Cargo.toml Cargo.lock core/tauri.conf.json package.json package-lock.json
+          git add core/Cargo.toml Cargo.lock core/tauri.conf.json package.json package-lock.json website/index.html
           git commit -m "bump version to $version"
           git push origin HEAD:master
 
@@ -195,3 +198,10 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           files: kayet-macos-aarch64.dmg
           fail_on_unmatched_files: true
+
+  deploy-website:
+    # The bump commit is pushed with GITHUB_TOKEN, which doesn't trigger deploy-website.yml on
+    # its own, so call it explicitly once the release (and its .dmg) is published.
+    needs: release
+    uses: ./.github/workflows/deploy-website.yml
+    secrets: inherit

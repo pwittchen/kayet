@@ -173,6 +173,20 @@ section { padding: 0 24px; }
   letter-spacing: -0.05em;
 }
 
+.hero-version { margin: 20px 0 0; }
+.version-pill {
+  display: inline-block;
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 980px;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.version-pill:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+
 .hero-lead {
   margin: 16px 0 0;
   font-size: clamp(24px, 3.4vw, 32px);
