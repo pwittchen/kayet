@@ -40,3 +40,4 @@ Target platform is Apple Silicon macOS only.
 ## Git
 
 - Commit messages must NOT contain `Co-Authored-By` trailers or any other attribution to AI tools.
+- Never run `git push` (or push in any other way); pushing is always left to the user.
