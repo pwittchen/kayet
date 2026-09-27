@@ -6,7 +6,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Text } from "@codemirror/state";
 
-import { api, basename, Config, dirname, isMarkdown, isWithin, Opened, relativeTo, ThemeMode } from "./api";
+import { api, Backup, basename, Config, dirname, isMarkdown, isWithin, Opened, relativeTo, ThemeMode } from "./api";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
 import { icons } from "./icons";
@@ -78,6 +78,7 @@ const editor = new Editor(els.editor, defaultEditorSettings(), {
     updateTitle();
     if (previewVisible()) preview.update(() => editor.text(), doc.path);
     scheduleAutosave();
+    scheduleBackup();
   },
   onScroll: () => syncPreview(),
   onType: () => chrome.onTyping(),
@@ -97,6 +98,7 @@ const tree = new FileTree(els.tree, {
       doc.saved = null;
       rememberLastFile(null);
       updateAll();
+      void syncBackup();
     }
   },
   notify,
@@ -382,6 +384,7 @@ function loadDoc(path: string | null, text: string): void {
   hideBanner();
   rememberLastFile(path);
   updateAll();
+  syncBackup();
   if (previewVisible()) void preview.render(text, path);
   editor.focus();
 }
@@ -441,6 +444,7 @@ async function writeDoc(path: string): Promise<boolean> {
   doc.savedOnce = true;
   hideBanner();
   updateTitle();
+  syncBackup();
   if (path === configPath) await reloadConfig();
   return true;
 }
@@ -466,6 +470,74 @@ function scheduleAutosave(): void {
   autosaveTimer = window.setTimeout(() => {
     if (doc.path && isDirty()) void save();
   }, 1000);
+}
+
+// ---- crash recovery ----
+
+let backupTimer: number | undefined;
+/** Whether a backup of the buffer may be on disk. */
+let backedUp = false;
+/** Backup writes and removals, in order. */
+let backupQueue: Promise<void> = Promise.resolve();
+
+function queueBackup(op: () => Promise<void>): Promise<void> {
+  backupQueue = backupQueue.then(op).catch((e) => console.error("recovery backup failed", e));
+  return backupQueue;
+}
+
+/** Backs up the buffer within a second of an edit, also while typing continuously. */
+function scheduleBackup(): void {
+  if (backupTimer === undefined) backupTimer = window.setTimeout(syncBackup, 1000);
+}
+
+/** Backs up the buffer while it has unsaved changes and removes the backup once it has none. */
+function syncBackup(): Promise<void> {
+  window.clearTimeout(backupTimer);
+  backupTimer = undefined;
+  if (isDirty()) {
+    backedUp = true;
+    const path = doc.path;
+    const text = editor.text();
+    return queueBackup(() => api.writeRecovery(path, text));
+  }
+  if (!backedUp) return backupQueue;
+  backedUp = false;
+  return queueBackup(() => api.clearRecovery());
+}
+
+/** Removes the backup when the window closes with the changes saved or discarded. */
+function clearBackup(): Promise<void> {
+  window.clearTimeout(backupTimer);
+  backupTimer = undefined;
+  backedUp = false;
+  return queueBackup(() => api.clearRecovery());
+}
+
+/**
+ * Offers to restore the buffer backed up by a session that did not exit cleanly.
+ * Returns true if it was restored.
+ */
+async function restoreBackup(backup: Backup): Promise<boolean> {
+  const name = backup.path ? basename(backup.path) : "Untitled";
+  if (!(await chrome.hold(api.confirmRestore(name)))) {
+    await clearBackup();
+    return false;
+  }
+  const disk = backup.path ? await api.readFile(backup.path).catch(() => null) : "";
+  if (disk === null) {
+    // The file is gone: keep the text as unsaved changes to that path.
+    loadDoc(backup.path, backup.text);
+    doc.saved = null;
+    doc.disk = "";
+    updateTitle();
+  } else {
+    loadDoc(backup.path, disk);
+    editor.replaceText(backup.text);
+  }
+  // Rewrites the backup right away, or removes it if the text matches the file after all.
+  backedUp = true;
+  await syncBackup();
+  return true;
 }
 
 // ---- external changes ----
@@ -706,6 +778,18 @@ window.addEventListener("resize", () => preview.measure());
 
 // ---- startup ----
 
+/** Opens the document kayet starts with, or an empty untitled one. */
+async function openStart(start: string | null | undefined): Promise<void> {
+  if (!start) return loadDoc(null, "");
+  try {
+    loadDoc(start, await api.readFile(start));
+  } catch (e) {
+    if (start === cfg.session.last_file) rememberLastFile(null);
+    else notify(String(e));
+    loadDoc(null, "");
+  }
+}
+
 async function init(): Promise<void> {
   cfg = await api.getConfig();
   workspace = await api.getWorkspace();
@@ -731,7 +815,8 @@ async function init(): Promise<void> {
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
     appWindow.onCloseRequested(async (event) => {
-      if (!(await confirmDiscard())) event.preventDefault();
+      if (!(await confirmDiscard())) return event.preventDefault();
+      await clearBackup();
     }),
   ]);
 
@@ -743,18 +828,9 @@ async function init(): Promise<void> {
   await tree.setRoot(workspace);
   if (opened.folder && !cfg.ui.sidebar_visible) await toggleTree();
 
-  const start = opened.file ?? cfg.session.last_file;
-  if (start) {
-    try {
-      loadDoc(start, await api.readFile(start));
-    } catch (e) {
-      if (start === cfg.session.last_file) rememberLastFile(null);
-      else notify(String(e));
-      loadDoc(null, "");
-    }
-  } else {
-    loadDoc(null, "");
-  }
+  // Unsaved changes left behind by a crash take the place of the start document.
+  const backup = await api.loadRecovery().catch(() => null);
+  if (!backup || !(await restoreBackup(backup))) await openStart(opened.file ?? cfg.session.last_file);
 
   const notice = await api.takeNotice();
   if (notice) notify(notice);

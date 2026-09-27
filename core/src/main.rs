@@ -8,6 +8,7 @@ mod config;
 mod fs_ops;
 mod markdown;
 mod menu;
+mod recovery;
 mod workspace;
 
 use serde::Serialize;
@@ -77,6 +78,9 @@ fn main() {
             commands::list_dir,
             commands::read_file,
             commands::write_file,
+            commands::write_recovery,
+            commands::clear_recovery,
+            commands::load_recovery,
             commands::create_file,
             commands::create_dir,
             commands::rename,
@@ -91,6 +95,7 @@ fn main() {
             commands::pick_workspace,
             commands::confirm_unsaved,
             commands::confirm_save,
+            commands::confirm_restore,
             commands::confirm_trash,
             commands::show_context_menu,
         ])

@@ -21,6 +21,7 @@ use tauri_plugin_dialog::{
 use crate::config::{self, Config};
 use crate::fs_ops::{self, canonical};
 use crate::markdown;
+use crate::recovery;
 use crate::workspace::{self, Entry, FsWatcher};
 
 type CmdResult<T> = Result<T, String>;
@@ -277,6 +278,40 @@ pub async fn write_file(
     fs_ops::write_atomic(&p, &contents).map_err(err)
 }
 
+/// Backs up the unsaved buffer for crash recovery. The path is only recorded if the
+/// buffer may be written there, since it is allowed again when the backup is restored.
+#[tauri::command]
+pub async fn write_recovery(
+    state: State<'_, AppState>,
+    path: Option<String>,
+    contents: String,
+) -> CmdResult<()> {
+    let path = path
+        .and_then(|p| state.authorize(&p).ok())
+        .map(|p| path_string(&p));
+    let backup = recovery::Backup {
+        path,
+        text: contents,
+    };
+    recovery::write(&recovery::backup_path(), &backup).map_err(err)
+}
+
+/// Removes the crash recovery backup once the buffer was saved, discarded or closed.
+#[tauri::command]
+pub async fn clear_recovery() -> CmdResult<()> {
+    recovery::clear(&recovery::backup_path()).map_err(err)
+}
+
+/// Returns the backup left behind by a session that did not exit cleanly, if any.
+#[tauri::command]
+pub fn load_recovery(app: AppHandle, state: State<'_, AppState>) -> Option<recovery::Backup> {
+    let mut backup = recovery::read(&recovery::backup_path())?;
+    if let Some(p) = &backup.path {
+        backup.path = Some(path_string(&state.allow(&app, Path::new(p))));
+    }
+    Some(backup)
+}
+
 #[tauri::command]
 pub async fn create_file(state: State<'_, AppState>, path: String) -> CmdResult<String> {
     let p = state.authorize(&path)?;
@@ -436,6 +471,27 @@ pub async fn confirm_save(app: AppHandle, name: String) -> bool {
     match result {
         MessageDialogResult::Ok => true,
         MessageDialogResult::Custom(label) => label == "Save",
+        _ => false,
+    }
+}
+
+/// Native "restore unsaved changes?" prompt shown at launch after an unclean exit.
+/// Returns true if the user chose to restore them.
+#[tauri::command]
+pub async fn confirm_restore(app: AppHandle, name: String) -> bool {
+    let result = app
+        .dialog()
+        .message("kayet didn't quit normally. If you don't restore them, the changes will be lost.")
+        .title(format!("Restore unsaved changes to “{name}”?"))
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Restore".into(),
+            "Discard".into(),
+        ))
+        .blocking_show_with_result();
+    match result {
+        MessageDialogResult::Ok => true,
+        MessageDialogResult::Custom(label) => label == "Restore",
         _ => false,
     }
 }

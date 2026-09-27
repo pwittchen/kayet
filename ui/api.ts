@@ -39,6 +39,12 @@ export interface Opened {
   folder: string | null;
 }
 
+/** An unsaved buffer backed up for crash recovery; `path: null` means untitled. */
+export interface Backup {
+  path: string | null;
+  text: string;
+}
+
 /** A context menu item; `id: null` renders a separator. */
 export interface MenuItemSpec {
   id: string | null;
@@ -61,6 +67,10 @@ export const api = {
   readFile: (path: string) => invoke<string>("read_file", { path }),
   writeFile: (path: string, contents: string) =>
     invoke<void>("write_file", { path, contents }),
+  writeRecovery: (path: string | null, contents: string) =>
+    invoke<void>("write_recovery", { path, contents }),
+  clearRecovery: () => invoke<void>("clear_recovery"),
+  loadRecovery: () => invoke<Backup | null>("load_recovery"),
   createFile: (path: string) => invoke<string>("create_file", { path }),
   createDir: (path: string) => invoke<string>("create_dir", { path }),
   rename: (from: string, to: string) => invoke<string>("rename", { from, to }),
@@ -79,6 +89,8 @@ export const api = {
   confirmUnsaved: (name: string) =>
     invoke<"save" | "discard" | "cancel">("confirm_unsaved", { name }),
   confirmSave: (name: string) => invoke<boolean>("confirm_save", { name }),
+  confirmRestore: (name: string) =>
+    invoke<boolean>("confirm_restore", { name }),
   confirmTrash: (name: string) => invoke<boolean>("confirm_trash", { name }),
   showContextMenu: (items: MenuItemSpec[]) =>
     invoke<void>("show_context_menu", { items }),

@@ -184,6 +184,11 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   `⌘+/⌘-/⌘0` zoom.
 - Autosave: off by default; optional setting to autosave after 1s of inactivity.
 - Unsaved changes prompt on close / switching file (native dialog).
+- Crash recovery: while the document (a file or untitled) has unsaved changes, a backup is kept in
+  `~/.kayet/recovery/` (written at most ~1s after an edit). It is removed once the changes are
+  saved or discarded and when the window closes normally, so a backup found at launch means kayet
+  did not exit cleanly: a native dialog offers to **Restore** the changes (they reopen as unsaved
+  edits to their file, or as an untitled document, in place of the start document) or **Discard** them.
 - External file change detection: if the file changed on disk and the buffer is clean,
   reload silently; if dirty, show a small inline banner: "File changed on disk — Reload / Keep mine".
 
@@ -280,6 +285,7 @@ kayet/
 │   │   ├── workspace.rs     # workspace resolution, tree listing, watcher
 │   │   ├── fs_ops.rs        # read/write/rename/create/trash
 │   │   ├── markdown.rs      # pulldown-cmark + ammonia rendering
+│   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
 │   │   └── config.rs        # load/save ~/.kayet/config.toml
 │   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
 │   ├── Cargo.toml
@@ -307,6 +313,8 @@ kayet/
 | `list_dir(path) -> Vec<Entry>` | List directory entries (lazy tree loading)    |
 | `read_file(path) -> String`    | Read file contents                            |
 | `write_file(path, contents)`   | Atomic write (temp file + rename)             |
+| `write_recovery / clear_recovery` | Keep / remove the crash recovery backup  |
+| `load_recovery() -> Backup`    | Backup left by an unclean exit, if any        |
 | `create_file / create_dir`     | Create entries                                |
 | `rename(from, to)`             | Rename / move                                 |
 | `trash(path)`                  | Move to Trash (`trash` crate)                 |

@@ -16,7 +16,7 @@ items here move into the spec once they are picked up.
 
 - [x] **Lint gates in CI** — add `cargo fmt --check` and
       `cargo clippy --all-targets -- -D warnings` to `rust.yml`.
-- [ ] **Crash recovery** — keep a backup of dirty and untitled buffers in `~/.kayet/recovery/`
+- [x] **Crash recovery** — keep a backup of dirty and untitled buffers in `~/.kayet/recovery/`
       and offer to restore them on next launch.
 - [ ] **Performance checks** — a small benchmark script for the targets in SPEC §13
       (cold start < 300ms, opening a 5MB file without freezing, preview render < 16ms).
