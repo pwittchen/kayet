@@ -6,7 +6,7 @@
 
 the minimalistic text editor for macOS
 
-[getkayet.app](https://getkayet.app)
+[**getkayet.app**](https://getkayet.app)
 
 [![Rust](https://github.com/pwittchen/kayet/actions/workflows/rust.yml/badge.svg)](https://github.com/pwittchen/kayet/actions/workflows/rust.yml)
 
