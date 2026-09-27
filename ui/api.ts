@@ -94,6 +94,8 @@ export const api = {
   confirmTrash: (name: string) => invoke<boolean>("confirm_trash", { name }),
   showContextMenu: (items: MenuItemSpec[]) =>
     invoke<void>("show_context_menu", { items }),
+  benchDir: () => invoke<string | null>("bench_dir"),
+  benchReport: (report: unknown) => invoke<void>("bench_report", { report }),
 };
 
 // ---- path helpers (POSIX-style; macOS is the primary target) ----

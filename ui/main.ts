@@ -7,6 +7,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Text } from "@codemirror/state";
 
 import { api, Backup, basename, Config, dirname, isMarkdown, isWithin, Opened, relativeTo, ThemeMode } from "./api";
+import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
 import { icons } from "./icons";
@@ -836,7 +837,22 @@ async function init(): Promise<void> {
   if (notice) notify(notice);
 }
 
-init().catch((e) => {
-  console.error(e);
-  notify(`kayet failed to start: ${e}`);
-});
+init()
+  .then(async () => {
+    const firstPaint = afterPaint();
+    const benchDir = await api.benchDir();
+    if (!benchDir) return;
+    await runBench(benchDir, {
+      firstPaint,
+      openFile,
+      docLength: () => editor.doc.length,
+      showPreview: async () => {
+        if (!previewVisible()) await togglePreview();
+      },
+      renderPreview: (text, path) => preview.render(text, path),
+    });
+  })
+  .catch((e) => {
+    console.error(e);
+    notify(`kayet failed to start: ${e}`);
+  });

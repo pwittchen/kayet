@@ -544,3 +544,17 @@ pub fn show_context_menu(
     }
     window.popup_menu(&menu).map_err(err)
 }
+
+/// Directory with the benchmark fixtures when kayet runs under `scripts/bench.mjs`
+/// (`KAYET_BENCH` is set); the frontend then measures itself and reports back.
+#[tauri::command]
+pub fn bench_dir() -> Option<String> {
+    std::env::var("KAYET_BENCH").ok().filter(|d| !d.is_empty())
+}
+
+/// Prints the benchmark results as one JSON line on stdout and quits.
+#[tauri::command]
+pub fn bench_report(app: AppHandle, report: serde_json::Value) {
+    println!("kayet-bench {report}");
+    app.exit(0);
+}

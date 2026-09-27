@@ -61,6 +61,10 @@ fn main() {
             restore_geometry(&window, &state);
             chrome::set_traffic_lights_visible(&window, false);
             window.show()?;
+            if commands::bench_dir().is_some() {
+                // A window hidden behind others gets no frames, which stalls the benchmark.
+                window.set_focus()?;
+            }
             Ok(())
         })
         .on_window_event(on_window_event)
@@ -98,6 +102,8 @@ fn main() {
             commands::confirm_restore,
             commands::confirm_trash,
             commands::show_context_menu,
+            commands::bench_dir,
+            commands::bench_report,
         ])
         .build(tauri::generate_context!())
         .expect("error while building kayet")

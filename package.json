@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "tsc --noEmit && vite build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "bench": "node scripts/bench.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.0",

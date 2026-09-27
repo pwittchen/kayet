@@ -10,7 +10,8 @@ kayet is a minimalistic macOS text editor built with Rust + Tauri 2 and a CodeMi
     `markdown.rs` Markdown rendering (pulldown-cmark), `recovery.rs` crash recovery backup, `menu.rs`, `chrome.rs`, `config.rs`,
     `cli.rs` installs the `kayet` shell command (launcher script in `core/cli/kayet`)
 - `ui/` — TypeScript frontend (vanilla TS, no framework), built by Vite into `dist/`
-  - `editor.ts` CodeMirror setup, `languages.ts` code highlighting by file extension, `preview.ts` Markdown preview, `tree.ts` file tree,
+  - `bench.ts` self-measurement for `scripts/bench.mjs` (only active with `KAYET_BENCH` set),
+    `editor.ts` CodeMirror setup, `languages.ts` code highlighting by file extension, `preview.ts` Markdown preview, `tree.ts` file tree,
     `chrome.ts` auto-hiding window chrome, `api.ts` Tauri command bindings, `theme.css`
 
 ## Commands
@@ -24,6 +25,7 @@ cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings -W clippy::pedantic
 npx tauri dev          # run the app in dev mode
 npx tauri build --target aarch64-apple-darwin --bundles app
+npx tauri build --no-bundle && npm run bench   # SPEC §13 performance checks (scripts/bench.mjs)
 ```
 
 The Rust crate embeds `dist/` at compile time, so always build the frontend first.

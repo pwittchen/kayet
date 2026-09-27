@@ -18,8 +18,9 @@ items here move into the spec once they are picked up.
       `cargo clippy --all-targets -- -D warnings` to `rust.yml`.
 - [x] **Crash recovery** — keep a backup of dirty and untitled buffers in `~/.kayet/recovery/`
       and offer to restore them on next launch.
-- [ ] **Performance checks** — a small benchmark script for the targets in SPEC §13
-      (cold start < 300ms, opening a 5MB file without freezing, preview render < 16ms).
+- [x] **Performance checks** — a small benchmark script for the targets in SPEC §13
+      (cold start < 300ms, opening a 5MB file without freezing, preview render < 16ms):
+      `npm run bench`.
 - [ ] **Frontend tests** — cover hover-reveal / fade timing in `chrome.ts` and keyboard
       navigation in `tree.ts`.
 
