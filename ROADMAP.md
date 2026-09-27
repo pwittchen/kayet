@@ -14,7 +14,7 @@ items here move into the spec once they are picked up.
 
 ## Robustness
 
-- [ ] **Lint gates in CI** — add `cargo fmt --check` and
+- [x] **Lint gates in CI** — add `cargo fmt --check` and
       `cargo clippy --all-targets -- -D warnings` to `rust.yml`.
 - [ ] **Crash recovery** — keep a backup of dirty and untitled buffers in `~/.kayet/recovery/`
       and offer to restore them on next launch.

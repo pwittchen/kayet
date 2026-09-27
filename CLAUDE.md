@@ -33,6 +33,9 @@ Target platform is Apple Silicon macOS only.
 
 - Keep dependencies minimal; favor small binary size and instant startup.
 - Follow the design language in `SPEC.md` (quiet, native, no unnecessary UI).
+- Before marking a task as done, run `cargo fmt --check` and the `cargo clippy` command above
+  (CI enforces both). If they report any warnings, fix them (don't silence them with `allow`
+  unless there is no reasonable fix) and re-run until clean.
 
 ## Git
 
