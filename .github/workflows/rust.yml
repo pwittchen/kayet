@@ -35,10 +35,9 @@ jobs:
         node-version: 22
         cache: npm
 
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: aarch64-apple-darwin
-        components: rustfmt, clippy
+    # Installs the toolchain pinned in rust-toolchain.toml, so CI lints match local ones.
+    - name: Install Rust toolchain
+      run: rustup toolchain install
 
     - uses: Swatinem/rust-cache@v2
 

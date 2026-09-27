@@ -51,7 +51,7 @@ pub fn list_dir(path: &Path, show_hidden: bool) -> io::Result<Vec<Entry>> {
                 return None;
             }
             // Follow symlinks so linked folders behave like folders.
-            let is_dir = fs::metadata(e.path()).map(|m| m.is_dir()).unwrap_or(false);
+            let is_dir = fs::metadata(e.path()).is_ok_and(|m| m.is_dir());
             Some(Entry {
                 name,
                 path: e.path().to_string_lossy().into_owned(),
