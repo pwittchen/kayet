@@ -27,6 +27,7 @@ import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
 import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
 import { Preview } from "./preview";
+import { countWords, formatStats } from "./stats";
 import { FileTree } from "./tree";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -46,6 +47,7 @@ const els = {
   docTitle: $("doc-title"),
   docName: $("doc-name"),
   docEdited: $("doc-edited"),
+  docStats: $("doc-stats"),
   btnPalette: $<HTMLButtonElement>("btn-palette"),
   btnPin: $<HTMLButtonElement>("btn-pin"),
   btnZen: $<HTMLButtonElement>("btn-zen"),
@@ -82,6 +84,7 @@ const doc = {
 };
 let previewOpen = false; // remembered per session only
 let autosaveTimer: number | undefined;
+let statsTimer: number | undefined;
 
 const isDirty = () => !doc.saved || !editor.doc.eq(doc.saved);
 const docName = () => (doc.path ? basename(doc.path) : "Untitled");
@@ -136,6 +139,7 @@ const chrome = new Chrome(
       saveConfig();
     }
   },
+  () => updateStats(),
 );
 
 // ---- config ----
@@ -252,6 +256,21 @@ function updateTitle(): void {
   els.docTitle.title = doc.path ? (rel ?? doc.path) : "Not saved yet";
   void appWindow.setTitle(`${docName()}${dirty ? " — edited" : ""}`).catch(() => {});
   updateStatus(dirty);
+  scheduleStats();
+}
+
+/** Title bar word count and reading time, for prose (not code files); counted only while the title bar shows. */
+function updateStats(): void {
+  window.clearTimeout(statsTimer);
+  statsTimer = undefined;
+  const stats = isCode(doc.path) ? "" : formatStats(countWords(editor.text()));
+  els.docStats.textContent = stats;
+  els.docStats.hidden = !stats;
+}
+
+function scheduleStats(): void {
+  if (!chrome.isVisible || statsTimer !== undefined) return;
+  statsTimer = window.setTimeout(updateStats, 300);
 }
 
 let statusState: "hidden" | "edited" | "saved" = "hidden";

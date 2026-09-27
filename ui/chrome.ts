@@ -18,6 +18,7 @@ export class Chrome {
     private readonly edgeHandle: HTMLElement,
     private readonly treeVisible: () => boolean,
     private readonly onPinnedChange: (pinned: boolean) => void,
+    private readonly onShow: () => void = () => {},
   ) {
     document.addEventListener("mousemove", (e) => this.onMouseMove(e), { passive: true });
     document.documentElement.addEventListener("mouseleave", () => {
@@ -48,6 +49,7 @@ export class Chrome {
     this.visible = true;
     this.titlebar.classList.add("visible");
     void api.setChromeVisible(true);
+    this.onShow();
   }
 
   hide(): void {
@@ -84,6 +86,10 @@ export class Chrome {
     if (pinned) this.show();
     else this.hide();
     this.onPinnedChange(pinned);
+  }
+
+  get isVisible(): boolean {
+    return this.visible;
   }
 
   togglePinned(): void {

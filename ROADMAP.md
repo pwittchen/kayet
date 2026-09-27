@@ -34,7 +34,7 @@ items here move into the spec once they are picked up.
 - [x] **Fuzzy file finder** (`⌘P`).
 - [x] **Workspace-wide search** (`⌘⇧F`).
 - [x] **Command palette** (`⌘K`), Linear-style.
-- [ ] **Word count / reading time** in the hover title bar.
+- [x] **Word count / reading time** in the hover title bar.
 - [ ] **Open Recent** menu.
 - [ ] **Spell check** for prose files (built into the web view; just needs enabling).
 - [ ] **Export** Markdown to HTML / PDF.

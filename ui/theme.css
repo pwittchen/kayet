@@ -191,9 +191,15 @@ body.resizing * {
   color: var(--text);
 }
 
-#doc-edited {
+#doc-edited,
+#doc-stats {
   color: var(--text-muted);
   font-weight: 400;
+}
+
+#doc-stats::before {
+  content: "·";
+  margin: 0 6px;
 }
 
 .controls {

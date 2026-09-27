@@ -132,6 +132,10 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 ### 5.3 Title bar contents
 - **Left:** native traffic lights, followed directly by the Sidebar icon (toggle file tree, `⌘\`).
 - **Center:** document name, muted "— edited" suffix when unsaved; workspace-relative path on hover tooltip.
+  For prose (Markdown, plain text, untitled — not code files) a muted `· 1,234 words · 6 min read`
+  follows (200 words per minute, at least 1 min; hidden for an empty document). Words are runs of
+  non-whitespace containing a letter or digit, so Markdown markers (`#`, `-`, `>`) don't count.
+  The count is refreshed only while the title bar is visible.
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):
   | Icon | Action | Shortcut |
   |------|--------|----------|
@@ -412,5 +416,4 @@ kayet/
 
 ## 15. Future Ideas (post-v1)
 - Tabs / multiple windows.
-- Word count / reading time in the hover title bar.
 - Export Markdown to PDF/HTML.

@@ -11,6 +11,7 @@ let titlebar: HTMLElement;
 let edgeHandle: HTMLElement;
 let treeVisible: boolean;
 let onPinnedChange: ReturnType<typeof vi.fn<(pinned: boolean) => void>>;
+let onShow: ReturnType<typeof vi.fn<() => void>>;
 let chrome: Chrome;
 // Chrome registers listeners on document; remove them after each test so instances don't leak.
 let listeners: [EventTarget, string, EventListenerOrEventListenerObject][];
@@ -39,7 +40,8 @@ beforeEach(() => {
   document.body.replaceChildren(titlebar, edgeHandle);
   treeVisible = false;
   onPinnedChange = vi.fn<(pinned: boolean) => void>();
-  chrome = new Chrome(titlebar, edgeHandle, () => treeVisible, onPinnedChange);
+  onShow = vi.fn<() => void>();
+  chrome = new Chrome(titlebar, edgeHandle, () => treeVisible, onPinnedChange, onShow);
 });
 
 afterEach(() => {
@@ -70,6 +72,17 @@ describe("title bar hover-reveal", () => {
     move(300, 20);
     move(300, 30);
     expect(api.setChromeVisible).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports each reveal and its visibility", () => {
+    expect(chrome.isVisible).toBe(false);
+    move(300, 10);
+    move(300, 20);
+    expect(onShow).toHaveBeenCalledTimes(1);
+    expect(chrome.isVisible).toBe(true);
+    chrome.hide();
+    move(300, 10);
+    expect(onShow).toHaveBeenCalledTimes(2);
   });
 
   it("fades out only after the hide delay once the pointer leaves", () => {
