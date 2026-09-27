@@ -10,7 +10,9 @@ the minimalistic text editor for macOS
 
 </div>
 
-![kayet screenshot](screenshot.png)
+<p align="center">
+  <img src="screenshot.png" alt="kayet screenshot">
+</p>
 
 See [SPEC.md](SPEC.md) for the full specification and [ROADMAP.md](ROADMAP.md) for planned work.
 
