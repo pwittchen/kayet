@@ -8,7 +8,7 @@ items here move into the spec once they are picked up.
 - [ ] **Code signing & notarization** — tag-triggered release workflow: sign with a Developer ID,
       notarize via `notarytool`, publish a `.dmg` to GitHub Releases. Unsigned builds are
       blocked by Gatekeeper on other Macs.
-- [ ] **Homebrew cask** — `brew install --cask kayet`, once signed releases exist.
+- [ ] Release the project website and connect download buttons with released, signed, notarized app
 - [x] **`kayet` CLI + file associations** — open files from the terminal (`kayet notes.md`) and
       register `.md` / `.txt` so Finder "Open With" and double-click work.
 
