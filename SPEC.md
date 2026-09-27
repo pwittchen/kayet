@@ -67,7 +67,7 @@ in CI or releases.
 
 ### 4.2 Document
 - One active document at a time.
-- Files are opened from the file tree, via `⌘O`, by drag-and-drop onto the window, from
+- Files are opened from the file tree, the file finder (`⌘P`, see 5.5), via `⌘O`, by drag-and-drop onto the window, from
   Finder or from the terminal (see 4.3).
 - Encoding: UTF-8. Line endings are preserved as found in the file.
 - New untitled document: `⌘N`. On first save, the default location is the current workspace.
@@ -153,6 +153,16 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   syntax highlighting) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
+
+### 5.5 File finder
+- `⌘P` (`File → Go to File…` or the command palette) opens the same floating panel listing every
+  file in the workspace (recursively), each shown by name with its folder muted beside it.
+- Hidden files follow the `show_hidden_files` setting; symlinked folders and `node_modules` /
+  `target` folders are skipped, and at most 20,000 files are listed.
+- Typing filters fuzzily: matches in the file name rank above matches elsewhere in the path, a
+  query containing `/` matches against the whole relative path, spaces are ignored.
+- `↑` / `↓` move the selection, `Enter` or a click opens the file (asking to save unsaved changes
+  first), `Esc`, `⌘P` again or a click outside closes it.
 
 ## 6. File Tree
 
@@ -308,6 +318,7 @@ kayet/
 │   ├── markdown.ts          # smart Markdown editing (lists, ⌘B / ⌘I, pasting)
 │   ├── languages.ts         # code languages by file extension (lazy-loaded)
 │   ├── tree.ts              # file tree component
+│   ├── palette.ts           # command palette (⌘K) and file finder (⌘P)
 │   ├── preview.ts           # preview pane
 │   ├── chrome.ts            # hover reveal logic, title bar
 │   └── theme.css
@@ -323,6 +334,7 @@ kayet/
 | `get_workspace() -> PathBuf`   | Current workspace path                        |
 | `set_workspace(path)`          | Change workspace, restart watcher             |
 | `list_dir(path) -> Vec<Entry>` | List directory entries (lazy tree loading)    |
+| `list_files() -> Vec<String>`  | Every workspace file, for the file finder     |
 | `read_file(path) -> String`    | Read file contents                            |
 | `write_file(path, contents)`   | Atomic write (temp file + rename)             |
 | `save_image(document, bytes)`  | Save a pasted image next to the document      |
@@ -352,6 +364,7 @@ kayet/
 |------------------------|-----------|
 | New file               | `⌘N`      |
 | Open file              | `⌘O`      |
+| Go to file (finder)    | `⌘P`      |
 | Open workspace         | `⌘⇧O`     |
 | Save / Save as         | `⌘S` / `⌘⇧S` |
 | Close file / window    | `⌘W` / `⌘⇧W` |
@@ -384,6 +397,5 @@ kayet/
 
 ## 15. Future Ideas (post-v1)
 - Tabs / multiple windows.
-- Fuzzy file finder (`⌘P`).
 - Word count / reading time in the hover title bar.
 - Export Markdown to PDF/HTML.

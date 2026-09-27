@@ -65,6 +65,7 @@ export const api = {
   takeOpened: () => invoke<Opened>("take_opened"),
   installCli: () => invoke<string | null>("install_cli"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
+  listFiles: () => invoke<string[]>("list_files"),
   readFile: (path: string) => invoke<string>("read_file", { path }),
   writeFile: (path: string, contents: string) =>
     invoke<void>("write_file", { path, contents }),

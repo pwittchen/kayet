@@ -68,6 +68,48 @@ pub fn list_dir(path: &Path, show_hidden: bool) -> io::Result<Vec<Entry>> {
     Ok(entries)
 }
 
+/// Upper bound for `list_files`, so a huge folder cannot stall the file finder.
+pub const MAX_FILES: usize = 20_000;
+
+/// Folders the file finder never descends into: dependency and build output trees.
+const SKIPPED_DIRS: [&str; 2] = ["node_modules", "target"];
+
+/// Lists every file below `root` (recursively, at most `limit`), sorted by path
+/// (case-insensitive). Symlinked folders are not followed, so link cycles cannot recur.
+pub fn list_files(root: &Path, show_hidden: bool, limit: usize) -> Vec<String> {
+    let mut files = Vec::new();
+    let mut dirs = vec![root.to_path_buf()];
+    while let Some(dir) = dirs.pop() {
+        let Ok(read) = fs::read_dir(&dir) else {
+            continue;
+        };
+        for e in read.filter_map(Result::ok) {
+            let name = e.file_name();
+            let name = name.to_string_lossy();
+            if !show_hidden && name.starts_with('.') {
+                continue;
+            }
+            let Ok(kind) = e.file_type() else {
+                continue;
+            };
+            let path = e.path();
+            if kind.is_dir() {
+                if !SKIPPED_DIRS.contains(&name.as_ref()) {
+                    dirs.push(path);
+                }
+            } else if path.is_file() {
+                files.push(path.to_string_lossy().into_owned());
+                if files.len() >= limit {
+                    dirs.clear();
+                    break;
+                }
+            }
+        }
+    }
+    files.sort_by_cached_key(|p| p.to_lowercase());
+    files
+}
+
 #[derive(Clone, Serialize)]
 struct FsChanged {
     paths: Vec<String>,
@@ -163,6 +205,44 @@ mod tests {
         };
         assert_eq!(names(false), ["Alpha", "zeta", "A.txt", "b.md", "c.md"]);
         assert_eq!(names(true)[2], ".hidden");
+    }
+
+    #[test]
+    fn lists_files_recursively_skipping_hidden_and_dependency_dirs() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        for d in ["notes/deep", "node_modules/pkg", ".git"] {
+            fs::create_dir_all(root.join(d)).unwrap();
+        }
+        for f in [
+            "b.md",
+            "A.txt",
+            ".hidden",
+            "notes/c.md",
+            "notes/deep/d.md",
+            "node_modules/pkg/index.js",
+            ".git/HEAD",
+        ] {
+            fs::write(root.join(f), "").unwrap();
+        }
+        let rel = |show, limit| {
+            list_files(root, show, limit)
+                .into_iter()
+                .map(|p| {
+                    Path::new(&p)
+                        .strip_prefix(root)
+                        .unwrap()
+                        .to_string_lossy()
+                        .into_owned()
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            rel(false, MAX_FILES),
+            ["A.txt", "b.md", "notes/c.md", "notes/deep/d.md"]
+        );
+        assert_eq!(rel(true, MAX_FILES).len(), 6);
+        assert_eq!(rel(false, 2).len(), 2);
     }
 
     #[test]

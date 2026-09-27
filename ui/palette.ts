@@ -1,30 +1,47 @@
-// Spotlight-like command palette (⌘K): type to filter, ↑/↓ to move, Enter to run, Esc to close.
+// Spotlight-like palette: type to filter, ↑/↓ to move, Enter to pick, Esc to close.
+// Lists commands (⌘K) or workspace files (⌘P, the file finder).
 
-export interface PaletteCommand {
+export interface PaletteItem {
   id: string;
   label: string;
+  /** Muted text after the label, e.g. the folder of a file. */
+  detail?: string;
   shortcut?: string;
 }
+
+export interface PaletteOptions {
+  /** What the palette lists, e.g. "commands" or "files" (see `Palette.showing`). */
+  kind: string;
+  placeholder: string;
+  /** Shown when nothing matches the query. */
+  empty: string;
+  /** Called with the picked item's id. */
+  pick: (id: string) => void;
+  /** Ranks an item against the lower-cased query; 0 means no match. Defaults to the label. */
+  rank?: (item: PaletteItem, query: string) => number;
+}
+
+/** At most this many items are shown, so long file lists stay quick to filter. */
+const MAX_SHOWN = 100;
 
 export class Palette {
   private readonly root: HTMLElement;
   private readonly input: HTMLInputElement;
   private readonly list: HTMLElement;
-  private commands: PaletteCommand[] = [];
-  private matches: PaletteCommand[] = [];
+  private items: PaletteItem[] = [];
+  private options: PaletteOptions | null = null;
+  private matches: PaletteItem[] = [];
   private selected = 0;
+  private closed: Promise<void> = Promise.resolve();
   private done: (() => void) | null = null;
 
-  constructor(
-    private readonly run: (id: string) => void,
-    private readonly onClose: () => void,
-  ) {
+  constructor(private readonly onClose: () => void) {
     this.root = document.createElement("div");
     this.root.id = "palette";
     this.root.hidden = true;
     this.root.innerHTML =
       `<div class="palette-box" role="dialog" aria-label="Command palette">` +
-      `<input type="text" placeholder="Type a command…" spellcheck="false" autocomplete="off"` +
+      `<input type="text" spellcheck="false" autocomplete="off"` +
       ` role="combobox" aria-controls="palette-list" aria-expanded="true" />` +
       `<ul id="palette-list" role="listbox"></ul>` +
       `</div>`;
@@ -57,18 +74,28 @@ export class Palette {
     return !this.root.hidden;
   }
 
-  /** Shows the palette; the returned promise resolves once it closes. */
-  open(commands: PaletteCommand[]): Promise<void> {
-    if (this.isOpen) {
-      this.input.select();
-      return Promise.resolve();
-    }
-    this.commands = commands;
+  /** The `kind` of what the open palette lists, or null while it is closed. */
+  get showing(): string | null {
+    return this.isOpen ? (this.options?.kind ?? null) : null;
+  }
+
+  /**
+   * Shows the palette with `items`, or switches it to them if it is already open.
+   * The returned promise resolves once it closes.
+   */
+  open(items: PaletteItem[], options: PaletteOptions): Promise<void> {
+    this.items = items;
+    this.options = options;
+    this.input.placeholder = options.placeholder;
+    this.root.querySelector(".palette-box")!.setAttribute("aria-label", options.placeholder);
     this.input.value = "";
-    this.root.hidden = false;
+    if (!this.isOpen) {
+      this.root.hidden = false;
+      this.closed = new Promise((resolve) => (this.done = resolve));
+    }
     this.filter();
     this.input.focus();
-    return new Promise((resolve) => (this.done = resolve));
+    return this.closed;
   }
 
   close(): void {
@@ -80,10 +107,11 @@ export class Palette {
   }
 
   private pick(index: number): void {
-    const command = this.matches[index];
-    if (!command) return;
+    const item = this.matches[index];
+    const pick = this.options?.pick;
+    if (!item || !pick) return;
     this.close();
-    this.run(command.id);
+    pick(item.id);
   }
 
   private onKeyDown(e: KeyboardEvent): void {
@@ -116,13 +144,16 @@ export class Palette {
 
   private filter(): void {
     const query = this.input.value.trim().toLowerCase();
-    this.matches = query
-      ? this.commands
-          .map((c) => ({ c, score: score(c.label.toLowerCase(), query) }))
-          .filter((m) => m.score > 0)
-          .sort((a, b) => b.score - a.score)
-          .map((m) => m.c)
-      : this.commands;
+    const rank = this.options?.rank ?? ((item: PaletteItem, q: string) => score(item.label.toLowerCase(), q));
+    this.matches = (
+      query
+        ? this.items
+            .map((item) => ({ item, score: rank(item, query) }))
+            .filter((m) => m.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map((m) => m.item)
+        : this.items
+    ).slice(0, MAX_SHOWN);
     this.list.replaceChildren(
       ...this.matches.map((c, i) => {
         const li = document.createElement("li");
@@ -130,7 +161,14 @@ export class Palette {
         li.role = "option";
         li.dataset.index = String(i);
         const label = document.createElement("span");
+        label.className = "label";
         label.textContent = c.label;
+        if (c.detail) {
+          const detail = document.createElement("span");
+          detail.className = "detail";
+          detail.textContent = c.detail;
+          label.append(detail);
+        }
         li.append(label);
         if (c.shortcut) {
           const kbd = document.createElement("kbd");
@@ -143,7 +181,7 @@ export class Palette {
     if (!this.matches.length) {
       const empty = document.createElement("li");
       empty.className = "empty";
-      empty.textContent = "No matching commands";
+      empty.textContent = this.options?.empty ?? "";
       this.list.append(empty);
     }
     this.select(0);
@@ -164,11 +202,27 @@ export class Palette {
  * Ranks how well `query` matches `label` (both lower-cased); 0 means no match.
  * Substrings win, word prefixes beat mid-word hits, then any in-order subsequence.
  */
-function score(label: string, query: string): number {
+export function score(label: string, query: string): number {
   const at = label.indexOf(query);
   if (at === 0) return 4;
-  if (at > 0) return label[at - 1] === " " ? 3 : 2;
+  if (at > 0) return /[\s/._-]/.test(label[at - 1]) ? 3 : 2;
   let i = 0;
   for (const ch of label) if (ch === query[i]) i++;
   return i === query.length ? 1 : 0;
+}
+
+/**
+ * Ranks a file by its workspace-relative `path` (lower-cased) against the lower-cased query.
+ * Matches in the file name beat matches elsewhere in the path; a query with a `/` is
+ * matched against the whole path. Spaces in the query are ignored. Among equal matches,
+ * shorter names and paths come first.
+ */
+export function fileScore(path: string, query: string): number {
+  const q = query.replace(/\s+/g, "");
+  if (!q) return 1;
+  const name = path.slice(path.lastIndexOf("/") + 1);
+  const inName = q.includes("/") ? 0 : score(name, q);
+  const s = inName ? inName + 4 : score(path, q);
+  // The tie-breaker stays below 1, so it never outweighs a better match.
+  return s ? s + 1 / (2 + name.length + path.length / 1000) : 0;
 }

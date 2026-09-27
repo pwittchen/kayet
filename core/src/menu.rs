@@ -49,6 +49,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         &[
             &item("new", "New", Some("CmdOrCtrl+N"))?,
             &item("open", "Open…", Some("CmdOrCtrl+O"))?,
+            &item("go-to-file", "Go to File…", Some("CmdOrCtrl+P"))?,
             &item(
                 "open-workspace",
                 "Open Workspace…",

@@ -13,7 +13,7 @@ import { Editor, EditorSettings } from "./editor";
 import { imageExtension } from "./markdown";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
-import { Palette, PaletteCommand } from "./palette";
+import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
 import { Preview } from "./preview";
 import { FileTree } from "./tree";
 
@@ -710,22 +710,21 @@ const commands: Record<string, () => unknown> = {
   "zoom-out": () => zoom(-1),
   "zoom-reset": () => zoom("reset"),
   palette: togglePalette,
+  "go-to-file": toggleFileFinder,
 };
 
 // ---- command palette ----
 
-const palette = new Palette(
-  (id) => run(id),
-  () => editor.focus(),
-);
+const palette = new Palette(() => editor.focus());
 
 /** Everything the palette offers, in menu order; context-only commands appear when they apply. */
-function paletteCommands(): PaletteCommand[] {
+function paletteCommands(): PaletteItem[] {
   const md = isMarkdown(doc.path);
   const code = isCode(doc.path);
-  const list: (PaletteCommand | false)[] = [
+  const list: (PaletteItem | false)[] = [
     { id: "new", label: "New File", shortcut: "⌘N" },
     { id: "open", label: "Open File…", shortcut: "⌘O" },
+    { id: "go-to-file", label: "Go to File…", shortcut: "⌘P" },
     { id: "open-workspace", label: "Open Workspace…", shortcut: "⌘⇧O" },
     { id: "reset-workspace", label: "Reset to Default Workspace" },
     { id: "save", label: "Save", shortcut: "⌘S" },
@@ -764,13 +763,44 @@ function paletteCommands(): PaletteCommand[] {
     { id: "close", label: "Close Window", shortcut: "⌘⇧W" },
     { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
   ];
-  return list.filter((c): c is PaletteCommand => !!c);
+  return list.filter((c): c is PaletteItem => !!c);
 }
 
-async function togglePalette(): Promise<void> {
-  if (palette.isOpen) return palette.close();
+/** Opens the palette with `items`, switches it to them, or closes it if it shows them already. */
+async function showPalette(items: PaletteItem[], options: PaletteOptions): Promise<void> {
+  if (palette.showing === options.kind) return palette.close();
+  const wasOpen = palette.isOpen;
+  const closed = palette.open(items, options);
   // Keeps the title bar up while the palette is open, if it was showing.
-  await chrome.hold(palette.open(paletteCommands()));
+  if (!wasOpen) await chrome.hold(closed);
+}
+
+function togglePalette(): Promise<void> {
+  return showPalette(paletteCommands(), {
+    kind: "commands",
+    placeholder: "Type a command…",
+    empty: "No matching commands",
+    pick: run,
+  });
+}
+
+/** File finder: every workspace file, labeled by name with its folder as detail. */
+async function toggleFileFinder(): Promise<void> {
+  if (palette.showing === "files") return palette.close();
+  const files = await api.listFiles();
+  const items = files.map((path) => {
+    const rel = relativeTo(workspace, path) ?? path;
+    const cut = rel.lastIndexOf("/");
+    return { id: path, label: rel.slice(cut + 1), detail: cut > 0 ? rel.slice(0, cut) : undefined };
+  });
+  const paths = new Map(items.map((i) => [i.id, (i.detail ? `${i.detail}/${i.label}` : i.label).toLowerCase()]));
+  await showPalette(items, {
+    kind: "files",
+    placeholder: "Go to file…",
+    empty: files.length ? "No matching files" : "No files in the workspace",
+    pick: (path) => void openFile(path),
+    rank: (item, query) => fileScore(paths.get(item.id)!, query),
+  });
 }
 
 function zoom(step: number | "reset"): void {

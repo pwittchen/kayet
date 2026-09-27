@@ -258,6 +258,18 @@ pub async fn list_dir(state: State<'_, AppState>, path: String) -> CmdResult<Vec
     workspace::list_dir(&p, show_hidden).map_err(err)
 }
 
+/// Every file in the workspace (recursively), for the file finder.
+#[tauri::command]
+pub async fn list_files(state: State<'_, AppState>) -> CmdResult<Vec<String>> {
+    let root = lock(&state.workspace).clone();
+    let show_hidden = lock(&state.config).workspace.show_hidden_files;
+    Ok(workspace::list_files(
+        &root,
+        show_hidden,
+        workspace::MAX_FILES,
+    ))
+}
+
 /// Reads a file and starts watching it for external changes.
 #[tauri::command]
 pub async fn read_file(state: State<'_, AppState>, path: String) -> CmdResult<String> {

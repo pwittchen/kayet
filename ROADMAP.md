@@ -31,7 +31,7 @@ items here move into the spec once they are picked up.
   - `⌘B` / `⌘I` for bold / italic.
   - Pasting a URL over selected text creates a link.
   - Pasting an image saves it next to the file and inserts `![](…)`.
-- [ ] **Fuzzy file finder** (`⌘P`).
+- [x] **Fuzzy file finder** (`⌘P`).
 - [ ] **Workspace-wide search.**
 - [x] **Command palette** (`⌘K`), Linear-style.
 - [ ] **Word count / reading time** in the hover title bar.

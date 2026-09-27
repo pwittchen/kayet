@@ -80,6 +80,7 @@ fn main() {
             commands::take_opened,
             commands::install_cli,
             commands::list_dir,
+            commands::list_files,
             commands::read_file,
             commands::write_file,
             commands::save_image,
