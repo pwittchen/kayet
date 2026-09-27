@@ -38,4 +38,4 @@ items here move into the spec once they are picked up.
 - [x] **Open Recent** menu.
 - [x] **Spell check** for prose files (built into the web view; just needs enabling).
 - [x] **Export** Markdown to HTML / PDF.
-- [ ] **Tabs / multiple windows.**
+- [x] **Tabs / multiple windows.**
