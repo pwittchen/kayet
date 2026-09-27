@@ -148,6 +148,16 @@ export class Editor {
       }
     });
     this.view.contentDOM.setAttribute("spellcheck", "true");
+    // WebKit's text checking auto-capitalizes the first letter typed into a field. The search panel
+    // is rebuilt on every open, so turn it off on its inputs as they gain focus.
+    this.view.dom.addEventListener("focusin", (e) => {
+      const target = e.target;
+      if (target instanceof HTMLInputElement && target.closest(".cm-search")) {
+        target.autocapitalize = "off";
+        target.setAttribute("autocorrect", "off");
+        target.spellcheck = false;
+      }
+    });
   }
 
   private createState(text: string, syntax: Syntax): EditorState {
