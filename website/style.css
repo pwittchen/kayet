@@ -435,6 +435,56 @@ kbd {
 .download > p { margin: 0 0 32px; color: var(--text-muted); }
 .note { margin: 18px 0 0; font-size: 14px; color: var(--text-muted); }
 
+/* ---- contact ---- */
+.contact-section {
+  padding-top: 120px;
+  padding-bottom: 140px;
+  border-top: 1px solid var(--border);
+}
+.contact-section h2 {
+  text-align: center;
+  font-size: clamp(36px, 5.5vw, 56px);
+  line-height: 1.08;
+}
+.contact-intro { margin: 16px auto 56px; max-width: 40em; text-align: center; color: var(--text-muted); font-size: 19px; }
+
+.contact {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.3fr);
+  max-width: 1040px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  overflow: hidden;
+}
+.contact-about, .contact-cta { display: flex; flex-direction: column; padding: 40px; }
+.contact-about { gap: 24px; border-right: 1px solid var(--border); }
+.contact-avatar {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+.contact-name { font-size: 22px; letter-spacing: -0.02em; }
+.contact-role { margin: 4px 0 16px; font-size: 13px; color: var(--accent); }
+.contact-note { margin: 0; font-size: 15px; color: var(--text-muted); }
+.contact-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; font-size: 13px; color: var(--text-muted); }
+
+.contact-lead { margin: 0 0 20px; font-size: 15px; color: var(--text-muted); }
+.contact-list { margin: 0 0 32px; padding: 0; list-style: none; }
+.contact-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  color: var(--text-muted);
+}
+.contact-list li:first-child { padding-top: 0; }
+.contact-list li:last-child { border-bottom: 0; }
+.contact-list strong { color: var(--text); font-weight: 600; }
+.contact-button { align-self: flex-start; margin-top: auto; }
+
 /* ---- footer ---- */
 .footer {
   display: flex;
@@ -483,6 +533,15 @@ kbd {
   .nav-links a svg { width: 16px; height: 16px; }
   .hero { padding-top: 72px; }
   .showcase, .features, .palette, .shortcuts, .config { padding-bottom: 96px; }
+  .contact-section { padding-top: 96px; padding-bottom: 96px; }
+  .contact-intro br { display: none; }
+}
+
+@media (max-width: 800px) {
+  .contact { grid-template-columns: 1fr; }
+  .contact-about { align-items: center; text-align: center; border-right: 0; border-bottom: 1px solid var(--border); }
+  .contact-links { justify-content: center; }
+  .contact-about, .contact-cta { padding: 32px 24px; }
   .config-code { font-size: 12px; }
   .window-body { min-height: 0; font-size: 13px; }
   .window-controls { display: none; }
