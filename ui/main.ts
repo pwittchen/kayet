@@ -912,6 +912,16 @@ async function installCli(): Promise<void> {
   if (link) notify(`Installed ${link} — open files from a terminal with kayet <file>.`);
 }
 
+/** Restarts into the kayet `version` just installed, once unsaved changes are dealt with. */
+async function restartToUpdate(version: string): Promise<void> {
+  if (!(await confirmDiscardAll())) {
+    notify(`kayet ${version} is installed and starts the next time you open kayet.`);
+    return;
+  }
+  await clearBackup();
+  await api.restartApp();
+}
+
 async function resetWorkspace(): Promise<void> {
   await applyWorkspace(await api.resetWorkspace().catch(showError));
 }
@@ -982,6 +992,7 @@ const commands: Record<string, () => unknown> = {
   "toggle-preview": togglePreview,
   "open-settings": openSettings,
   "install-cli": installCli,
+  "check-updates": () => api.checkForUpdates(),
   "cycle-theme": cycleTheme,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
@@ -1055,6 +1066,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "zoom-reset", label: "Actual Size", shortcut: "⌘0" },
     { id: "open-settings", label: "Settings…", shortcut: "⌘," },
     { id: "install-cli", label: "Install ‘kayet’ Command" },
+    { id: "check-updates", label: "Check for Updates…" },
     { id: "close", label: "Close Window", shortcut: "⌘⇧W" },
     { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
   ];
@@ -1253,6 +1265,7 @@ async function init(): Promise<void> {
     listen<string>("notice", (e) => notify(e.payload)),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
+    listen<string>("update://installed", (e) => void restartToUpdate(e.payload).catch(showError)),
     appWindow.onCloseRequested(async (event) => {
       if (!(await confirmDiscardAll())) return event.preventDefault();
       await clearBackup();

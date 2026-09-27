@@ -48,9 +48,16 @@ fn install_as_admin(script: &Path, link: &Path) -> Result<bool, String> {
         sh_quote(&script.to_string_lossy()),
         sh_quote(&link.to_string_lossy()),
     );
+    run_as_admin(&command).map_err(|e| format!("cannot install {LINK}: {e}"))
+}
+
+/// Runs a shell `command` with administrator privileges, asking for the password.
+/// Returns false if the user cancelled the password prompt.
+#[cfg(target_os = "macos")]
+pub fn run_as_admin(command: &str) -> Result<bool, String> {
     let apple_script = format!(
         "do shell script {} with administrator privileges",
-        applescript_string(&command)
+        applescript_string(command)
     );
     let out = std::process::Command::new("/usr/bin/osascript")
         .arg("-e")
@@ -64,11 +71,11 @@ fn install_as_admin(script: &Path, link: &Path) -> Result<bool, String> {
     if stderr.contains("(-128)") {
         return Ok(false); // "User canceled."
     }
-    Err(format!("cannot install {LINK}: {}", stderr.trim()))
+    Err(stderr.trim().to_string())
 }
 
 /// Quotes `s` as a single POSIX shell word.
-fn sh_quote(s: &str) -> String {
+pub fn sh_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', r"'\''"))
 }
 

@@ -14,6 +14,7 @@ pub struct Config {
     pub ui: UiConfig,
     pub editor: EditorConfig,
     pub window: WindowConfig,
+    pub updates: UpdatesConfig,
     pub session: SessionConfig,
 }
 
@@ -152,6 +153,21 @@ impl WindowConfig {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UpdatesConfig {
+    /// Look for a new kayet release at launch and once a day.
+    pub check_automatically: bool,
+}
+
+impl Default for UpdatesConfig {
+    fn default() -> Self {
+        Self {
+            check_automatically: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SessionConfig {
@@ -164,6 +180,9 @@ pub struct SessionConfig {
     /// Recently opened files, most recent first (File → Open Recent).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub recent_files: Vec<String>,
+    /// A release the user chose to skip; automatic update checks don't offer it again.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skipped_version: Option<String>,
 }
 
 /// How many files File → Open Recent remembers.

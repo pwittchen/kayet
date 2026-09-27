@@ -198,8 +198,8 @@ pub fn get_config(state: State<'_, AppState>) -> Config {
     lock(&state.config).clone()
 }
 
-/// Persists the configuration. Window geometry and the workspace path are owned by the
-/// backend (see `set_workspace`) and are kept as they are.
+/// Persists the configuration. Window geometry, the workspace path, the recent files and the
+/// skipped update are owned by the backend and are kept as they are.
 #[tauri::command]
 pub fn set_config(state: State<'_, AppState>, cfg: Config) {
     {
@@ -207,10 +207,12 @@ pub fn set_config(state: State<'_, AppState>, cfg: Config) {
         let window = current.window.clone();
         let path = current.workspace.path.clone();
         let recent = std::mem::take(&mut current.session.recent_files);
+        let skipped = current.session.skipped_version.take();
         *current = cfg;
         current.window = window;
         current.workspace.path = path;
         current.session.recent_files = recent;
+        current.session.skipped_version = skipped;
     }
     state.save_config();
 }
@@ -316,6 +318,21 @@ pub fn take_opened(state: State<'_, AppState>) -> Opened {
 pub async fn install_cli(app: AppHandle) -> CmdResult<Option<String>> {
     let script = app.path().resource_dir().map_err(err)?.join("kayet");
     Ok(crate::cli::install(&script)?.then(|| crate::cli::LINK.to_string()))
+}
+
+/// Checks for a new kayet release and offers to install it (`kayet → Check for Updates…`).
+#[tauri::command]
+pub async fn check_for_updates(app: AppHandle) -> CmdResult<()> {
+    tauri::async_runtime::spawn_blocking(move || crate::update::check(&app, true))
+        .await
+        .map_err(err)
+}
+
+/// Restarts kayet into the update just installed; the frontend has dealt with unsaved changes.
+#[tauri::command]
+pub fn restart_app(app: AppHandle, state: State<'_, AppState>) {
+    state.save_config();
+    app.request_restart();
 }
 
 #[tauri::command]

@@ -11,6 +11,7 @@ mod markdown;
 mod menu;
 mod recovery;
 mod search;
+mod update;
 mod workspace;
 
 use serde::Serialize;
@@ -52,6 +53,7 @@ fn main() {
             state.save_config();
             state.start_watcher(app.handle());
             state.refresh_recent_menu(app.handle());
+            update::start_background_checks(app.handle());
             for file in state.config.lock().unwrap().session.restored_files() {
                 if let Some(dir) = std::path::Path::new(file).parent() {
                     let _ = app.asset_protocol_scope().allow_directory(dir, true);
@@ -105,6 +107,8 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::recent_files,
         commands::allow_recent,
         commands::install_cli,
+        commands::check_for_updates,
+        commands::restart_app,
         commands::list_dir,
         commands::list_files,
         commands::search_workspace,

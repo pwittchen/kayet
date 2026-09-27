@@ -27,7 +27,13 @@ export interface Config {
     spell_check: boolean;
   };
   window: { width: number; height: number; x: number; y: number };
-  session: { last_file?: string | null; open_files?: string[]; recent_files?: string[] };
+  updates: { check_automatically: boolean };
+  session: {
+    last_file?: string | null;
+    open_files?: string[];
+    recent_files?: string[];
+    skipped_version?: string | null;
+  };
 }
 
 export interface Entry {
@@ -84,6 +90,10 @@ export const api = {
   /** Allows opening a recent file picked in the palette; returns its canonical path. */
   allowRecent: (path: string) => invoke<string>("allow_recent", { path }),
   installCli: () => invoke<string | null>("install_cli"),
+  /** Checks for a new kayet release and offers to install it (native dialogs). */
+  checkForUpdates: () => invoke<void>("check_for_updates"),
+  /** Restarts kayet into the update just installed. */
+  restartApp: () => invoke<void>("restart_app"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
   listFiles: () => invoke<string[]>("list_files"),
   searchWorkspace: (query: string) => invoke<SearchMatch[]>("search_workspace", { query }),

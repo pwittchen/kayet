@@ -41,6 +41,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                     ..AboutMetadata::default()
                 }),
             )?,
+            &item("check-updates", "Check for Updates…", None)?,
             &sep()?,
             &item("open-settings", "Settings…", Some("CmdOrCtrl+,"))?,
             &item("install-cli", "Install ‘kayet’ Command", None)?,

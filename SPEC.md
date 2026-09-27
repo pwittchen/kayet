@@ -108,6 +108,23 @@ in CI or releases.
   tab, see 4.4) and, at launch, is shown instead of the restored active document. When several
   files are given only the first one is opened.
 
+### 4.5 App updates
+- kayet looks for a newer release on GitHub (the latest non-draft, non-prerelease release of
+  `pwittchen/kayet`) ~10s after launch and once a day while running, unless
+  `[updates] check_automatically = false`. Development builds never check on their own.
+- `kayet → Check for Updates…` (or the command palette) checks right away and also reports when
+  kayet is up to date or the check failed.
+- When a newer version is found, a native dialog offers **Update**, **Skip This Version** (automatic
+  checks don't offer that version again; a manual check still does) or **Later**.
+- **Update** downloads the release's `.dmg`, verifies that the app inside has a valid signature
+  from the same Developer ID team as the running app and replaces the running `kayet.app` with it
+  (asking for an administrator password if its folder isn't writable; the old app is restored if
+  that fails). kayet then restarts, asking about unsaved changes first; if that is cancelled, the
+  new version starts next time.
+- When kayet can't update itself (unsigned build, run from a disk image or a translocated copy,
+  no `.dmg` in the release) or the install fails, the release page is opened in the browser instead.
+- No HTTP client is bundled: the system's `curl`, `hdiutil`, `codesign` and `ditto` do the work.
+
 ## 5. Window & Layout
 
 ```
@@ -358,6 +375,9 @@ width = 1000
 height = 700
 x = 0
 y = 0
+
+[updates]
+check_automatically = true  # look for a new kayet release at launch and once a day (see 4.5)
 ```
 
 - Missing file or keys → defaults are used and written back.
@@ -365,7 +385,8 @@ y = 0
   saving it applies the changes immediately. Window geometry, the workspace path and the session
   are owned by the running app and are not reloaded.
 - The files open in tabs and the active one are restored on launch (those that still exist). They
-  and the recent files are kept in a `[session]` table (`open_files`, `last_file`, `recent_files`).
+  and the recent files are kept in a `[session]` table (`open_files`, `last_file`, `recent_files`),
+  together with a release the user chose to skip (`skipped_version`).
 
 ## 11. Architecture
 
@@ -382,6 +403,7 @@ kayet/
 │   │   ├── markdown.rs      # pulldown-cmark + ammonia rendering
 │   │   ├── export.rs        # PDF export (web view print operation)
 │   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
+│   │   ├── update.rs        # app update check and install (GitHub Releases)
 │   │   └── config.rs        # load/save ~/.kayet/config.toml
 │   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
 │   ├── Cargo.toml
@@ -431,12 +453,15 @@ kayet/
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |
 | `install_cli()`                | Install the `kayet` shell command             |
+| `check_for_updates()`          | Look for a new release and offer to install it |
+| `restart_app()`                | Restart into the update just installed        |
 
 ### Events (Rust → frontend)
 - `fs://changed` — file tree / open file changed on disk.
 - `theme://changed` — system appearance changed.
 - `open://requested` — a file / folder was opened from Finder, the `kayet` command or File → Open Recent.
 - `notice` — a non-blocking message to show (e.g. a recent file no longer exists).
+- `update://installed` — a new kayet version was installed; the frontend restarts into it.
 
 ### Security
 - Tauri capabilities restrict FS access to the workspace and files explicitly opened by the user.
