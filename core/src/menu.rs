@@ -12,6 +12,7 @@ const FILE: &str = "file";
 const RECENT: &str = "open-recent";
 const VIEW: &str = "view";
 const SYNTAX: &str = "toggle-syntax";
+const SPELL: &str = "toggle-spell-check";
 
 /// Menu id prefix of the File → Open Recent entries, followed by the entry's index.
 pub const RECENT_PREFIX: &str = "recent:";
@@ -117,7 +118,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     Menu::with_items(app, &[&app_menu, &file, &edit, &view, &window])
 }
 
-/// The View menu, which carries the Syntax Highlighting item updated by `set_syntax_item`.
+/// The View menu, which carries the Syntax Highlighting and Check Spelling items updated by
+/// `set_check_item`.
 fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
     let item =
         |id: &str, label: &str, accel: Option<&str>| MenuItem::with_id(app, id, label, true, accel);
@@ -154,6 +156,8 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 true,
                 None::<&str>,
             )?,
+            // Enabled by the frontend only while a prose file is open.
+            &CheckMenuItem::with_id(app, SPELL, "Check Spelling", false, false, None::<&str>)?,
             &sep()?,
             &item("zoom-in", "Zoom In", Some("CmdOrCtrl+="))?,
             &item("zoom-out", "Zoom Out", Some("CmdOrCtrl+-"))?,
@@ -164,12 +168,16 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
     )
 }
 
-/// Updates the View → Syntax Highlighting item.
-pub fn set_syntax_item<R: Runtime>(app: &AppHandle<R>, enabled: bool, checked: bool) {
+/// Updates a View menu check item: Syntax Highlighting (`toggle-syntax`) or Check Spelling
+/// (`toggle-spell-check`); other ids are ignored.
+pub fn set_check_item<R: Runtime>(app: &AppHandle<R>, id: &str, enabled: bool, checked: bool) {
+    if id != SYNTAX && id != SPELL {
+        return;
+    }
     let Some(view) = app.menu().and_then(|m| m.get(VIEW)) else {
         return;
     };
-    let Some(item) = view.as_submenu().and_then(|v| v.get(SYNTAX)) else {
+    let Some(item) = view.as_submenu().and_then(|v| v.get(id)) else {
         return;
     };
     if let Some(check) = item.as_check_menuitem() {

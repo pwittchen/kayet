@@ -27,6 +27,7 @@ struct Dropped {
 }
 
 fn main() {
+    chrome::enable_spell_checking();
     let config = config::load_from(&config::config_path());
     let (workspace, fell_back) = workspace::resolve(&config.workspace.path);
     let notice = fell_back.then(|| {
@@ -100,7 +101,7 @@ fn main() {
             commands::open_external,
             commands::render_markdown,
             commands::set_chrome_visible,
-            commands::set_syntax_menu,
+            commands::set_menu_check,
             commands::open_file_dialog,
             commands::save_file_dialog,
             commands::pick_workspace,

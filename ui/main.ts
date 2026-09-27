@@ -58,6 +58,7 @@ const els = {
   btnTheme: $<HTMLButtonElement>("btn-theme"),
   btnPreview: $<HTMLButtonElement>("btn-preview"),
   btnSyntax: $<HTMLButtonElement>("btn-syntax"),
+  btnSpell: $<HTMLButtonElement>("btn-spell"),
   btnCloseFile: $<HTMLButtonElement>("btn-close-file"),
   btnStatus: $<HTMLButtonElement>("btn-status"),
   edgeHandle: $("edge-handle"),
@@ -186,6 +187,7 @@ async function reloadConfig(): Promise<void> {
   applyZen();
   applyCursorBlink();
   updateLayout();
+  applySpellCheck();
   await applySyntax();
   if (hiddenChanged) await tree.refresh();
 }
@@ -415,7 +417,7 @@ async function applySyntax(): Promise<void> {
   const seq = ++syntaxSeq;
   const code = isCode(doc.path);
   const on = cfg.editor.syntax_highlighting;
-  void api.setSyntaxMenu(code, on).catch(() => {});
+  void api.setMenuCheck("toggle-syntax", code, on).catch(() => {});
   els.btnSyntax.hidden = !code;
   els.btnSyntax.classList.toggle("on", on);
   els.btnSyntax.setAttribute("aria-pressed", String(on));
@@ -431,10 +433,31 @@ function toggleSyntax(): void {
   void applySyntax();
 }
 
+/** Spell check for prose (Markdown, plain text, untitled — not code files), per the setting. */
+function applySpellCheck(): void {
+  const prose = !isCode(doc.path);
+  const on = cfg.editor.spell_check;
+  void api.setMenuCheck("toggle-spell-check", prose, on).catch(() => {});
+  els.btnSpell.hidden = !prose;
+  els.btnSpell.classList.toggle("on", on);
+  els.btnSpell.setAttribute("aria-pressed", String(on));
+  els.btnSpell.title = on ? "Spell check: on" : "Spell check: off";
+  editor.setSpellCheck(prose && on);
+}
+
+function toggleSpellCheck(): void {
+  if (isCode(doc.path)) return;
+  cfg.editor.spell_check = !cfg.editor.spell_check;
+  applySpellCheck();
+  saveConfig();
+  editor.focus();
+}
+
 function loadDoc(path: string | null, text: string): void {
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
+  applySpellCheck();
   editor.load(text, isMarkdown(path) ? "markdown" : null);
   void applySyntax().catch(showError);
   doc.saved = editor.doc;
@@ -449,6 +472,7 @@ function loadDoc(path: string | null, text: string): void {
 
 function setDocPath(path: string): void {
   doc.path = path;
+  applySpellCheck();
   void applySyntax().catch(showError);
   rememberLastFile(path);
   noteRecent(path);
@@ -751,6 +775,7 @@ const commands: Record<string, () => unknown> = {
   "toggle-zen": toggleZen,
   "toggle-cursor-blink": toggleCursorBlink,
   "toggle-syntax": toggleSyntax,
+  "toggle-spell-check": toggleSpellCheck,
   "zoom-in": () => zoom(1),
   "zoom-out": () => zoom(-1),
   "zoom-reset": () => zoom("reset"),
@@ -803,6 +828,10 @@ function paletteCommands(): PaletteItem[] {
     code && {
       id: "toggle-syntax",
       label: cfg.editor.syntax_highlighting ? "Disable Syntax Highlighting" : "Enable Syntax Highlighting",
+    },
+    !code && {
+      id: "toggle-spell-check",
+      label: cfg.editor.spell_check ? "Disable Spell Check" : "Enable Spell Check",
     },
     { id: "zoom-in", label: "Zoom In", shortcut: "⌘+" },
     { id: "zoom-out", label: "Zoom Out", shortcut: "⌘−" },
@@ -916,6 +945,7 @@ els.btnSettings.addEventListener("click", () => run("open-settings"));
 els.btnTheme.addEventListener("click", () => run("cycle-theme"));
 els.btnPreview.addEventListener("click", () => run("toggle-preview"));
 els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
+els.btnSpell.addEventListener("click", () => run("toggle-spell-check"));
 els.btnCloseFile.addEventListener("click", () => run("close-file"));
 els.btnStatus.addEventListener("click", () => void promptSave().catch(showError));
 els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
@@ -929,6 +959,7 @@ els.btnWorkspace.innerHTML = icons.folder;
 els.btnSettings.innerHTML = icons.settings;
 els.btnPreview.innerHTML = icons.eye;
 els.btnSyntax.innerHTML = icons.code;
+els.btnSpell.innerHTML = icons.spell;
 els.btnCloseFile.innerHTML = icons.closeFile;
 
 // Keep the default browser context menu out of the editor chrome.

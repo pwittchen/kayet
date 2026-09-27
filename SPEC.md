@@ -150,6 +150,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Cursor (I-beam) | Toggle text cursor blinking (on by default); when off the cursor stays still | — |
   | Folder | Change workspace | `⌘⇧O` |
   | Code | Toggle syntax highlighting — **only shown for code and data/config files** | — |
+  | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled) | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
@@ -158,7 +159,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
   `View → Command Palette…` or the title bar command icon.
 - Lists every command with its shortcut; context-only commands (Close File, preview,
-  syntax highlighting) appear only when they apply.
+  syntax highlighting, spell check) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
 
@@ -220,6 +221,12 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   using the same muted palette as preview code blocks. Grammars are loaded lazily per language.
 - `View → Syntax Highlighting` (or the title bar code icon) toggles highlighting for code files; the setting is global and
   persisted. The item is disabled for plain text and Markdown files.
+- Spell check for prose (Markdown, plain text, untitled — not code files), **off by default**:
+  `View → Check Spelling`, the title bar spell check icon or the command palette toggle it; the
+  setting is global and persisted. It uses the web view's built-in (macOS) spell checker:
+  misspelled words are underlined, and right-clicking one offers suggestions. Nothing is
+  corrected automatically. Existing text is checked right away — when spell check is turned on,
+  a file is opened and scrolling stops — not only once it is edited. The item is disabled for code files.
 - Standard shortcuts: `⌘S` save, `⌘⇧S` save as, `⌘Z/⌘⇧Z` undo/redo, `⌘F` find, `⌘R` replace,
   `⌘+/⌘-/⌘0` zoom.
 - Find / replace (Firefox-style): `⌘F` docks a slim bar across the bottom of the editor with the
@@ -306,6 +313,7 @@ max_line_width = 72
 autosave = false
 syntax_highlighting = true  # code and data/config files
 cursor = "blink"            # "blink" | "steady" (no blinking)
+spell_check = false         # prose files (Markdown, plain text, untitled)
 
 [window]
 width = 1000

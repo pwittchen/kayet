@@ -496,8 +496,8 @@ pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
 }
 
 #[tauri::command]
-pub fn set_syntax_menu(app: AppHandle, enabled: bool, checked: bool) {
-    crate::menu::set_syntax_item(&app, enabled, checked);
+pub fn set_menu_check(app: AppHandle, id: &str, enabled: bool, checked: bool) {
+    crate::menu::set_check_item(&app, id, enabled, checked);
 }
 
 #[tauri::command]

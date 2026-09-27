@@ -88,6 +88,8 @@ pub enum Cursor {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
+// Mirrors the `[editor]` table, where on/off settings are plain TOML booleans.
+#[allow(clippy::struct_excessive_bools)]
 pub struct EditorConfig {
     pub font_family: FontFamily,
     pub font_size: u32,
@@ -98,6 +100,8 @@ pub struct EditorConfig {
     /// Syntax highlighting for source code and data/config files (Markdown is always highlighted).
     pub syntax_highlighting: bool,
     pub cursor: Cursor,
+    /// Spell check for prose files (Markdown, plain text, untitled).
+    pub spell_check: bool,
 }
 
 impl Default for EditorConfig {
@@ -111,6 +115,7 @@ impl Default for EditorConfig {
             autosave: false,
             syntax_highlighting: true,
             cursor: Cursor::Blink,
+            spell_check: false,
         }
     }
 }

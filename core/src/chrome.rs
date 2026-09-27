@@ -1,4 +1,4 @@
-//! Native window chrome: showing/hiding the macOS traffic lights.
+//! Native window chrome: showing/hiding the macOS traffic lights, and web view spell checking.
 
 use tauri::WebviewWindow;
 
@@ -79,3 +79,28 @@ fn inset_traffic_lights(ns_window: &objc2_app_kit::NSWindow, x: f64, y: f64) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn set_traffic_lights_visible(_window: &WebviewWindow, _visible: bool) {}
+
+/// Lets the web view spell check: `WKWebView` only underlines misspelled words when the app's
+/// `WebContinuousSpellCheckingEnabled` default is set (normally toggled from an Edit → Spelling
+/// menu, which kayet has not), so it is registered here; the editor's `spellcheck` attribute then
+/// decides per document. Automatic spelling correction is turned off. Registered defaults are
+/// not persisted. Must run before the web view is created.
+#[cfg(target_os = "macos")]
+pub fn enable_spell_checking() {
+    use objc2::runtime::AnyObject;
+    use objc2_foundation::{NSDictionary, NSNumber, NSUserDefaults, ns_string};
+
+    let keys = [
+        ns_string!("WebContinuousSpellCheckingEnabled"),
+        ns_string!("WebAutomaticSpellingCorrectionEnabled"),
+    ];
+    let (yes, no) = (NSNumber::new_bool(true), NSNumber::new_bool(false));
+    let values: [&AnyObject; 2] = [yes.as_ref(), no.as_ref()];
+    let defaults = NSDictionary::from_slices(&keys, &values);
+    // SAFETY: the dictionary holds only property-list values (NSNumber) under NSString keys,
+    // which is what `registerDefaults:` requires.
+    unsafe { NSUserDefaults::standardUserDefaults().registerDefaults(&defaults) };
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn enable_spell_checking() {}

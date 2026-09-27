@@ -30,6 +30,7 @@ export const icons = {
   closeFile: svg(`<path d="M4 4l8 8M12 4l-8 8"/>`),
   chevronUp: svg(`<path d="M4 10l4-4 4 4"/>`),
   chevronDown: svg(`<path d="M4 6l4 4 4-4"/>`),
+  spell: svg(`<path d="M4.75 10 8 2.25 11.25 10M6 7.25h4M2 13.5q1.5-1.5 3 0t3 0 3 0 3 0"/>`),
   code: svg(`<path d="M5.25 4.5 1.75 8l3.5 3.5M10.75 4.5 14.25 8l-3.5 3.5M9 3 7 13"/>`),
   command: svg(
     `<path d="M6 6h4v4H6zM6 6V4.25A1.75 1.75 0 1 0 4.25 6H6zM10 6V4.25A1.75 1.75 0 1 1 11.75 6H10zM6 10v1.75A1.75 1.75 0 1 1 4.25 10H6zM10 10v1.75A1.75 1.75 0 1 0 11.75 10H10z"/>`,

@@ -234,7 +234,8 @@ body.resizing * {
 #btn-pin.on,
 #btn-zen.on,
 #btn-blink.on,
-#btn-syntax.on {
+#btn-syntax.on,
+#btn-spell.on {
   background: var(--pill);
 }
 
@@ -446,6 +447,11 @@ button:focus-visible {
   0%, 35% { opacity: 1; }
   55%, 85% { opacity: 0; }
   100% { opacity: 1; }
+}
+
+/* The spell check sweep moves the caret through the visible lines; keep it out of sight. */
+#editor .cm-editor.cm-spell-sweep .cm-cursorLayer {
+  visibility: hidden;
 }
 
 /* Cursor blink turned off: the caret stays still. */

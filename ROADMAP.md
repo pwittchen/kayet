@@ -36,6 +36,6 @@ items here move into the spec once they are picked up.
 - [x] **Command palette** (`⌘K`), Linear-style.
 - [x] **Word count / reading time** in the hover title bar.
 - [x] **Open Recent** menu.
-- [ ] **Spell check** for prose files (built into the web view; just needs enabling).
+- [x] **Spell check** for prose files (built into the web view; just needs enabling).
 - [ ] **Export** Markdown to HTML / PDF.
 - [ ] **Tabs / multiple windows.**
