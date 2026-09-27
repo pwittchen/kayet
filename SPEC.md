@@ -70,6 +70,10 @@ in CI or releases.
 - Files are opened from the file tree, the file finder (`⌘P`, see 5.5), workspace search (`⌘⇧F`, see 5.6), via `⌘O`, by drag-and-drop onto the window, from
   Finder or from the terminal (see 4.3).
 - Encoding: UTF-8. Line endings are preserved as found in the file.
+- `File → Open Recent` lists the last 10 opened files, most recent first, by name (files sharing a
+  name get their folder appended); files that no longer exist are dropped, `Clear Menu` empties the
+  list. Picking one opens it (asking to save unsaved changes first). The command palette offers the
+  same list as `Open Recent…` (without the open document). The settings file is not recorded.
 - New untitled document: `⌘N`. On first save, the default location is the current workspace.
 - `File → Close File` (`⌘W`) closes the open document (asking to save unsaved changes first) and
   leaves an empty untitled document; the closed file is no longer restored on next launch.
@@ -314,7 +318,8 @@ y = 0
 - The file can be edited in kayet itself (`kayet → Settings…`, `⌘,`, or the title bar sliders icon);
   saving it applies the changes immediately. Window geometry, the workspace path and the session
   are owned by the running app and are not reloaded.
-- Last opened file is restored on launch (if it still exists).
+- Last opened file is restored on launch (if it still exists). It and the recent files are kept in
+  a `[session]` table (`last_file`, `recent_files`).
 
 ## 11. Architecture
 
@@ -370,12 +375,15 @@ kayet/
 | `render_markdown(text, base)`  | Render sanitized HTML                         |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
 | `take_opened() -> Opened`      | File / folder kayet was launched to open      |
+| `add_recent(path)`             | Record an opened file for File → Open Recent  |
+| `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |
 | `install_cli()`                | Install the `kayet` shell command             |
 
 ### Events (Rust → frontend)
 - `fs://changed` — file tree / open file changed on disk.
 - `theme://changed` — system appearance changed.
-- `open://requested` — a file / folder was opened from Finder or the `kayet` command.
+- `open://requested` — a file / folder was opened from Finder, the `kayet` command or File → Open Recent.
+- `notice` — a non-blocking message to show (e.g. a recent file no longer exists).
 
 ### Security
 - Tauri capabilities restrict FS access to the workspace and files explicitly opened by the user.

@@ -25,7 +25,7 @@ export interface Config {
     cursor: "blink" | "steady";
   };
   window: { width: number; height: number; x: number; y: number };
-  session: { last_file?: string | null };
+  session: { last_file?: string | null; recent_files?: string[] };
 }
 
 export interface Entry {
@@ -77,6 +77,10 @@ export const api = {
   pickWorkspace: () => invoke<string | null>("pick_workspace"),
   takeNotice: () => invoke<string | null>("take_notice"),
   takeOpened: () => invoke<Opened>("take_opened"),
+  addRecent: (path: string) => invoke<void>("add_recent", { path }),
+  recentFiles: () => invoke<string[]>("recent_files"),
+  /** Allows opening a recent file picked in the palette; returns its canonical path. */
+  allowRecent: (path: string) => invoke<string>("allow_recent", { path }),
   installCli: () => invoke<string | null>("install_cli"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
   listFiles: () => invoke<string[]>("list_files"),

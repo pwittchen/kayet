@@ -148,6 +148,21 @@ pub struct SessionConfig {
     /// Last opened file, restored on launch if it still exists.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_file: Option<String>,
+    /// Recently opened files, most recent first (File → Open Recent).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub recent_files: Vec<String>,
+}
+
+/// How many files File → Open Recent remembers.
+pub const MAX_RECENT: usize = 10;
+
+impl SessionConfig {
+    /// Moves `path` to the front of the recent files, keeping at most [`MAX_RECENT`].
+    pub fn push_recent(&mut self, path: String) {
+        self.recent_files.retain(|p| *p != path);
+        self.recent_files.insert(0, path);
+        self.recent_files.truncate(MAX_RECENT);
+    }
 }
 
 /// `~/.kayet`
@@ -283,6 +298,34 @@ mod tests {
             fs::read_to_string(&path).unwrap(),
             "[ui]\ntheme = \"purple\"\n"
         );
+    }
+
+    #[test]
+    fn recent_files_are_deduplicated_and_capped() {
+        let mut session = SessionConfig::default();
+        for i in 0..12 {
+            session.push_recent(format!("/f{i}"));
+        }
+        session.push_recent("/f5".into());
+        assert_eq!(session.recent_files.len(), MAX_RECENT);
+        assert_eq!(session.recent_files[..3], ["/f5", "/f11", "/f10"]);
+        assert_eq!(
+            session.recent_files.iter().filter(|p| *p == "/f5").count(),
+            1
+        );
+    }
+
+    #[test]
+    fn recent_files_roundtrip() {
+        let mut cfg = Config::default();
+        assert!(
+            !toml::to_string_pretty(&cfg)
+                .unwrap()
+                .contains("recent_files")
+        );
+        cfg.session.push_recent("/a.md".into());
+        let text = toml::to_string_pretty(&cfg).unwrap();
+        assert_eq!(parse(&text).unwrap(), cfg);
     }
 
     #[test]

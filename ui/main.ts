@@ -190,6 +190,12 @@ async function reloadConfig(): Promise<void> {
   if (hiddenChanged) await tree.refresh();
 }
 
+/** Records an opened file for File → Open Recent (the settings file is left out). */
+function noteRecent(path: string | null): void {
+  if (!path || path === configPath) return;
+  void api.addRecent(path).catch((e) => console.error("add_recent failed", e));
+}
+
 function rememberLastFile(path: string | null): void {
   if ((cfg.session.last_file ?? null) === path) return;
   cfg.session.last_file = path;
@@ -434,6 +440,7 @@ function loadDoc(path: string | null, text: string): void {
   doc.saved = editor.doc;
   hideBanner();
   rememberLastFile(path);
+  noteRecent(path);
   updateAll();
   syncBackup();
   if (previewVisible()) void preview.render(text, path);
@@ -444,6 +451,7 @@ function setDocPath(path: string): void {
   doc.path = path;
   void applySyntax().catch(showError);
   rememberLastFile(path);
+  noteRecent(path);
   updateAll();
 }
 
@@ -748,6 +756,7 @@ const commands: Record<string, () => unknown> = {
   "zoom-reset": () => zoom("reset"),
   palette: togglePalette,
   "go-to-file": toggleFileFinder,
+  "open-recent": toggleRecent,
   "find-in-workspace": toggleWorkspaceSearch,
 };
 
@@ -762,6 +771,7 @@ function paletteCommands(): PaletteItem[] {
   const list: (PaletteItem | false)[] = [
     { id: "new", label: "New File", shortcut: "⌘N" },
     { id: "open", label: "Open File…", shortcut: "⌘O" },
+    { id: "open-recent", label: "Open Recent…" },
     { id: "go-to-file", label: "Go to File…", shortcut: "⌘P" },
     { id: "open-workspace", label: "Open Workspace…", shortcut: "⌘⇧O" },
     { id: "reset-workspace", label: "Reset to Default Workspace" },
@@ -839,6 +849,22 @@ async function toggleFileFinder(): Promise<void> {
     empty: files.length ? "No matching files" : "No files in the workspace",
     pick: (path) => void openFile(path),
     rank: (item, query) => fileScore(paths.get(item.id)!, query),
+  });
+}
+
+/** Recently opened files (but the open one), labeled by name with their folder as detail. */
+async function toggleRecent(): Promise<void> {
+  if (palette.showing === "recent") return palette.close();
+  const files = (await api.recentFiles()).filter((path) => path !== doc.path);
+  const items = files.map((path) => {
+    const dir = dirname(path);
+    return { id: path, label: basename(path), detail: relativeTo(workspace, dir) ?? dir };
+  });
+  await showPalette(items, {
+    kind: "recent",
+    placeholder: "Open recent…",
+    empty: files.length ? "No matching files" : "No recent files",
+    pick: (path) => void api.allowRecent(path).then(openFile).catch(showError),
   });
 }
 
@@ -952,6 +978,7 @@ async function init(): Promise<void> {
       systemTheme = e.payload === "dark" ? "dark" : "light";
       applyTheme();
     }),
+    listen<string>("notice", (e) => notify(e.payload)),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
     appWindow.onCloseRequested(async (event) => {

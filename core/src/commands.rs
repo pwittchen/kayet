@@ -127,6 +127,44 @@ impl AppState {
         }
     }
 
+    /// Recent files that still exist, most recent first; missing ones are forgotten.
+    fn recent_files(&self) -> Vec<String> {
+        let mut cfg = lock(&self.config);
+        let before = cfg.session.recent_files.len();
+        cfg.session.recent_files.retain(|p| Path::new(p).is_file());
+        let recent = cfg.session.recent_files.clone();
+        drop(cfg);
+        if recent.len() != before {
+            self.save_config();
+        }
+        recent
+    }
+
+    /// Rebuilds File → Open Recent.
+    pub fn refresh_recent_menu(&self, app: &AppHandle) {
+        crate::menu::set_recent_items(app, &self.recent_files());
+    }
+
+    /// Opens the `index`-th entry of File → Open Recent.
+    pub fn open_recent(&self, app: &AppHandle, index: usize) {
+        let path = lock(&self.config).session.recent_files.get(index).cloned();
+        if let Some(path) = path.map(PathBuf::from) {
+            if path.is_file() {
+                self.open_paths(app, &[path]);
+            } else {
+                let name = path.file_name().unwrap_or_default().to_string_lossy();
+                let _ = app.emit("notice", format!("“{name}” no longer exists."));
+            }
+        }
+        self.refresh_recent_menu(app);
+    }
+
+    pub fn clear_recent(&self, app: &AppHandle) {
+        lock(&self.config).session.recent_files.clear();
+        self.save_config();
+        self.refresh_recent_menu(app);
+    }
+
     pub fn save_config(&self) {
         let cfg = lock(&self.config).clone();
         if let Err(e) = config::save_to(&config::config_path(), &cfg) {
@@ -168,9 +206,11 @@ pub fn set_config(state: State<'_, AppState>, cfg: Config) {
         let mut current = lock(&state.config);
         let window = current.window.clone();
         let path = current.workspace.path.clone();
+        let recent = std::mem::take(&mut current.session.recent_files);
         *current = cfg;
         current.window = window;
         current.workspace.path = path;
+        current.session.recent_files = recent;
     }
     state.save_config();
 }
@@ -235,6 +275,32 @@ pub fn reset_workspace(app: AppHandle, state: State<'_, AppState>) -> CmdResult<
 #[tauri::command]
 pub fn take_notice(state: State<'_, AppState>) -> Option<String> {
     lock(&state.notice).take()
+}
+
+/// Records a file the user opened for File → Open Recent.
+#[tauri::command]
+pub fn add_recent(app: AppHandle, state: State<'_, AppState>, path: String) -> CmdResult<()> {
+    let p = state.authorize(&path)?;
+    lock(&state.config).session.push_recent(path_string(&p));
+    state.save_config();
+    state.refresh_recent_menu(&app);
+    Ok(())
+}
+
+/// Recent files that still exist, most recent first (for the command palette).
+#[tauri::command]
+pub fn recent_files(state: State<'_, AppState>) -> Vec<String> {
+    state.recent_files()
+}
+
+/// Allows opening a recent file picked in the command palette; returns its canonical path.
+#[tauri::command]
+pub fn allow_recent(app: AppHandle, state: State<'_, AppState>, path: String) -> CmdResult<String> {
+    let recent = lock(&state.config).session.recent_files.contains(&path);
+    if !recent || !Path::new(&path).is_file() {
+        return Err(format!("{path} is not a recent file"));
+    }
+    Ok(path_string(&state.allow(&app, Path::new(&path))))
 }
 
 /// Returns what kayet was launched to open (if anything); later requests arrive as events.

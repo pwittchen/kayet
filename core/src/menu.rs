@@ -1,11 +1,22 @@
 //! Application menu. Custom items are forwarded to the frontend as `menu` events carrying
 //! the item id; the frontend owns all editor actions.
 
+use std::path::Path;
 use tauri::menu::{AboutMetadata, CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
+
 use tauri::{AppHandle, Runtime};
 
+use crate::config::contract_tilde;
+
+const FILE: &str = "file";
+const RECENT: &str = "open-recent";
 const VIEW: &str = "view";
 const SYNTAX: &str = "toggle-syntax";
+
+/// Menu id prefix of the File → Open Recent entries, followed by the entry's index.
+pub const RECENT_PREFIX: &str = "recent:";
+/// Menu id of File → Open Recent → Clear Menu.
+pub const CLEAR_RECENT: &str = "clear-recent";
 
 pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let item =
@@ -42,13 +53,16 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         ],
     )?;
 
-    let file = Submenu::with_items(
+    let file = Submenu::with_id_and_items(
         app,
+        FILE,
         "File",
         true,
         &[
             &item("new", "New", Some("CmdOrCtrl+N"))?,
             &item("open", "Open…", Some("CmdOrCtrl+O"))?,
+            // Filled in by `set_recent_items`.
+            &Submenu::with_id(app, RECENT, "Open Recent", true)?,
             &item("go-to-file", "Go to File…", Some("CmdOrCtrl+P"))?,
             &item(
                 "open-workspace",
@@ -161,5 +175,83 @@ pub fn set_syntax_item<R: Runtime>(app: &AppHandle<R>, enabled: bool, checked: b
     if let Some(check) = item.as_check_menuitem() {
         let _ = check.set_enabled(enabled);
         let _ = check.set_checked(checked);
+    }
+}
+
+/// Fills File → Open Recent with `paths` (most recent first), followed by Clear Menu.
+pub fn set_recent_items<R: Runtime>(app: &AppHandle<R>, paths: &[String]) {
+    let Some(file) = app.menu().and_then(|m| m.get(FILE)) else {
+        return;
+    };
+    let Some(recent) = file
+        .as_submenu()
+        .and_then(|f| f.get(RECENT))
+        .and_then(|r| r.as_submenu().cloned())
+    else {
+        return;
+    };
+    if let Err(e) = fill_recent(app, &recent, paths) {
+        eprintln!("kayet: cannot update Open Recent: {e}");
+    }
+}
+
+fn fill_recent<R: Runtime>(
+    app: &AppHandle<R>,
+    recent: &Submenu<R>,
+    paths: &[String],
+) -> tauri::Result<()> {
+    for item in recent.items()? {
+        recent.remove(&item)?;
+    }
+    for (i, label) in recent_labels(paths).into_iter().enumerate() {
+        let id = format!("{RECENT_PREFIX}{i}");
+        recent.append(&MenuItem::with_id(app, id, label, true, None::<&str>)?)?;
+    }
+    if !paths.is_empty() {
+        recent.append(&PredefinedMenuItem::separator(app)?)?;
+    }
+    recent.append(&MenuItem::with_id(
+        app,
+        CLEAR_RECENT,
+        "Clear Menu",
+        !paths.is_empty(),
+        None::<&str>,
+    )?)
+}
+
+/// Labels recent files by name; files sharing a name get their folder appended.
+fn recent_labels(paths: &[String]) -> Vec<String> {
+    let name = |p: &String| {
+        Path::new(p)
+            .file_name()
+            .map_or_else(|| p.clone(), |n| n.to_string_lossy().into_owned())
+    };
+    let names: Vec<String> = paths.iter().map(name).collect();
+    paths
+        .iter()
+        .zip(&names)
+        .map(|(path, n)| {
+            if names.iter().filter(|m| *m == n).count() < 2 {
+                return n.clone();
+            }
+            match Path::new(path).parent() {
+                Some(dir) => format!("{n} — {}", contract_tilde(dir)),
+                None => n.clone(),
+            }
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recent_labels_disambiguate_same_names() {
+        let paths = ["/a/notes.md", "/b/todo.txt", "/c/notes.md"].map(String::from);
+        assert_eq!(
+            recent_labels(&paths),
+            ["notes.md — /a", "todo.txt", "notes.md — /c"]
+        );
     }
 }

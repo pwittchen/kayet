@@ -13,9 +13,10 @@ mod search;
 mod workspace;
 
 use serde::Serialize;
+use tauri::menu::MenuEvent;
 use tauri::{
-    DragDropEvent, Emitter, LogicalPosition, LogicalSize, Manager, Theme, WebviewWindow, Window,
-    WindowEvent,
+    AppHandle, DragDropEvent, Emitter, LogicalPosition, LogicalSize, Manager, Theme, WebviewWindow,
+    Window, WindowEvent,
 };
 
 use commands::AppState;
@@ -43,13 +44,12 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::new(config, &workspace, notice))
         .menu(menu::build)
-        .on_menu_event(|app, event| {
-            let _ = app.emit("menu", event.id().0.as_str());
-        })
+        .on_menu_event(|app, event| on_menu_event(app, &event))
         .setup(|app| {
             let state = app.state::<AppState>();
             state.save_config();
             state.start_watcher(app.handle());
+            state.refresh_recent_menu(app.handle());
             if let Some(last) = &state.config.lock().unwrap().session.last_file
                 && let Some(dir) = std::path::Path::new(last).parent()
             {
@@ -79,6 +79,9 @@ fn main() {
             commands::reset_workspace,
             commands::take_notice,
             commands::take_opened,
+            commands::add_recent,
+            commands::recent_files,
+            commands::allow_recent,
             commands::install_cli,
             commands::list_dir,
             commands::list_files,
@@ -124,6 +127,21 @@ fn main() {
             #[cfg(not(target_os = "macos"))]
             let _ = (app, event);
         });
+}
+
+/// Open Recent is handled here, as the backend owns the list; everything else goes to the frontend.
+fn on_menu_event(app: &AppHandle, event: &MenuEvent) {
+    let id = event.id().0.as_str();
+    let state = app.state::<AppState>();
+    if id == menu::CLEAR_RECENT {
+        state.clear_recent(app);
+    } else if let Some(index) = id.strip_prefix(menu::RECENT_PREFIX) {
+        if let Ok(index) = index.parse() {
+            state.open_recent(app, index);
+        }
+    } else {
+        let _ = app.emit("menu", id);
+    }
 }
 
 fn on_window_event(window: &Window, event: &WindowEvent) {
