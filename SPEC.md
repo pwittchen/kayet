@@ -158,7 +158,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 ### 5.4 Command palette
 - Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
   `View → Command Palette…` or the title bar command icon.
-- Lists every command with its shortcut; context-only commands (Close File, preview,
+- Lists every command with its shortcut; context-only commands (Close File, preview, export,
   syntax highlighting, spell check) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
@@ -264,6 +264,19 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Preview state (open/closed) is remembered per session; it closes automatically when a
   non-Markdown file is opened.
 
+### 8.1 Export
+- `File → Export as HTML…` / `Export as PDF…` (or the command palette) export the open Markdown
+  file as currently edited (unsaved changes included); the items are disabled for other files.
+  A native save dialog proposes `<file name>.html` / `.pdf` next to the document.
+- Both are rendered like the preview (same Markdown features and code highlighting), without
+  any app chrome. Relative links are kept as written.
+- **HTML:** a single self-contained page — the preview typography is inlined, local images are
+  embedded as `data:` URIs (images that can't be read link to the file instead), no scripts.
+  It follows the reader's light / dark appearance; its title is the first `#` heading, else the
+  file name.
+- **PDF:** written directly (no print dialog) through the web view's native print operation:
+  paginated with the system's default paper size, 0.75in margins, always light, code wrapped.
+
 ## 9. Theming
 
 - Three modes: **System** (default), **Light**, **Dark**.
@@ -342,6 +355,7 @@ kayet/
 │   │   ├── fs_ops.rs        # read/write/rename/create/trash
 │   │   ├── search.rs        # workspace-wide text search
 │   │   ├── markdown.rs      # pulldown-cmark + ammonia rendering
+│   │   ├── export.rs        # PDF export (web view print operation)
 │   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
 │   │   └── config.rs        # load/save ~/.kayet/config.toml
 │   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
@@ -356,6 +370,8 @@ kayet/
 │   ├── tree.ts              # file tree component
 │   ├── palette.ts           # command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F)
 │   ├── preview.ts           # preview pane
+│   ├── export.ts            # HTML / PDF export
+│   ├── markdown-body.css    # rendered Markdown typography (preview and exports)
 │   ├── chrome.ts            # hover reveal logic, title bar
 │   └── theme.css
 └── SPEC.md
@@ -381,6 +397,10 @@ kayet/
 | `rename(from, to)`             | Rename / move                                 |
 | `trash(path)`                  | Move to Trash (`trash` crate)                 |
 | `render_markdown(text, base)`  | Render sanitized HTML                         |
+| `render_export(text, base)`    | Render sanitized HTML for export (no line anchors, links as written) |
+| `read_image(path) -> bytes`    | An image the preview may show, to embed into an HTML export |
+| `export_pdf(path)`             | Print the document prepared for printing into a PDF |
+| `set_export_enabled(bool)`     | Enable / disable File → Export as HTML… / PDF… |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
 | `take_opened() -> Opened`      | File / folder kayet was launched to open      |
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
@@ -438,4 +458,3 @@ kayet/
 
 ## 15. Future Ideas (post-v1)
 - Tabs / multiple windows.
-- Export Markdown to PDF/HTML.

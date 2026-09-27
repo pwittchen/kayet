@@ -1,7 +1,7 @@
 // Markdown preview pane: debounced rendering in Rust, link handling, scroll sync.
 
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { api, dirname, isMarkdown } from "./api";
+import { api, dirname, isMarkdown, safeDecode } from "./api";
 
 const RENDER_DELAY_MS = 150;
 
@@ -110,13 +110,5 @@ export class Preview {
       if (isMarkdown(path)) this.cb.openFile(path);
       else void api.reveal(path).catch(() => {});
     }
-  }
-}
-
-function safeDecode(s: string): string {
-  try {
-    return decodeURIComponent(s);
-  } catch {
-    return s;
   }
 }

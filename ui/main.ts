@@ -1,6 +1,7 @@
 // kayet frontend entry point: wires the editor, file tree, preview and chrome together.
 
 import "./theme.css";
+import "./markdown-body.css";
 
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -22,6 +23,7 @@ import {
 import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
+import { exportHtml, exportPdf } from "./export";
 import { imageExtension } from "./markdown";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
@@ -66,6 +68,7 @@ const els = {
   bannerReload: $<HTMLButtonElement>("banner-reload"),
   bannerKeep: $<HTMLButtonElement>("banner-keep"),
   toast: $("toast"),
+  print: $("print"),
 };
 
 // ---- state ----
@@ -84,6 +87,7 @@ const doc = {
   savedOnce: false,
 };
 let previewOpen = false; // remembered per session only
+let exportEnabled: boolean | null = null;
 let autosaveTimer: number | undefined;
 let statsTimer: number | undefined;
 
@@ -248,6 +252,10 @@ function updateLayout(): void {
 
   const md = isMarkdown(doc.path);
   if (!md) previewOpen = false;
+  if (exportEnabled !== md) {
+    exportEnabled = md;
+    void api.setExportEnabled(md).catch(() => {});
+  }
   els.btnPreview.hidden = !md;
   els.btnPreview.classList.toggle("on", previewVisible());
   els.previewPane.hidden = !previewVisible();
@@ -553,6 +561,20 @@ async function saveAs(): Promise<boolean> {
   return true;
 }
 
+/** Exports the open Markdown file (as currently edited) to a file picked by the user. */
+async function exportDoc(format: "html" | "pdf"): Promise<void> {
+  const path = doc.path;
+  if (!path || !isMarkdown(path)) return;
+  const stem = basename(path).replace(/\.(md|markdown)$/i, "");
+  const out = await chrome.hold(api.saveFileDialog(dirname(path), `${stem}.${format}`));
+  if (!out) return;
+  if (out === path) return notify("Choose another file name for the export");
+  const text = editor.text();
+  if (format === "html") await exportHtml(text, path, out, stem);
+  else await chrome.hold(exportPdf(text, path, out, els.print));
+  notify(`Exported ${basename(out)}`);
+}
+
 function scheduleAutosave(): void {
   window.clearTimeout(autosaveTimer);
   if (!cfg?.editor.autosave || !doc.path) return;
@@ -759,6 +781,8 @@ const commands: Record<string, () => unknown> = {
   "reset-workspace": resetWorkspace,
   save,
   "save-as": saveAs,
+  "export-html": () => exportDoc("html"),
+  "export-pdf": () => exportDoc("pdf"),
   "close-file": closeFile,
   close: () => appWindow.close(),
   quit: () => appWindow.close(),
@@ -802,6 +826,8 @@ function paletteCommands(): PaletteItem[] {
     { id: "reset-workspace", label: "Reset to Default Workspace" },
     { id: "save", label: "Save", shortcut: "⌘S" },
     { id: "save-as", label: "Save As…", shortcut: "⌘⇧S" },
+    md && { id: "export-html", label: "Export as HTML…" },
+    md && { id: "export-pdf", label: "Export as PDF…" },
     !!doc.path && { id: "close-file", label: "Close File", shortcut: "⌘W" },
     { id: "undo", label: "Undo", shortcut: "⌘Z" },
     { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },

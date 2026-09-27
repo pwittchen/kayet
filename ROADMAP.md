@@ -37,5 +37,5 @@ items here move into the spec once they are picked up.
 - [x] **Word count / reading time** in the hover title bar.
 - [x] **Open Recent** menu.
 - [x] **Spell check** for prose files (built into the web view; just needs enabling).
-- [ ] **Export** Markdown to HTML / PDF.
+- [x] **Export** Markdown to HTML / PDF.
 - [ ] **Tabs / multiple windows.**

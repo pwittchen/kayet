@@ -5,6 +5,7 @@ mod chrome;
 mod cli;
 mod commands;
 mod config;
+mod export;
 mod fs_ops;
 mod markdown;
 mod menu;
@@ -70,49 +71,7 @@ fn main() {
             Ok(())
         })
         .on_window_event(on_window_event)
-        .invoke_handler(tauri::generate_handler![
-            commands::get_config,
-            commands::set_config,
-            commands::config_file,
-            commands::reload_config,
-            commands::get_workspace,
-            commands::set_workspace,
-            commands::reset_workspace,
-            commands::take_notice,
-            commands::take_opened,
-            commands::add_recent,
-            commands::recent_files,
-            commands::allow_recent,
-            commands::install_cli,
-            commands::list_dir,
-            commands::list_files,
-            commands::search_workspace,
-            commands::read_file,
-            commands::write_file,
-            commands::save_image,
-            commands::write_recovery,
-            commands::clear_recovery,
-            commands::load_recovery,
-            commands::create_file,
-            commands::create_dir,
-            commands::rename,
-            commands::trash,
-            commands::reveal,
-            commands::open_external,
-            commands::render_markdown,
-            commands::set_chrome_visible,
-            commands::set_menu_check,
-            commands::open_file_dialog,
-            commands::save_file_dialog,
-            commands::pick_workspace,
-            commands::confirm_unsaved,
-            commands::confirm_save,
-            commands::confirm_restore,
-            commands::confirm_trash,
-            commands::show_context_menu,
-            commands::bench_dir,
-            commands::bench_report,
-        ])
+        .invoke_handler(invoke_handler())
         .build(tauri::generate_context!())
         .expect("error while building kayet")
         .run(|app, event| {
@@ -128,6 +87,57 @@ fn main() {
             #[cfg(not(target_os = "macos"))]
             let _ = (app, event);
         });
+}
+
+/// The frontend's API (see `commands`).
+fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'static {
+    tauri::generate_handler![
+        commands::get_config,
+        commands::set_config,
+        commands::config_file,
+        commands::reload_config,
+        commands::get_workspace,
+        commands::set_workspace,
+        commands::reset_workspace,
+        commands::take_notice,
+        commands::take_opened,
+        commands::add_recent,
+        commands::recent_files,
+        commands::allow_recent,
+        commands::install_cli,
+        commands::list_dir,
+        commands::list_files,
+        commands::search_workspace,
+        commands::read_file,
+        commands::write_file,
+        commands::save_image,
+        commands::write_recovery,
+        commands::clear_recovery,
+        commands::load_recovery,
+        commands::create_file,
+        commands::create_dir,
+        commands::rename,
+        commands::trash,
+        commands::reveal,
+        commands::open_external,
+        commands::render_markdown,
+        commands::render_export,
+        commands::read_image,
+        commands::export_pdf,
+        commands::set_chrome_visible,
+        commands::set_menu_check,
+        commands::set_export_enabled,
+        commands::open_file_dialog,
+        commands::save_file_dialog,
+        commands::pick_workspace,
+        commands::confirm_unsaved,
+        commands::confirm_save,
+        commands::confirm_restore,
+        commands::confirm_trash,
+        commands::show_context_menu,
+        commands::bench_dir,
+        commands::bench_report,
+    ]
 }
 
 /// Open Recent is handled here, as the backend owns the list; everything else goes to the frontend.

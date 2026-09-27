@@ -13,6 +13,8 @@ const RECENT: &str = "open-recent";
 const VIEW: &str = "view";
 const SYNTAX: &str = "toggle-syntax";
 const SPELL: &str = "toggle-spell-check";
+const EXPORT_HTML: &str = "export-html";
+const EXPORT_PDF: &str = "export-pdf";
 
 /// Menu id prefix of the File → Open Recent entries, followed by the entry's index.
 pub const RECENT_PREFIX: &str = "recent:";
@@ -74,6 +76,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &sep()?,
             &item("save", "Save", Some("CmdOrCtrl+S"))?,
             &item("save-as", "Save As…", Some("CmdOrCtrl+Shift+S"))?,
+            // Enabled by the frontend only while a Markdown file is open.
+            &MenuItem::with_id(app, EXPORT_HTML, "Export as HTML…", false, None::<&str>)?,
+            &MenuItem::with_id(app, EXPORT_PDF, "Export as PDF…", false, None::<&str>)?,
             &sep()?,
             &item("close-file", "Close File", Some("CmdOrCtrl+W"))?,
             &item("close", "Close Window", Some("CmdOrCtrl+Shift+W"))?,
@@ -183,6 +188,21 @@ pub fn set_check_item<R: Runtime>(app: &AppHandle<R>, id: &str, enabled: bool, c
     if let Some(check) = item.as_check_menuitem() {
         let _ = check.set_enabled(enabled);
         let _ = check.set_checked(checked);
+    }
+}
+
+/// Enables or disables File → Export as HTML… / Export as PDF….
+pub fn set_export_enabled<R: Runtime>(app: &AppHandle<R>, enabled: bool) {
+    let Some(file) = app.menu().and_then(|m| m.get(FILE)) else {
+        return;
+    };
+    let Some(file) = file.as_submenu() else {
+        return;
+    };
+    for id in [EXPORT_HTML, EXPORT_PDF] {
+        if let Some(item) = file.get(id).and_then(|i| i.as_menuitem().cloned()) {
+            let _ = item.set_enabled(enabled);
+        }
     }
 }
 

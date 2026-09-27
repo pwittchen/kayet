@@ -4,6 +4,9 @@
 //! source line) so the preview can approximately sync its scroll position with the editor.
 //! Relative image and link targets are resolved against `base` into absolute file paths;
 //! the frontend turns those into asset URLs / in-editor navigation.
+//!
+//! Exports (`render_export`) get neither the anchors nor resolved links, which stay as written
+//! so they keep working next to the exported file; images are still resolved, to be embedded.
 
 use std::path::Path;
 use std::sync::LazyLock;
@@ -31,6 +34,21 @@ static SANITIZER: LazyLock<ammonia::Builder<'static>> = LazyLock::new(|| {
 });
 
 pub fn render(text: &str, base: Option<&Path>) -> String {
+    render_with(text, base, Mode::Preview)
+}
+
+/// Renders a document for export: no line anchors, relative links left as written.
+pub fn render_export(text: &str, base: Option<&Path>) -> String {
+    render_with(text, base, Mode::Export)
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Mode {
+    Preview,
+    Export,
+}
+
+fn render_with(text: &str, base: Option<&Path>, mode: Mode) -> String {
     let opts = Options::ENABLE_TABLES
         | Options::ENABLE_TASKLISTS
         | Options::ENABLE_STRIKETHROUGH
@@ -44,7 +62,8 @@ pub fn render(text: &str, base: Option<&Path>) -> String {
     let mut events = Vec::new();
     let mut depth = 0usize;
     for (event, range) in Parser::new_ext(text, opts).into_offset_iter() {
-        let top_level_block = depth == 0 && matches!(event, Event::Start(_) | Event::Rule);
+        let top_level_block =
+            mode == Mode::Preview && depth == 0 && matches!(event, Event::Start(_) | Event::Rule);
         if top_level_block {
             let anchor = format!("<span data-line=\"{}\"></span>", line_of(range.start));
             events.push(Event::Html(anchor.into()));
@@ -52,7 +71,7 @@ pub fn render(text: &str, base: Option<&Path>) -> String {
         let event = match event {
             Event::Start(tag) => {
                 depth += 1;
-                Event::Start(resolve_tag(tag, base))
+                Event::Start(resolve_tag(tag, base, mode))
             }
             Event::End(tag) => {
                 depth = depth.saturating_sub(1);
@@ -68,7 +87,7 @@ pub fn render(text: &str, base: Option<&Path>) -> String {
     SANITIZER.clean(&out).to_string()
 }
 
-fn resolve_tag<'a>(tag: Tag<'a>, base: Option<&Path>) -> Tag<'a> {
+fn resolve_tag<'a>(tag: Tag<'a>, base: Option<&Path>, mode: Mode) -> Tag<'a> {
     let Some(base) = base else { return tag };
     match tag {
         Tag::Image {
@@ -87,7 +106,7 @@ fn resolve_tag<'a>(tag: Tag<'a>, base: Option<&Path>) -> Tag<'a> {
             dest_url,
             title,
             id,
-        } => Tag::Link {
+        } if mode == Mode::Preview => Tag::Link {
             link_type,
             dest_url: resolve_url(dest_url, base),
             title,
@@ -208,6 +227,17 @@ mod tests {
         assert!(html.contains("href=\"/notes/other.md#top\""), "{html}");
         assert!(html.contains("href=\"https://example.com\""));
         assert!(html.contains("href=\"#frag\""));
+    }
+
+    #[test]
+    fn export_resolves_images_only_and_has_no_anchors() {
+        let html = render_export(
+            "# T\n\n![i](img/a.png) [n](other.md)\n",
+            Some(Path::new("/notes")),
+        );
+        assert!(!html.contains("data-line"), "{html}");
+        assert!(html.contains("src=\"/notes/img/a.png\""), "{html}");
+        assert!(html.contains("href=\"other.md\""), "{html}");
     }
 
     #[test]

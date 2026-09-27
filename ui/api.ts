@@ -109,6 +109,15 @@ export const api = {
   openExternal: (url: string) => invoke<void>("open_external", { url }),
   renderMarkdown: (text: string, base: string | null) =>
     invoke<string>("render_markdown", { text, base }),
+  /** Renders for export: no scroll-sync anchors, relative links left as written. */
+  renderExport: (text: string, base: string | null) =>
+    invoke<string>("render_export", { text, base }),
+  /** Bytes of an image the preview may show, to embed into an HTML export. */
+  readImage: (path: string) => invoke<ArrayBuffer>("read_image", { path }),
+  /** Prints the document prepared in `#print` into a PDF at `path`. */
+  exportPdf: (path: string) => invoke<void>("export_pdf", { path }),
+  /** Enables File → Export as HTML… / PDF…. */
+  setExportEnabled: (enabled: boolean) => invoke<void>("set_export_enabled", { enabled }),
   setChromeVisible: (visible: boolean) =>
     invoke<void>("set_chrome_visible", { visible }),
   /** Updates the View menu's Syntax Highlighting or Check Spelling item. */
@@ -143,6 +152,14 @@ export function dirname(path: string): string {
 
 export function join(dir: string, name: string): string {
   return dir.endsWith("/") ? dir + name : `${dir}/${name}`;
+}
+
+export function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
 }
 
 export function isMarkdown(path: string | null): boolean {

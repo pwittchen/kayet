@@ -489,6 +489,48 @@ pub async fn render_markdown(text: String, base: Option<String>) -> String {
     markdown::render(&text, base.as_deref().map(Path::new))
 }
 
+/// Renders sanitized HTML for export (see `markdown::render_export`).
+#[tauri::command]
+pub async fn render_export(text: String, base: Option<String>) -> String {
+    markdown::render_export(&text, base.as_deref().map(Path::new))
+}
+
+/// Largest image embedded into an HTML export.
+const MAX_EMBEDDED_IMAGE: u64 = 20 * 1024 * 1024;
+
+/// Reads an image the preview may show (so it can be embedded into an HTML export) as raw bytes.
+#[tauri::command]
+pub async fn read_image(app: AppHandle, path: String) -> CmdResult<tauri::ipc::Response> {
+    let p = canonical(Path::new(&path));
+    let image = p.extension().is_some_and(|ext| {
+        let ext = ext.to_string_lossy().to_ascii_lowercase();
+        [
+            "png", "jpg", "jpeg", "gif", "webp", "svg", "avif", "bmp", "ico",
+        ]
+        .contains(&ext.as_str())
+    });
+    if !image || !app.asset_protocol_scope().is_allowed(&p) {
+        return Err(format!("access denied: {}", p.display()));
+    }
+    if std::fs::metadata(&p).map_err(err)?.len() > MAX_EMBEDDED_IMAGE {
+        return Err(format!("{} is too large to embed", p.display()));
+    }
+    Ok(tauri::ipc::Response::new(std::fs::read(&p).map_err(err)?))
+}
+
+/// Prints the rendered document the frontend prepared for printing into a PDF at `path`.
+#[tauri::command]
+pub async fn export_pdf(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> CmdResult<()> {
+    let p = state.authorize(&path)?;
+    tauri::async_runtime::spawn_blocking(move || crate::export::pdf(&window, &p))
+        .await
+        .map_err(err)?
+}
+
 /// Shows or hides the native traffic lights together with the hover title bar.
 #[tauri::command]
 pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
@@ -498,6 +540,11 @@ pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
 #[tauri::command]
 pub fn set_menu_check(app: AppHandle, id: &str, enabled: bool, checked: bool) {
     crate::menu::set_check_item(&app, id, enabled, checked);
+}
+
+#[tauri::command]
+pub fn set_export_enabled(app: AppHandle, enabled: bool) {
+    crate::menu::set_export_enabled(&app, enabled);
 }
 
 #[tauri::command]
