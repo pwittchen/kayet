@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod chrome;
+mod cli;
 mod commands;
 mod config;
 mod fs_ops;
@@ -98,6 +99,8 @@ fn main() {
             commands::set_workspace,
             commands::reset_workspace,
             commands::take_notice,
+            commands::take_opened,
+            commands::install_cli,
             commands::list_dir,
             commands::read_file,
             commands::write_file,
@@ -118,8 +121,21 @@ fn main() {
             commands::confirm_trash,
             commands::show_context_menu,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running kayet");
+        .build(tauri::generate_context!())
+        .expect("error while building kayet")
+        .run(|app, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Opened { urls } = event {
+                let paths: Vec<_> = urls.iter().filter_map(|u| u.to_file_path().ok()).collect();
+                app.state::<AppState>().open_paths(app, &paths);
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.unminimize();
+                    let _ = window.set_focus();
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }
 
 fn restore_geometry(window: &WebviewWindow, state: &AppState) {

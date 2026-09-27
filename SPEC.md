@@ -67,11 +67,24 @@ in CI or releases.
 
 ### 4.2 Document
 - One active document at a time.
-- Files are opened from the file tree, via `⌘O`, or by drag-and-drop onto the window.
+- Files are opened from the file tree, via `⌘O`, by drag-and-drop onto the window, from
+  Finder or from the terminal (see 4.3).
 - Encoding: UTF-8. Line endings are preserved as found in the file.
 - New untitled document: `⌘N`. On first save, the default location is the current workspace.
 - `File → Close File` (`⌘W`) closes the open document (asking to save unsaved changes first) and
   leaves an empty untitled document; the closed file is no longer restored on next launch.
+
+### 4.3 Finder & terminal
+- kayet registers as an editor for `.md` / `.markdown` and `.txt` files, so they appear in
+  Finder's "Open With" and open on double-click once kayet is the default app for them.
+- `kayet` shell command: `kayet [file | folder]` opens a file (created empty if missing) or
+  makes a folder the workspace, in the running instance or by launching kayet.
+  - Installed via `kayet → Install ‘kayet’ Command` (or the command palette), which
+    symlinks the launcher script bundled in `kayet.app/Contents/Resources/kayet` to
+    `/usr/local/bin/kayet`, asking for an administrator password if needed.
+- A file opened this way replaces the current document (asking to save unsaved changes
+  first) and wins over the restored last file at launch. Only one document is shown, so
+  when several files are given only the first one is opened.
 
 ## 5. Window & Layout
 
@@ -261,12 +274,14 @@ y = 0
 kayet/
 ├── core/
 │   ├── src/
-│   │   ├── main.rs          # Tauri bootstrap, window setup
+│   │   ├── main.rs          # Tauri bootstrap, window setup, Finder "open" events
+│   │   ├── cli.rs           # installs the `kayet` shell command
 │   │   ├── commands.rs      # #[tauri::command] handlers
 │   │   ├── workspace.rs     # workspace resolution, tree listing, watcher
 │   │   ├── fs_ops.rs        # read/write/rename/create/trash
 │   │   ├── markdown.rs      # pulldown-cmark + ammonia rendering
 │   │   └── config.rs        # load/save ~/.kayet/config.toml
+│   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
 │   ├── Cargo.toml
 │   └── tauri.conf.json
 ├── ui/
@@ -297,10 +312,13 @@ kayet/
 | `trash(path)`                  | Move to Trash (`trash` crate)                 |
 | `render_markdown(text, base)`  | Render sanitized HTML                         |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
+| `take_opened() -> Opened`      | File / folder kayet was launched to open      |
+| `install_cli()`                | Install the `kayet` shell command             |
 
 ### Events (Rust → frontend)
 - `fs://changed` — file tree / open file changed on disk.
 - `theme://changed` — system appearance changed.
+- `open://requested` — a file / folder was opened from Finder or the `kayet` command.
 
 ### Security
 - Tauri capabilities restrict FS access to the workspace and files explicitly opened by the user.

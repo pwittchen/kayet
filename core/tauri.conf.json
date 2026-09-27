@@ -59,6 +59,23 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": { "cli/kayet": "kayet" },
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown"],
+        "name": "Markdown",
+        "description": "Markdown document",
+        "role": "Editor",
+        "contentTypes": ["net.daringfireball.markdown"]
+      },
+      {
+        "ext": ["txt"],
+        "name": "Plain Text",
+        "description": "Plain text document",
+        "role": "Editor",
+        "contentTypes": ["public.plain-text"]
+      }
+    ],
     "macOS": {
       "minimumSystemVersion": "11.0"
     }

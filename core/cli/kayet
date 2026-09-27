@@ -1,0 +1,25 @@
+#!/bin/sh
+# kayet command-line launcher, bundled in kayet.app/Contents/Resources and symlinked into
+# PATH by "Install 'kayet' Command". Opens files (or a folder as the workspace) in the
+# running app, launching it if needed. Missing files are created empty.
+
+case "$1" in
+  -h | --help)
+    echo "usage: kayet [file | folder]"
+    exit 0
+    ;;
+esac
+
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    /*) path="$arg" ;;
+    *) path="$PWD/$arg" ;;
+  esac
+  if [ ! -e "$path" ]; then
+    touch "$path" || exit 1
+  fi
+  set -- "$@" "$path"
+done
+
+exec open -b com.github.pwittchen.kayet "$@"

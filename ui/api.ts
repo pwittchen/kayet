@@ -33,6 +33,12 @@ export interface Entry {
   is_dir: boolean;
 }
 
+/** A file and/or folder kayet was asked to open from Finder or the `kayet` command. */
+export interface Opened {
+  file: string | null;
+  folder: string | null;
+}
+
 /** A context menu item; `id: null` renders a separator. */
 export interface MenuItemSpec {
   id: string | null;
@@ -49,6 +55,8 @@ export const api = {
   resetWorkspace: () => invoke<string>("reset_workspace"),
   pickWorkspace: () => invoke<string | null>("pick_workspace"),
   takeNotice: () => invoke<string | null>("take_notice"),
+  takeOpened: () => invoke<Opened>("take_opened"),
+  installCli: () => invoke<string | null>("install_cli"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
   readFile: (path: string) => invoke<string>("read_file", { path }),
   writeFile: (path: string, contents: string) =>

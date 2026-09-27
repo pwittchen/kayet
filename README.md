@@ -14,6 +14,17 @@ the minimalistic text editor for macOS
   <img src="screenshot.png" alt="kayet screenshot">
 </p>
 
+## Opening files from the terminal
+
+Run **kayet → Install ‘kayet’ Command** once (also in the command palette, `⌘K`), then:
+
+```sh
+kayet notes.md     # open a file (created if missing)
+kayet .            # use the current folder as the workspace
+```
+
+`.md` and `.txt` files can also be opened from Finder via **Open With → kayet**.
+
 See [SPEC.md](SPEC.md) for the full specification and [ROADMAP.md](ROADMAP.md) for planned work.
 
 ## Development

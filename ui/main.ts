@@ -6,7 +6,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Text } from "@codemirror/state";
 
-import { api, basename, Config, dirname, isMarkdown, isWithin, relativeTo, ThemeMode } from "./api";
+import { api, basename, Config, dirname, isMarkdown, isWithin, Opened, relativeTo, ThemeMode } from "./api";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings } from "./editor";
 import { icons } from "./icons";
@@ -530,6 +530,20 @@ async function changeWorkspace(): Promise<void> {
   if (!cfg.ui.sidebar_visible) await toggleTree();
 }
 
+/** Handles a file / folder opened from Finder or the `kayet` command while running. */
+async function openRequested(req: Opened): Promise<void> {
+  if (req.folder) {
+    await applyWorkspace(await api.setWorkspace(req.folder).catch(showError));
+    if (!cfg.ui.sidebar_visible) await toggleTree();
+  }
+  if (req.file) await openFile(req.file);
+}
+
+async function installCli(): Promise<void> {
+  const link = await chrome.hold(api.installCli());
+  if (link) notify(`Installed ${link} — open files from a terminal with kayet <file>.`);
+}
+
 async function resetWorkspace(): Promise<void> {
   await applyWorkspace(await api.resetWorkspace().catch(showError));
 }
@@ -578,6 +592,7 @@ const commands: Record<string, () => unknown> = {
   "toggle-tree": toggleTree,
   "toggle-preview": togglePreview,
   "open-settings": openSettings,
+  "install-cli": installCli,
   "cycle-theme": cycleTheme,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
@@ -632,6 +647,7 @@ function paletteCommands(): PaletteCommand[] {
     { id: "zoom-out", label: "Zoom Out", shortcut: "⌘−" },
     { id: "zoom-reset", label: "Actual Size", shortcut: "⌘0" },
     { id: "open-settings", label: "Settings…", shortcut: "⌘," },
+    { id: "install-cli", label: "Install ‘kayet’ Command" },
     { id: "close", label: "Close Window", shortcut: "⌘⇧W" },
     { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
   ];
@@ -713,19 +729,27 @@ async function init(): Promise<void> {
       applyTheme();
     }),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
+    listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
     appWindow.onCloseRequested(async (event) => {
       if (!(await confirmDiscard())) event.preventDefault();
     }),
   ]);
 
+  // Launched from Finder or the `kayet` command: that file / folder wins over the session.
+  const opened = await api.takeOpened();
+  if (opened.folder) {
+    workspace = await api.setWorkspace(opened.folder).catch(() => workspace);
+  }
   await tree.setRoot(workspace);
+  if (opened.folder && !cfg.ui.sidebar_visible) await toggleTree();
 
-  const last = cfg.session.last_file;
-  if (last) {
+  const start = opened.file ?? cfg.session.last_file;
+  if (start) {
     try {
-      loadDoc(last, await api.readFile(last));
-    } catch {
-      rememberLastFile(null);
+      loadDoc(start, await api.readFile(start));
+    } catch (e) {
+      if (start === cfg.session.last_file) rememberLastFile(null);
+      else notify(String(e));
       loadDoc(null, "");
     }
   } else {

@@ -1,7 +1,8 @@
 //! `#[tauri::command]` handlers — the frontend's API.
 //!
 //! File system access is restricted to the workspace and to files the user explicitly
-//! picked (open/save dialogs, drag-and-drop, the restored last file).
+//! picked (open/save dialogs, drag-and-drop, Finder / the `kayet` command, the restored
+//! last file).
 
 // Tauri commands must take their arguments (State, AppHandle, WebviewWindow, …) by value.
 #![allow(clippy::needless_pass_by_value)]
@@ -10,9 +11,9 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::{AppHandle, Manager, State, WebviewWindow};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult};
 
 use crate::config::{self, Config};
@@ -30,6 +31,22 @@ pub struct AppState {
     pub allowed: Mutex<HashSet<PathBuf>>,
     /// Non-blocking notice shown once by the frontend (e.g. workspace fallback).
     pub notice: Mutex<Option<String>>,
+    pub opened: Mutex<OpenQueue>,
+}
+
+/// A file and/or folder the user opened kayet with from Finder or the `kayet` command.
+#[derive(Clone, Default, Serialize)]
+pub struct Opened {
+    file: Option<String>,
+    folder: Option<String>,
+}
+
+/// Open requests arriving before the frontend is ready are held until it takes them at
+/// startup (`take_opened`); later ones are emitted as `open://requested`.
+#[derive(Default)]
+pub struct OpenQueue {
+    ready: bool,
+    pending: Opened,
 }
 
 fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -56,6 +73,7 @@ impl AppState {
             watcher: Mutex::new(None),
             allowed: Mutex::new(allowed),
             notice: Mutex::new(notice),
+            opened: Mutex::default(),
         }
     }
 
@@ -76,6 +94,32 @@ impl AppState {
             let _ = app.asset_protocol_scope().allow_directory(dir, true);
         }
         p
+    }
+
+    /// Handles files / folders opened from Finder or the `kayet` command. kayet shows one
+    /// document at a time, so the first file is opened and the last folder becomes the
+    /// workspace.
+    pub fn open_paths(&self, app: &AppHandle, paths: &[PathBuf]) {
+        let mut request = Opened::default();
+        for p in paths {
+            if p.is_dir() {
+                request.folder = Some(path_string(&self.allow(app, p)));
+            } else if p.is_file() && request.file.is_none() {
+                request.file = Some(path_string(&self.allow(app, p)));
+            }
+        }
+        if request.file.is_none() && request.folder.is_none() {
+            return;
+        }
+        let mut queue = lock(&self.opened);
+        if queue.ready {
+            drop(queue);
+            let _ = app.emit("open://requested", request);
+        } else {
+            let pending = &mut queue.pending;
+            pending.file = request.file.or(pending.file.take());
+            pending.folder = request.folder.or(pending.folder.take());
+        }
     }
 
     pub fn save_config(&self) {
@@ -182,6 +226,21 @@ pub fn reset_workspace(app: AppHandle, state: State<'_, AppState>) -> CmdResult<
 #[tauri::command]
 pub fn take_notice(state: State<'_, AppState>) -> Option<String> {
     lock(&state.notice).take()
+}
+
+/// Returns what kayet was launched to open (if anything); later requests arrive as events.
+#[tauri::command]
+pub fn take_opened(state: State<'_, AppState>) -> Opened {
+    let mut queue = lock(&state.opened);
+    queue.ready = true;
+    std::mem::take(&mut queue.pending)
+}
+
+/// Installs the `kayet` shell command. Returns its path, or None if the user cancelled.
+#[tauri::command]
+pub async fn install_cli(app: AppHandle) -> CmdResult<Option<String>> {
+    let script = app.path().resource_dir().map_err(err)?.join("kayet");
+    Ok(crate::cli::install(&script)?.then(|| crate::cli::LINK.to_string()))
 }
 
 #[tauri::command]
