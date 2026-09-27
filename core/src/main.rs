@@ -52,10 +52,10 @@ fn main() {
             state.save_config();
             state.start_watcher(app.handle());
             state.refresh_recent_menu(app.handle());
-            if let Some(last) = &state.config.lock().unwrap().session.last_file
-                && let Some(dir) = std::path::Path::new(last).parent()
-            {
-                let _ = app.asset_protocol_scope().allow_directory(dir, true);
+            for file in state.config.lock().unwrap().session.restored_files() {
+                if let Some(dir) = std::path::Path::new(file).parent() {
+                    let _ = app.asset_protocol_scope().allow_directory(dir, true);
+                }
             }
 
             let window = app

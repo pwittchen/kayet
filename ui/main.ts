@@ -5,7 +5,7 @@ import "./markdown-body.css";
 
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { Text } from "@codemirror/state";
+import { Text } from "@codemirror/state";
 
 import {
   api,
@@ -22,7 +22,7 @@ import {
 } from "./api";
 import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
-import { Editor, EditorSettings } from "./editor";
+import { Editor, EditorSettings, EditorSnapshot } from "./editor";
 import { exportHtml, exportPdf } from "./export";
 import { imageExtension } from "./markdown";
 import { icons } from "./icons";
@@ -47,6 +47,7 @@ const els = {
   preview: $("preview"),
   titlebar: $("titlebar"),
   docTitle: $("doc-title"),
+  tabs: $("tabs"),
   docName: $("doc-name"),
   docEdited: $("doc-edited"),
   docStats: $("doc-stats"),
@@ -62,6 +63,7 @@ const els = {
   btnSyntax: $<HTMLButtonElement>("btn-syntax"),
   btnSpell: $<HTMLButtonElement>("btn-spell"),
   btnCloseFile: $<HTMLButtonElement>("btn-close-file"),
+  btnNewTab: $<HTMLButtonElement>("btn-new-tab"),
   btnStatus: $<HTMLButtonElement>("btn-status"),
   edgeHandle: $("edge-handle"),
   banner: $("banner"),
@@ -77,22 +79,38 @@ let cfg: Config;
 /** `~/.kayet/config.toml`; saving it from the editor reloads the settings. */
 let configPath = "";
 let workspace = "";
-/** Currently open document; `path === null` means untitled. */
-const doc = {
-  path: null as string | null,
-  saved: null as Text | null,
+/** An open document, shown in a tab; `path === null` means untitled. */
+interface Tab {
+  path: string | null;
+  saved: Text | null;
   /** Last content known to be on disk, to tell our own writes from external ones. */
-  disk: "",
+  disk: string;
   /** Whether the document was saved since it was loaded; turns the edit status into a check. */
-  savedOnce: false,
-};
+  savedOnce: boolean;
+  /** Changed file content waiting for Reload / Keep mine (see the banner). */
+  pendingDisk: string | null;
+  /** The editor state while another tab is shown. */
+  editor: EditorSnapshot | null;
+}
+
+const newTab = (): Tab => ({ path: null, saved: Text.empty, disk: "", savedOnce: false, pendingDisk: null, editor: null });
+
+/** Open documents in tab order; `doc` is the one shown. */
+const tabs: Tab[] = [newTab()];
+let doc = tabs[0];
 let previewOpen = false; // remembered per session only
 let exportEnabled: boolean | null = null;
 let autosaveTimer: number | undefined;
 let statsTimer: number | undefined;
 
-const isDirty = () => !doc.saved || !editor.doc.eq(doc.saved);
-const docName = () => (doc.path ? basename(doc.path) : "Untitled");
+/** The tab's text; a tab not shown yet has none. */
+const textOf = (tab: Tab) => (tab === doc ? editor.doc : (tab.editor?.state.doc ?? Text.empty));
+const isTabDirty = (tab: Tab) => !tab.saved || !textOf(tab).eq(tab.saved);
+const isDirty = () => isTabDirty(doc);
+const tabName = (tab: Tab) => (tab.path ? basename(tab.path) : "Untitled");
+const docName = () => tabName(doc);
+/** An untitled tab nothing was typed into yet, which an opened file may take over. */
+const isBlank = (tab: Tab) => !tab.path && !tab.savedOnce && textOf(tab).length === 0;
 
 // ---- components ----
 
@@ -111,19 +129,26 @@ const editor = new Editor(els.editor, defaultEditorSettings(), {
 const tree = new FileTree(els.tree, {
   openFile: (path) => void openFile(path),
   renamed: (from, to) => {
-    if (doc.path && isWithin(from, doc.path)) {
-      setDocPath(to + doc.path.slice(from.length));
+    for (const tab of tabs) {
+      if (!tab.path || !isWithin(from, tab.path)) continue;
+      const path = to + tab.path.slice(from.length);
+      if (tab === doc) setDocPath(path);
+      else tab.path = path;
     }
+    rememberSession();
+    renderTabs();
   },
   trashed: (path) => {
-    if (doc.path && isWithin(path, doc.path)) {
+    const gone = tabs.filter((tab) => tab.path && isWithin(path, tab.path));
+    if (!gone.length) return;
+    for (const tab of gone) {
       // Keep the text around as an unsaved, untitled document.
-      doc.path = null;
-      doc.saved = null;
-      rememberLastFile(null);
-      updateAll();
-      void syncBackup();
+      tab.path = null;
+      tab.saved = null;
     }
+    rememberSession();
+    updateAll();
+    void syncBackup();
   },
   notify,
 });
@@ -202,9 +227,14 @@ function noteRecent(path: string | null): void {
   void api.addRecent(path).catch((e) => console.error("add_recent failed", e));
 }
 
-function rememberLastFile(path: string | null): void {
-  if ((cfg.session.last_file ?? null) === path) return;
-  cfg.session.last_file = path;
+/** Remembers the files open in tabs and the active one, to be restored on next launch. */
+function rememberSession(): void {
+  const last = doc.path;
+  const open = tabs.flatMap((tab) => (tab.path ? [tab.path] : []));
+  const before = cfg.session.open_files ?? [];
+  if ((cfg.session.last_file ?? null) === last && open.join("\n") === before.join("\n")) return;
+  cfg.session.last_file = last;
+  cfg.session.open_files = open;
   saveConfig();
 }
 
@@ -248,7 +278,7 @@ function updateLayout(): void {
   els.sidebar.hidden = !ui.sidebar_visible;
   els.sidebarDivider.hidden = !ui.sidebar_visible;
   els.btnSidebar.classList.toggle("on", ui.sidebar_visible);
-  els.btnCloseFile.hidden = !doc.path;
+  els.btnCloseFile.hidden = !doc.path && tabs.length < 2;
 
   const md = isMarkdown(doc.path);
   if (!md) previewOpen = false;
@@ -268,11 +298,70 @@ function updateTitle(): void {
   const dirty = isDirty();
   els.docName.textContent = docName();
   els.docEdited.hidden = !dirty;
-  const rel = doc.path ? relativeTo(workspace, doc.path) : null;
-  els.docTitle.title = doc.path ? (rel ?? doc.path) : "Not saved yet";
+  els.docTitle.title = tabTooltip(doc);
   void appWindow.setTitle(`${docName()}${dirty ? " — edited" : ""}`).catch(() => {});
   updateStatus(dirty);
+  renderTabs();
   scheduleStats();
+}
+
+function tabTooltip(tab: Tab): string {
+  return tab.path ? (relativeTo(workspace, tab.path) ?? tab.path) : "Not saved yet";
+}
+
+/** What the tab strip shows, so it is rebuilt only when that changes (not on every keystroke). */
+let tabsShown = "";
+
+/**
+ * With more than one tab open, the title bar shows a tab strip in place of the document name:
+ * each tab by name, with a dot while it has unsaved changes and a close button on hover.
+ */
+function renderTabs(): void {
+  const multiple = tabs.length > 1;
+  const shown = multiple
+    ? tabs.map((tab) => `${tab === doc}:${isTabDirty(tab)}:${tab.path}:${tabTooltip(tab)}`).join("\n")
+    : "";
+  if (shown === tabsShown) return;
+  tabsShown = shown;
+  els.tabs.hidden = !multiple;
+  els.docTitle.hidden = multiple;
+  if (!multiple) {
+    els.tabs.replaceChildren();
+    els.docTitle.append(els.docStats);
+    return;
+  }
+  const items = tabs.map((tab) => {
+    const item = document.createElement("div");
+    item.className = "tab";
+    item.role = "tab";
+    item.title = tabTooltip(tab);
+    item.setAttribute("aria-selected", String(tab === doc));
+    item.classList.toggle("edited", isTabDirty(tab));
+    const name = document.createElement("span");
+    name.className = "tab-name";
+    name.textContent = tabName(tab);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "tab-close";
+    close.innerHTML = icons.closeFile;
+    close.title = "Close tab";
+    close.setAttribute("aria-label", `Close ${tabName(tab)}`);
+    close.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void closeTab(tab).catch(showError);
+    });
+    item.append(name, close);
+    item.addEventListener("mousedown", (e) => {
+      if (e.button === 1) e.preventDefault();
+    });
+    item.addEventListener("click", () => void activate(tab).catch(showError));
+    item.addEventListener("auxclick", (e) => {
+      if (e.button === 1) void closeTab(tab).catch(showError);
+    });
+    return item;
+  });
+  els.tabs.replaceChildren(...items, els.docStats);
+  els.tabs.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
 /** Title bar word count and reading time, for prose (not code files); counted only while the title bar shows. */
@@ -461,7 +550,8 @@ function toggleSpellCheck(): void {
   editor.focus();
 }
 
-function loadDoc(path: string | null, text: string): void {
+/** Shows `text` as the current document; `recent` records the file for File → Open Recent. */
+function loadDoc(path: string | null, text: string, recent = true): void {
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
@@ -470,8 +560,8 @@ function loadDoc(path: string | null, text: string): void {
   void applySyntax().catch(showError);
   doc.saved = editor.doc;
   hideBanner();
-  rememberLastFile(path);
-  noteRecent(path);
+  rememberSession();
+  if (recent) noteRecent(path);
   updateAll();
   syncBackup();
   if (previewVisible()) void preview.render(text, path);
@@ -482,7 +572,7 @@ function setDocPath(path: string): void {
   doc.path = path;
   applySpellCheck();
   void applySyntax().catch(showError);
-  rememberLastFile(path);
+  rememberSession();
   noteRecent(path);
   updateAll();
 }
@@ -495,20 +585,63 @@ async function confirmDiscard(): Promise<boolean> {
   return choice === "discard";
 }
 
-/** Opens `path` (asking to save unsaved changes first). Resolves to whether it is now open. */
+/** Shows `tab`, putting the current document aside. */
+async function activate(tab: Tab): Promise<void> {
+  if (tab === doc) return editor.focus();
+  if (tabs.includes(doc)) {
+    await flushAutosave();
+    doc.editor = editor.snapshot();
+  }
+  doc = tab;
+  if (tab.editor) editor.restore(tab.editor);
+  else editor.load("", null);
+  tab.editor = null;
+  els.banner.hidden = tab.pendingDisk === null;
+  applySpellCheck();
+  void applySyntax().catch(showError);
+  rememberSession();
+  updateAll();
+  if (previewVisible()) {
+    void preview.render(editor.text(), doc.path).then(syncPreview);
+  }
+  editor.focus();
+  void checkDiskChange();
+}
+
+/** Opens a new tab next to the current one (with an empty untitled document) and shows it. */
+async function addTab(): Promise<void> {
+  const tab = newTab();
+  tabs.splice(tabs.indexOf(doc) + 1, 0, tab);
+  await activate(tab);
+  loadDoc(null, "");
+}
+
+/** Whether an opened file gets a tab of its own rather than replacing the current document. */
+const opensInNewTab = () => cfg.ui.open_in_new_tab && !isBlank(doc);
+
+/**
+ * Opens `path`: shows its tab if it is open already, else opens it in a new tab or in place
+ * of the current document (asking to save unsaved changes first), per `open_in_new_tab`.
+ * Resolves to whether it is now open.
+ */
 async function openFile(path: string): Promise<boolean> {
-  if (path === doc.path) {
-    editor.focus();
+  const open = tabs.find((tab) => tab.path === path);
+  if (open) {
+    await activate(open);
     return true;
   }
-  if (!(await confirmDiscard())) return false;
+  const inNewTab = opensInNewTab();
+  if (!inNewTab && !(await confirmDiscard())) return false;
+  let text: string;
   try {
-    loadDoc(path, await api.readFile(path));
-    return true;
+    text = await api.readFile(path);
   } catch (e) {
     notify(String(e));
     return false;
   }
+  if (inNewTab) await addTab();
+  loadDoc(path, text);
+  return true;
 }
 
 async function openWithDialog(): Promise<void> {
@@ -516,15 +649,53 @@ async function openWithDialog(): Promise<void> {
   if (path) await openFile(path);
 }
 
+/** A new untitled document, in a new tab or in place of the current one (see `open_in_new_tab`). */
 async function newDoc(): Promise<void> {
+  if (opensInNewTab()) return addTab();
   if (!(await confirmDiscard())) return;
   loadDoc(null, "");
 }
 
-/** Closes the open file, leaving an empty untitled document. */
-async function closeFile(): Promise<void> {
-  if (!(await confirmDiscard())) return;
-  loadDoc(null, "");
+/**
+ * Closes `tab` (asking to save unsaved changes first) and shows its neighbor. The last tab
+ * is not closed but left with an empty untitled document. Resolves to false if cancelled.
+ */
+async function closeTab(tab: Tab = doc): Promise<boolean> {
+  if (isTabDirty(tab)) {
+    await activate(tab);
+    if (!(await confirmDiscard())) return false;
+  }
+  if (tabs.length === 1) {
+    loadDoc(null, "");
+    return true;
+  }
+  const at = tabs.indexOf(tab);
+  tabs.splice(at, 1);
+  if (tab === doc) {
+    window.clearTimeout(autosaveTimer);
+    await activate(tabs[Math.min(at, tabs.length - 1)]);
+  } else {
+    rememberSession();
+    updateAll();
+  }
+  void syncBackup();
+  return true;
+}
+
+/** Shows the next (`step` 1) or previous (-1) tab, wrapping around. */
+function cycleTab(step: number): Promise<void> {
+  const at = tabs.indexOf(doc);
+  return activate(tabs[(at + step + tabs.length) % tabs.length]);
+}
+
+/** Asks about the unsaved changes of every tab. Returns false if the user cancelled. */
+async function confirmDiscardAll(): Promise<boolean> {
+  for (const tab of [...tabs]) {
+    if (!isTabDirty(tab)) continue;
+    await activate(tab);
+    if (!(await confirmDiscard())) return false;
+  }
+  return true;
 }
 
 async function writeDoc(path: string): Promise<boolean> {
@@ -577,10 +748,17 @@ async function exportDoc(format: "html" | "pdf"): Promise<void> {
 
 function scheduleAutosave(): void {
   window.clearTimeout(autosaveTimer);
+  autosaveTimer = undefined;
   if (!cfg?.editor.autosave || !doc.path) return;
-  autosaveTimer = window.setTimeout(() => {
-    if (doc.path && isDirty()) void save();
-  }, 1000);
+  autosaveTimer = window.setTimeout(() => void flushAutosave(), 1000);
+}
+
+/** Saves right away what autosave is waiting to save (before another tab is shown). */
+async function flushAutosave(): Promise<void> {
+  if (autosaveTimer === undefined) return;
+  window.clearTimeout(autosaveTimer);
+  autosaveTimer = undefined;
+  if (doc.path && isDirty()) await save();
 }
 
 // ---- crash recovery ----
@@ -601,15 +779,18 @@ function scheduleBackup(): void {
   if (backupTimer === undefined) backupTimer = window.setTimeout(syncBackup, 1000);
 }
 
-/** Backs up the buffer while it has unsaved changes and removes the backup once it has none. */
+/** Backs up the tabs with unsaved changes and removes the backup once there are none. */
 function syncBackup(): Promise<void> {
   window.clearTimeout(backupTimer);
   backupTimer = undefined;
-  if (isDirty()) {
+  const dirty = tabs.filter(isTabDirty);
+  if (dirty.length) {
     backedUp = true;
-    const path = doc.path;
-    const text = editor.text();
-    return queueBackup(() => api.writeRecovery(path, text));
+    const backups = dirty.map((tab) => ({
+      path: tab.path,
+      text: tab === doc ? editor.text() : (tab.editor?.state.sliceDoc() ?? ""),
+    }));
+    return queueBackup(() => api.writeRecovery(backups));
   }
   if (!backedUp) return backupQueue;
   backedUp = false;
@@ -625,27 +806,30 @@ function clearBackup(): Promise<void> {
 }
 
 /**
- * Offers to restore the buffer backed up by a session that did not exit cleanly.
- * Returns true if it was restored.
+ * Offers to restore the buffers backed up by a session that did not exit cleanly, each in a
+ * tab of its own. Returns true if they were restored.
  */
-async function restoreBackup(backup: Backup): Promise<boolean> {
-  const name = backup.path ? basename(backup.path) : "Untitled";
-  if (!(await chrome.hold(api.confirmRestore(name)))) {
+async function restoreBackups(backups: Backup[]): Promise<boolean> {
+  const name = backups[0].path ? basename(backups[0].path) : "Untitled";
+  if (!(await chrome.hold(api.confirmRestore(name, backups.length - 1)))) {
     await clearBackup();
     return false;
   }
-  const disk = backup.path ? await api.readFile(backup.path).catch(() => null) : "";
-  if (disk === null) {
-    // The file is gone: keep the text as unsaved changes to that path.
-    loadDoc(backup.path, backup.text);
-    doc.saved = null;
-    doc.disk = "";
-    updateTitle();
-  } else {
-    loadDoc(backup.path, disk);
-    editor.replaceText(backup.text);
+  for (const [i, backup] of backups.entries()) {
+    if (i > 0) await addTab();
+    const disk = backup.path ? await api.readFile(backup.path).catch(() => null) : "";
+    if (disk === null) {
+      // The file is gone: keep the text as unsaved changes to that path.
+      loadDoc(backup.path, backup.text);
+      doc.saved = null;
+      doc.disk = "";
+      updateTitle();
+    } else {
+      loadDoc(backup.path, disk);
+      editor.replaceText(backup.text);
+    }
   }
-  // Rewrites the backup right away, or removes it if the text matches the file after all.
+  // Rewrites the backup right away, or removes it if the texts match the files after all.
   backedUp = true;
   await syncBackup();
   return true;
@@ -653,8 +837,10 @@ async function restoreBackup(backup: Backup): Promise<boolean> {
 
 // ---- external changes ----
 
+/** Reloads the shown file if it changed on disk, or offers to (see the banner) if it has unsaved changes. */
 async function checkDiskChange(): Promise<void> {
-  const path = doc.path;
+  const tab = doc;
+  const path = tab.path;
   if (!path) return;
   let text: string;
   try {
@@ -662,28 +848,27 @@ async function checkDiskChange(): Promise<void> {
   } catch {
     return; // deleted or unreadable: keep the buffer as it is
   }
-  if (path !== doc.path || text === doc.disk) return;
+  // Another tab shown meanwhile: this one is checked again once it is shown.
+  if (tab !== doc || path !== tab.path || text === tab.disk) return;
   if (!isDirty()) {
-    doc.disk = text;
+    tab.disk = text;
     editor.replaceText(text);
-    doc.saved = editor.doc;
+    tab.saved = editor.doc;
     updateTitle();
   } else {
-    pendingDisk = text;
+    tab.pendingDisk = text;
     els.banner.hidden = false;
   }
 }
 
-let pendingDisk: string | null = null;
-
 function hideBanner(): void {
   els.banner.hidden = true;
-  pendingDisk = null;
+  doc.pendingDisk = null;
 }
 
 els.bannerReload.addEventListener("click", () => {
-  if (pendingDisk === null) return hideBanner();
-  const text = pendingDisk;
+  if (doc.pendingDisk === null) return hideBanner();
+  const text = doc.pendingDisk;
   doc.disk = text;
   editor.replaceText(text);
   doc.saved = editor.doc;
@@ -693,7 +878,7 @@ els.bannerReload.addEventListener("click", () => {
 });
 
 els.bannerKeep.addEventListener("click", () => {
-  if (pendingDisk !== null) doc.disk = pendingDisk;
+  if (doc.pendingDisk !== null) doc.disk = doc.pendingDisk;
   hideBanner();
   editor.focus();
 });
@@ -783,7 +968,10 @@ const commands: Record<string, () => unknown> = {
   "save-as": saveAs,
   "export-html": () => exportDoc("html"),
   "export-pdf": () => exportDoc("pdf"),
-  "close-file": closeFile,
+  "new-tab": addTab,
+  "close-file": () => closeTab(),
+  "next-tab": () => cycleTab(1),
+  "prev-tab": () => cycleTab(-1),
   close: () => appWindow.close(),
   quit: () => appWindow.close(),
   undo: () => (inTextField() ? document.execCommand("undo") : editor.undo()),
@@ -819,6 +1007,7 @@ function paletteCommands(): PaletteItem[] {
   const code = isCode(doc.path);
   const list: (PaletteItem | false)[] = [
     { id: "new", label: "New File", shortcut: "⌘N" },
+    { id: "new-tab", label: "New Tab", shortcut: "⌘T" },
     { id: "open", label: "Open File…", shortcut: "⌘O" },
     { id: "open-recent", label: "Open Recent…" },
     { id: "go-to-file", label: "Go to File…", shortcut: "⌘P" },
@@ -828,7 +1017,9 @@ function paletteCommands(): PaletteItem[] {
     { id: "save-as", label: "Save As…", shortcut: "⌘⇧S" },
     md && { id: "export-html", label: "Export as HTML…" },
     md && { id: "export-pdf", label: "Export as PDF…" },
-    !!doc.path && { id: "close-file", label: "Close File", shortcut: "⌘W" },
+    (!!doc.path || tabs.length > 1) && { id: "close-file", label: "Close File", shortcut: "⌘W" },
+    tabs.length > 1 && { id: "next-tab", label: "Show Next Tab", shortcut: "⌃⇥" },
+    tabs.length > 1 && { id: "prev-tab", label: "Show Previous Tab", shortcut: "⌃⇧⇥" },
     { id: "undo", label: "Undo", shortcut: "⌘Z" },
     { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },
     { id: "find", label: "Find…", shortcut: "⌘F" },
@@ -973,6 +1164,7 @@ els.btnPreview.addEventListener("click", () => run("toggle-preview"));
 els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
 els.btnSpell.addEventListener("click", () => run("toggle-spell-check"));
 els.btnCloseFile.addEventListener("click", () => run("close-file"));
+els.btnNewTab.addEventListener("click", () => run("new-tab"));
 els.btnStatus.addEventListener("click", () => void promptSave().catch(showError));
 els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 
@@ -987,6 +1179,19 @@ els.btnPreview.innerHTML = icons.eye;
 els.btnSyntax.innerHTML = icons.code;
 els.btnSpell.innerHTML = icons.spell;
 els.btnCloseFile.innerHTML = icons.closeFile;
+els.btnNewTab.innerHTML = icons.newTab;
+
+// ⌃⇥ / ⌃⇧⇥ switch tabs, like ⇧⌘] / ⇧⌘[ (Window menu).
+document.addEventListener(
+  "keydown",
+  (e) => {
+    if (e.key !== "Tab" || !e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    run(e.shiftKey ? "prev-tab" : "next-tab");
+  },
+  true,
+);
 
 // Keep the default browser context menu out of the editor chrome.
 document.addEventListener("contextmenu", (e) => {
@@ -1000,16 +1205,26 @@ window.addEventListener("resize", () => preview.measure());
 
 // ---- startup ----
 
-/** Opens the document kayet starts with, or an empty untitled one. */
-async function openStart(start: string | null | undefined): Promise<void> {
-  if (!start) return loadDoc(null, "");
-  try {
-    loadDoc(start, await api.readFile(start));
-  } catch (e) {
-    if (start === cfg.session.last_file) rememberLastFile(null);
-    else notify(String(e));
-    loadDoc(null, "");
+/**
+ * Opens the documents kayet starts with: the files open in tabs last time (showing the one
+ * that was active), or an empty untitled document.
+ */
+async function openSession(): Promise<void> {
+  const last = cfg.session.last_file ?? null;
+  const files = cfg.session.open_files?.length ? cfg.session.open_files : last ? [last] : [];
+  const texts = await Promise.all(files.map((path) => api.readFile(path).catch(() => null)));
+  let active: Tab | null = null;
+  for (const [i, path] of files.entries()) {
+    const text = texts[i];
+    if (text === null) continue; // gone since: dropped from the session
+    if (!isBlank(doc)) await addTab();
+    // Only the active file is recorded again, so the recent files keep their order.
+    loadDoc(path, text, path === last);
+    if (path === last) active = doc;
   }
+  if (active) await activate(active);
+  else if (!isBlank(doc)) await activate(tabs[0]);
+  else loadDoc(null, "");
 }
 
 async function init(): Promise<void> {
@@ -1039,7 +1254,7 @@ async function init(): Promise<void> {
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
     appWindow.onCloseRequested(async (event) => {
-      if (!(await confirmDiscard())) return event.preventDefault();
+      if (!(await confirmDiscardAll())) return event.preventDefault();
       await clearBackup();
     }),
   ]);
@@ -1052,9 +1267,13 @@ async function init(): Promise<void> {
   await tree.setRoot(workspace);
   if (opened.folder && !cfg.ui.sidebar_visible) await toggleTree();
 
-  // Unsaved changes left behind by a crash take the place of the start document.
-  const backup = await api.loadRecovery().catch(() => null);
-  if (!backup || !(await restoreBackup(backup))) await openStart(opened.file ?? cfg.session.last_file);
+  // Unsaved changes left behind by a crash take the place of the start documents.
+  const backups = await api.loadRecovery().catch(() => []);
+  if (!backups.length || !(await restoreBackups(backups))) {
+    await openSession();
+    // Launched to open a file: it wins over the session's active document.
+    if (opened.file) await openFile(opened.file);
+  }
 
   const notice = await api.takeNotice();
   if (notice) notify(notice);

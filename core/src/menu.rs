@@ -63,6 +63,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         true,
         &[
             &item("new", "New", Some("CmdOrCtrl+N"))?,
+            &item("new-tab", "New Tab", Some("CmdOrCtrl+T"))?,
             &item("open", "Open…", Some("CmdOrCtrl+O"))?,
             // Filled in by `set_recent_items`.
             &Submenu::with_id(app, RECENT, "Open Recent", true)?,
@@ -117,6 +118,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         &[
             &PredefinedMenuItem::minimize(app, None)?,
             &PredefinedMenuItem::maximize(app, Some("Zoom"))?,
+            &sep()?,
+            &item("prev-tab", "Show Previous Tab", Some("CmdOrCtrl+Shift+["))?,
+            &item("next-tab", "Show Next Tab", Some("CmdOrCtrl+Shift+]"))?,
         ],
     )?;
 

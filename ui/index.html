@@ -34,6 +34,7 @@
       <nav class="controls controls-left">
         <button id="btn-sidebar" type="button" title="Toggle file tree (⌘\)" aria-label="Toggle file tree"></button>
       </nav>
+      <div id="tabs" role="tablist" aria-label="Open documents" data-tauri-drag-region hidden></div>
       <div id="doc-title" data-tauri-drag-region>
         <span id="doc-name" data-tauri-drag-region></span>
         <span id="doc-edited" data-tauri-drag-region hidden>— edited</span>
@@ -42,6 +43,7 @@
       <nav class="controls">
         <button id="btn-status" type="button" hidden></button>
         <button id="btn-close-file" type="button" title="Close file" aria-label="Close file" hidden></button>
+        <button id="btn-new-tab" type="button" title="New tab (⌘T)" aria-label="New tab"></button>
         <button id="btn-palette" type="button" title="Command palette (⌘K)" aria-label="Command palette"></button>
         <button id="btn-pin" type="button" title="Keep title bar visible (⌘.)" aria-label="Keep title bar visible" aria-pressed="false"></button>
         <button id="btn-zen" type="button" title="Zen mode (⌘⇧J)" aria-label="Zen mode" aria-pressed="false"></button>

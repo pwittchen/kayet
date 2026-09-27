@@ -69,8 +69,8 @@ fn path_string(p: &Path) -> String {
 impl AppState {
     pub fn new(config: Config, workspace: &Path, notice: Option<String>) -> Self {
         let mut allowed = HashSet::new();
-        if let Some(last) = &config.session.last_file {
-            allowed.insert(canonical(Path::new(last)));
+        for file in config.session.restored_files() {
+            allowed.insert(canonical(Path::new(file)));
         }
         Self {
             config: Mutex::new(config),
@@ -399,38 +399,43 @@ fn percent_decode(bytes: &[u8]) -> Result<String, std::str::Utf8Error> {
         .map(std::borrow::Cow::into_owned)
 }
 
-/// Backs up the unsaved buffer for crash recovery. The path is only recorded if the
-/// buffer may be written there, since it is allowed again when the backup is restored.
+/// Backs up the unsaved buffers (one per tab with unsaved changes) for crash recovery. A
+/// path is only recorded if the buffer may be written there, since it is allowed again
+/// when the backup is restored.
 #[tauri::command]
 pub async fn write_recovery(
     state: State<'_, AppState>,
-    path: Option<String>,
-    contents: String,
+    backups: Vec<recovery::Backup>,
 ) -> CmdResult<()> {
-    let path = path
-        .and_then(|p| state.authorize(&p).ok())
-        .map(|p| path_string(&p));
-    let backup = recovery::Backup {
-        path,
-        text: contents,
-    };
-    recovery::write(&recovery::backup_path(), &backup).map_err(err)
+    let backups: Vec<_> = backups
+        .into_iter()
+        .map(|b| recovery::Backup {
+            path: b
+                .path
+                .and_then(|p| state.authorize(&p).ok())
+                .map(|p| path_string(&p)),
+            text: b.text,
+        })
+        .collect();
+    recovery::write(&recovery::backup_path(), &backups).map_err(err)
 }
 
-/// Removes the crash recovery backup once the buffer was saved, discarded or closed.
+/// Removes the crash recovery backup once the buffers were saved, discarded or closed.
 #[tauri::command]
 pub async fn clear_recovery() -> CmdResult<()> {
     recovery::clear(&recovery::backup_path()).map_err(err)
 }
 
-/// Returns the backup left behind by a session that did not exit cleanly, if any.
+/// Returns the buffers backed up by a session that did not exit cleanly (empty if none).
 #[tauri::command]
-pub fn load_recovery(app: AppHandle, state: State<'_, AppState>) -> Option<recovery::Backup> {
-    let mut backup = recovery::read(&recovery::backup_path())?;
-    if let Some(p) = &backup.path {
-        backup.path = Some(path_string(&state.allow(&app, Path::new(p))));
+pub fn load_recovery(app: AppHandle, state: State<'_, AppState>) -> Vec<recovery::Backup> {
+    let mut backups = recovery::read(&recovery::backup_path());
+    for backup in &mut backups {
+        if let Some(p) = &backup.path {
+            backup.path = Some(path_string(&state.allow(&app, Path::new(p))));
+        }
     }
-    Some(backup)
+    backups
 }
 
 #[tauri::command]
@@ -643,14 +648,19 @@ pub async fn confirm_save(app: AppHandle, name: String) -> bool {
     }
 }
 
-/// Native "restore unsaved changes?" prompt shown at launch after an unclean exit.
-/// Returns true if the user chose to restore them.
+/// Native "restore unsaved changes?" prompt shown at launch after an unclean exit, naming
+/// the first document and counting the `others`. Returns true if the user chose to restore them.
 #[tauri::command]
-pub async fn confirm_restore(app: AppHandle, name: String) -> bool {
+pub async fn confirm_restore(app: AppHandle, name: String, others: usize) -> bool {
+    let documents = match others {
+        0 => format!("“{name}”"),
+        1 => format!("“{name}” and 1 other document"),
+        n => format!("“{name}” and {n} other documents"),
+    };
     let result = app
         .dialog()
         .message("kayet didn't quit normally. If you don't restore them, the changes will be lost.")
-        .title(format!("Restore unsaved changes to “{name}”?"))
+        .title(format!("Restore unsaved changes to {documents}?"))
         .kind(MessageDialogKind::Warning)
         .buttons(MessageDialogButtons::OkCancelCustom(
             "Restore".into(),

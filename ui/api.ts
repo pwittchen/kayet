@@ -13,6 +13,7 @@ export interface Config {
     zen_mode: boolean;
     sidebar_width: number;
     preview_split: number;
+    open_in_new_tab: boolean;
   };
   editor: {
     font_family: "system" | "mono";
@@ -26,7 +27,7 @@ export interface Config {
     spell_check: boolean;
   };
   window: { width: number; height: number; x: number; y: number };
-  session: { last_file?: string | null; recent_files?: string[] };
+  session: { last_file?: string | null; open_files?: string[]; recent_files?: string[] };
 }
 
 export interface Entry {
@@ -97,10 +98,10 @@ export const api = {
         "kayet-extension": encodeURIComponent(extension),
       },
     }),
-  writeRecovery: (path: string | null, contents: string) =>
-    invoke<void>("write_recovery", { path, contents }),
+  /** Backs up the buffers with unsaved changes (one per tab). */
+  writeRecovery: (backups: Backup[]) => invoke<void>("write_recovery", { backups }),
   clearRecovery: () => invoke<void>("clear_recovery"),
-  loadRecovery: () => invoke<Backup | null>("load_recovery"),
+  loadRecovery: () => invoke<Backup[]>("load_recovery"),
   createFile: (path: string) => invoke<string>("create_file", { path }),
   createDir: (path: string) => invoke<string>("create_dir", { path }),
   rename: (from: string, to: string) => invoke<string>("rename", { from, to }),
@@ -129,8 +130,9 @@ export const api = {
   confirmUnsaved: (name: string) =>
     invoke<"save" | "discard" | "cancel">("confirm_unsaved", { name }),
   confirmSave: (name: string) => invoke<boolean>("confirm_save", { name }),
-  confirmRestore: (name: string) =>
-    invoke<boolean>("confirm_restore", { name }),
+  /** Asks whether to restore the unsaved changes to `name` and `others` more documents. */
+  confirmRestore: (name: string, others: number) =>
+    invoke<boolean>("confirm_restore", { name, others }),
   confirmTrash: (name: string) => invoke<boolean>("confirm_trash", { name }),
   showContextMenu: (items: MenuItemSpec[]) =>
     invoke<void>("show_context_menu", { items }),

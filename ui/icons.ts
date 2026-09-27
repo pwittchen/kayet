@@ -28,6 +28,7 @@ export const icons = {
   edited: svg(`<circle cx="8" cy="8" r="4" fill="currentColor" stroke="none"/>`),
   saved: svg(`<path d="M3.25 8.5 6.5 11.5l6.25-7"/>`),
   closeFile: svg(`<path d="M4 4l8 8M12 4l-8 8"/>`),
+  newTab: svg(`<path d="M8 3.25v9.5M3.25 8h9.5"/>`),
   chevronUp: svg(`<path d="M4 10l4-4 4 4"/>`),
   chevronDown: svg(`<path d="M4 6l4 4 4-4"/>`),
   spell: svg(`<path d="M4.75 10 8 2.25 11.25 10M6 7.25h4M2 13.5q1.5-1.5 3 0t3 0 3 0 3 0"/>`),

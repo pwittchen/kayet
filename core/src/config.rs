@@ -44,6 +44,8 @@ pub enum Theme {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
+// Mirrors the `[ui]` table, where on/off settings are plain TOML booleans.
+#[allow(clippy::struct_excessive_bools)]
 pub struct UiConfig {
     pub theme: Theme,
     pub sidebar_visible: bool,
@@ -54,6 +56,8 @@ pub struct UiConfig {
     pub zen_mode: bool,
     pub sidebar_width: u32,
     pub preview_split: f64,
+    /// Open files in a new tab instead of in place of the current document.
+    pub open_in_new_tab: bool,
 }
 
 impl Default for UiConfig {
@@ -65,6 +69,7 @@ impl Default for UiConfig {
             zen_mode: false,
             sidebar_width: 240,
             preview_split: 0.5,
+            open_in_new_tab: false,
         }
     }
 }
@@ -150,9 +155,12 @@ impl WindowConfig {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SessionConfig {
-    /// Last opened file, restored on launch if it still exists.
+    /// The file in the active tab, restored on launch if it still exists.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_file: Option<String>,
+    /// Files open in tabs, in tab order, restored on launch if they still exist.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub open_files: Vec<String>,
     /// Recently opened files, most recent first (File → Open Recent).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub recent_files: Vec<String>,
@@ -162,6 +170,11 @@ pub struct SessionConfig {
 pub const MAX_RECENT: usize = 10;
 
 impl SessionConfig {
+    /// Files restored on launch: those open in tabs, and the last active one.
+    pub fn restored_files(&self) -> impl Iterator<Item = &String> {
+        self.open_files.iter().chain(&self.last_file)
+    }
+
     /// Moves `path` to the front of the recent files, keeping at most [`MAX_RECENT`].
     pub fn push_recent(&mut self, path: String) {
         self.recent_files.retain(|p| *p != path);

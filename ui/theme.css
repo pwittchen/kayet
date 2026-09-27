@@ -204,6 +204,102 @@ body.resizing * {
   margin: 0 6px;
 }
 
+/* Tab strip, in place of the document name while more than one document is open. */
+#tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: safe center;
+  gap: 2px;
+  margin: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: 0 1 auto;
+  min-width: 64px;
+  max-width: 180px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 10px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  transition: color var(--fade), background-color var(--fade);
+}
+
+.tab:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--text);
+  background: var(--pill);
+  font-weight: 500;
+}
+
+.tab-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity var(--fade), background-color var(--fade);
+}
+
+.tab-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.tab:hover .tab-close,
+.tab.edited .tab-close {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* Unsaved changes: a dot where the close button appears on hover. */
+.tab.edited:not(:hover) .tab-close svg {
+  display: none;
+}
+
+.tab.edited:not(:hover) .tab-close::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+#tabs #doc-stats {
+  flex: none;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
 .controls {
   display: flex;
   gap: 2px;

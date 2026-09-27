@@ -28,6 +28,12 @@ export interface EditorSettings {
   maxLineWidth: number;
 }
 
+/** A document put aside while another one is shown (see `Editor.snapshot`). */
+export interface EditorSnapshot {
+  state: EditorState;
+  scrollTop: number;
+}
+
 /** How the document is highlighted: as Markdown, as a code language, or not at all. */
 export type Syntax = "markdown" | Language | null;
 
@@ -243,6 +249,28 @@ export class Editor {
     this.stopSweep();
     this.view.setState(this.createState(text, syntax));
     this.view.scrollDOM.scrollTop = 0;
+    if (this.spellOn) void this.checkSpelling();
+  }
+
+  /** The document with its history, selection and scroll position, to be shown again with `restore`. */
+  snapshot(): EditorSnapshot {
+    this.stopSweep();
+    return { state: this.view.state, scrollTop: this.view.scrollDOM.scrollTop };
+  }
+
+  /** Shows a document put aside by `snapshot`, with the current settings. */
+  restore(snapshot: EditorSnapshot): void {
+    this.stopSweep();
+    this.view.setState(snapshot.state);
+    this.view.dispatch({
+      effects: [
+        this.wrap.reconfigure(this.settings.softWrap ? EditorView.lineWrapping : []),
+        this.look.reconfigure(this.lookExtension()),
+        this.zen.reconfigure(this.zenOn ? zenMode : []),
+        this.spell.reconfigure(spellCheck(this.spellOn)),
+      ],
+    });
+    this.view.scrollDOM.scrollTop = snapshot.scrollTop;
     if (this.spellOn) void this.checkSpelling();
   }
 

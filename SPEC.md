@@ -25,7 +25,7 @@ no unnecessary icons, labels or decorations.
 - Plugins / extensions.
 - Language servers, autocompletion, linting.
 - Git integration.
-- Multiple windows or tabs (one open document per window in v1).
+- Multiple windows (one window; several documents are open in tabs, see 4.2).
 - Rich-text / WYSIWYG editing.
 - Cloud sync.
 
@@ -66,7 +66,7 @@ in CI or releases.
 - "Reset to default workspace" action available in the menu.
 
 ### 4.2 Document
-- One active document at a time.
+- One active document at a time, several can be open in **tabs** (see 4.4).
 - Files are opened from the file tree, the file finder (`⌘P`, see 5.5), workspace search (`⌘⇧F`, see 5.6), via `⌘O`, by drag-and-drop onto the window, from
   Finder or from the terminal (see 4.3).
 - Encoding: UTF-8. Line endings are preserved as found in the file.
@@ -74,9 +74,27 @@ in CI or releases.
   name get their folder appended); files that no longer exist are dropped, `Clear Menu` empties the
   list. Picking one opens it (asking to save unsaved changes first). The command palette offers the
   same list as `Open Recent…` (without the open document). The settings file is not recorded.
-- New untitled document: `⌘N`. On first save, the default location is the current workspace.
-- `File → Close File` (`⌘W`) closes the open document (asking to save unsaved changes first) and
-  leaves an empty untitled document; the closed file is no longer restored on next launch.
+- New untitled document: `⌘N` (in place of the open document, or in a new tab — see 4.4). On first
+  save, the default location is the current workspace.
+- `File → Close File` (`⌘W`) closes the open document (asking to save unsaved changes first): its
+  tab is closed, or, when it is the only one, an empty untitled document is left; the closed file is
+  no longer restored on next launch.
+
+### 4.4 Tabs
+- `File → New Tab` (`⌘T`), the title bar + icon or the command palette open a new tab with an empty untitled document next to the current one.
+- Opening a file that is open in a tab already shows that tab.
+- Otherwise an opened file (file tree, finder, workspace search, `⌘O`, Open Recent, drag-and-drop,
+  Finder, the `kayet` command, preview links, settings) and `⌘N` **replace the open document**
+  (asking to save unsaved changes first) — the default. With `[ui] open_in_new_tab = true` they
+  open in a new tab next to the current one instead; an untouched empty untitled document is
+  replaced either way.
+- With more than one tab open, the title bar shows a tab strip in place of the document name
+  (see 5.3). A click shows a tab; its × (or a middle click) closes it. `⇧⌘]` / `⇧⌘[`
+  (`Window → Show Next / Previous Tab`) and `⌃⇥` / `⌃⇧⇥` switch tabs, wrapping around.
+- Each tab keeps its own undo history, selection and scroll position; the file tree, preview and
+  settings are shared. Autosave saves a document before switching away from it.
+- Closing the window asks about the unsaved changes of every tab, one by one.
+- The files open in tabs (in order) and the active one are restored on next launch.
 
 ### 4.3 Finder & terminal
 - kayet registers as an editor for `.md` / `.markdown` and `.txt` files, so they appear in
@@ -86,9 +104,9 @@ in CI or releases.
   - Installed via `kayet → Install ‘kayet’ Command` (or the command palette), which
     symlinks the launcher script bundled in `kayet.app/Contents/Resources/kayet` to
     `/usr/local/bin/kayet`, asking for an administrator password if needed.
-- A file opened this way replaces the current document (asking to save unsaved changes
-  first) and wins over the restored last file at launch. Only one document is shown, so
-  when several files are given only the first one is opened.
+- A file opened this way is opened like any other (in place of the current document or in a new
+  tab, see 4.4) and, at launch, is shown instead of the restored active document. When several
+  files are given only the first one is opened.
 
 ## 5. Window & Layout
 
@@ -136,6 +154,9 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 ### 5.3 Title bar contents
 - **Left:** native traffic lights, followed directly by the Sidebar icon (toggle file tree, `⌘\`).
 - **Center:** document name, muted "— edited" suffix when unsaved; workspace-relative path on hover tooltip.
+  With more than one tab open, a tab strip takes its place: each tab by name (the active one on a
+  subtle pill), a dot while it has unsaved changes that turns into a close × on hover; the strip
+  scrolls sideways when the tabs don't fit.
   For prose (Markdown, plain text, untitled — not code files) a muted `· 1,234 words · 6 min read`
   follows (200 words per minute, at least 1 min; hidden for an empty document). Words are runs of
   non-whitespace containing a letter or digit, so Markdown markers (`#`, `-`, `>`) don't count.
@@ -144,7 +165,8 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Icon | Action | Shortcut |
   |------|--------|----------|
   | ● / ✓ (edit status) | ● appears once the document is edited and disappears when undone back to its original state; clicking it asks to save the changes, after which it turns into ✓ until the next edit — **hidden for an untouched document** | — |
-  | × (close) | Close the open file — **only shown when a file is open** | — |
+  | × (close) | Close the open file — **only shown when a file or more than one tab is open** | — |
+  | + (new tab) | Open a new tab with an empty untitled document (see 4.4) | `⌘T` |
   | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed | `⌘⇧J` |
   | Cursor (I-beam) | Toggle text cursor blinking (on by default); when off the cursor stays still | — |
@@ -158,8 +180,8 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 ### 5.4 Command palette
 - Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
   `View → Command Palette…` or the title bar command icon.
-- Lists every command with its shortcut; context-only commands (Close File, preview, export,
-  syntax highlighting, spell check) appear only when they apply.
+- Lists every command with its shortcut; context-only commands (Close File, next / previous tab,
+  preview, export, syntax highlighting, spell check) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
 
@@ -237,13 +259,15 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   replace all); `⌘F` hides it again. A selected single-line text becomes the query.
 - Autosave: off by default; optional setting to autosave after 1s of inactivity.
 - Unsaved changes prompt on close / switching file (native dialog).
-- Crash recovery: while the document (a file or untitled) has unsaved changes, a backup is kept in
-  `~/.kayet/recovery/` (written at most ~1s after an edit). It is removed once the changes are
-  saved or discarded and when the window closes normally, so a backup found at launch means kayet
-  did not exit cleanly: a native dialog offers to **Restore** the changes (they reopen as unsaved
-  edits to their file, or as an untitled document, in place of the start document) or **Discard** them.
+- Crash recovery: while any document (a file or untitled, in any tab) has unsaved changes, a backup
+  of those documents is kept in `~/.kayet/recovery/` (written at most ~1s after an edit). It is
+  removed once all changes are saved or discarded and when the window closes normally, so a backup
+  found at launch means kayet did not exit cleanly: a native dialog offers to **Restore** the changes
+  (each reopens in a tab as unsaved edits to its file, or as an untitled document, in place of the
+  start documents) or **Discard** them.
 - External file change detection: if the file changed on disk and the buffer is clean,
   reload silently; if dirty, show a small inline banner: "File changed on disk — Reload / Keep mine".
+  A document in a tab that is not shown is checked when its tab is shown.
 
 ## 8. Markdown Preview
 
@@ -316,6 +340,7 @@ sidebar_visible = false
 zen_mode = false
 sidebar_width = 240
 preview_split = 0.5
+open_in_new_tab = false   # open files (and ⌘N) in a new tab instead of in place of the open one
 
 [editor]
 font_family = "mono"      # "mono" | "system"
@@ -339,8 +364,8 @@ y = 0
 - The file can be edited in kayet itself (`kayet → Settings…`, `⌘,`, or the title bar sliders icon);
   saving it applies the changes immediately. Window geometry, the workspace path and the session
   are owned by the running app and are not reloaded.
-- Last opened file is restored on launch (if it still exists). It and the recent files are kept in
-  a `[session]` table (`last_file`, `recent_files`).
+- The files open in tabs and the active one are restored on launch (those that still exist). They
+  and the recent files are kept in a `[session]` table (`open_files`, `last_file`, `recent_files`).
 
 ## 11. Architecture
 
@@ -391,8 +416,8 @@ kayet/
 | `read_file(path) -> String`    | Read file contents                            |
 | `write_file(path, contents)`   | Atomic write (temp file + rename)             |
 | `save_image(document, bytes)`  | Save a pasted image next to the document      |
-| `write_recovery / clear_recovery` | Keep / remove the crash recovery backup  |
-| `load_recovery() -> Backup`    | Backup left by an unclean exit, if any        |
+| `write_recovery(backups) / clear_recovery` | Keep / remove the crash recovery backup of the unsaved tabs |
+| `load_recovery() -> Vec<Backup>` | Buffers backed up before an unclean exit (empty if none) |
 | `create_file / create_dir`     | Create entries                                |
 | `rename(from, to)`             | Rename / move                                 |
 | `trash(path)`                  | Move to Trash (`trash` crate)                 |
@@ -423,6 +448,8 @@ kayet/
 | Action                 | Shortcut  |
 |------------------------|-----------|
 | New file               | `⌘N`      |
+| New tab                | `⌘T`      |
+| Next / previous tab    | `⇧⌘]` / `⇧⌘[`, `⌃⇥` / `⌃⇧⇥` |
 | Open file              | `⌘O`      |
 | Go to file (finder)    | `⌘P`      |
 | Open workspace         | `⌘⇧O`     |
@@ -457,4 +484,4 @@ kayet/
 8. The UI uses a consistent, minimal macOS/Linear-style visual language in both themes.
 
 ## 15. Future Ideas (post-v1)
-- Tabs / multiple windows.
+- Multiple windows.
