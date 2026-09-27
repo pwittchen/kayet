@@ -221,8 +221,6 @@ section { padding: 0 24px; }
 .btn .apple { width: 1.05em; height: 1.05em; margin-top: -0.15em; fill: currentColor; }
 .btn-link span { transition: transform 0.2s var(--ease); display: inline-block; }
 .btn-link:hover span { transform: translateX(3px); }
-.btn-disabled { opacity: 0.35; cursor: not-allowed; }
-.btn-disabled:hover, .btn-disabled:active { transform: none; }
 
 /* ---- showcase window ---- */
 .showcase { max-width: 880px; margin: 0 auto; padding-bottom: 140px; }

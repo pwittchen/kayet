@@ -46,8 +46,3 @@ const observer = new IntersectionObserver(
   { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
 );
 document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
-
-// Download is a placeholder until signed releases exist.
-document.querySelectorAll('[aria-disabled="true"]').forEach((el) =>
-  el.addEventListener("click", (e) => e.preventDefault()),
-);
