@@ -148,7 +148,9 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
 fn on_menu_event(app: &AppHandle, event: &MenuEvent) {
     let id = event.id().0.as_str();
     let state = app.state::<AppState>();
-    if id == menu::CLEAR_RECENT {
+    if id == menu::ABOUT {
+        menu::show_about();
+    } else if id == menu::CLEAR_RECENT {
         state.clear_recent(app);
     } else if let Some(index) = id.strip_prefix(menu::RECENT_PREFIX) {
         if let Ok(index) = index.parse() {

@@ -125,6 +125,11 @@ in CI or releases.
   no `.dmg` in the release) or the install fails, the release page is opened in the browser instead.
 - No HTTP client is bundled: the system's `curl`, `hdiutil`, `codesign` and `ditto` do the work.
 
+### 4.6 About
+- `kayet → About kayet` shows the standard macOS About panel (icon, name, version) with clickable
+  links to the website ([getkayet.app](https://getkayet.app)), the source code on GitHub
+  (`pwittchen/kayet`) and the author, Piotr Wittchen ([wittchen.io](https://wittchen.io)).
+
 ## 5. Window & Layout
 
 ```

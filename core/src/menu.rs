@@ -2,7 +2,7 @@
 //! the item id; the frontend owns all editor actions.
 
 use std::path::Path;
-use tauri::menu::{AboutMetadata, CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 
 use tauri::{AppHandle, Runtime};
 
@@ -20,6 +20,64 @@ const EXPORT_PDF: &str = "export-pdf";
 pub const RECENT_PREFIX: &str = "recent:";
 /// Menu id of File → Open Recent → Clear Menu.
 pub const CLEAR_RECENT: &str = "clear-recent";
+/// Menu id of kayet → About kayet.
+pub const ABOUT: &str = "about";
+
+/// Credits of the About panel: project website, source code and author. The charset is explicit
+/// because the HTML importer would otherwise decode the bytes as Latin-1.
+const ABOUT_CREDITS: &str = "<meta charset=\"utf-8\">\
+    <style>p { font: 11px -apple-system; text-align: center; margin: 0 0 6px }</style>\
+    <p><a href=\"https://getkayet.app\">getkayet.app</a></p>\
+    <p><a href=\"https://github.com/pwittchen/kayet\">Source code on GitHub</a></p>\
+    <p>Made by Piotr Wittchen</p>\
+    <p><a href=\"https://wittchen.io\">wittchen.io</a></p>";
+
+/// Shows the standard macOS About panel with `ABOUT_CREDITS` (links clickable). Must run on the
+/// main thread, as menu events do.
+#[cfg(target_os = "macos")]
+pub fn show_about() {
+    use objc2::AnyThread;
+    use objc2::rc::Retained;
+    use objc2::runtime::AnyObject;
+    use objc2_app_kit::{
+        NSAboutPanelOptionApplicationIcon, NSAboutPanelOptionCredits, NSApplication,
+        NSAttributedStringAppKitDocumentFormats, NSImage,
+    };
+    use objc2_foundation::{MainThreadMarker, NSAttributedString, NSData, NSDictionary, NSString};
+
+    let Some(mtm) = MainThreadMarker::new() else {
+        return;
+    };
+    let mut keys: Vec<&NSString> = Vec::new();
+    let mut values: Vec<Retained<AnyObject>> = Vec::new();
+
+    // Explicit so the panel shows the app icon even when running unbundled (`tauri dev`), where
+    // macOS would fall back to a generic icon.
+    let icon = NSData::with_bytes(include_bytes!("../icons/128x128@2x.png"));
+    if let Some(icon) = NSImage::initWithData(NSImage::alloc(), &icon) {
+        keys.push(unsafe { NSAboutPanelOptionApplicationIcon });
+        values.push(icon.into());
+    }
+    let html = NSData::with_bytes(ABOUT_CREDITS.as_bytes());
+    // SAFETY: `html` is valid HTML data and no document attributes are requested.
+    let credits = unsafe {
+        NSAttributedString::initWithHTML_documentAttributes(
+            NSAttributedString::alloc(),
+            &html,
+            None,
+        )
+    };
+    if let Some(credits) = credits {
+        keys.push(unsafe { NSAboutPanelOptionCredits });
+        values.push(credits.into());
+    }
+
+    let options = NSDictionary::from_retained_objects(&keys, &values);
+    // SAFETY: every value has the type its About panel option key expects.
+    unsafe {
+        NSApplication::sharedApplication(mtm).orderFrontStandardAboutPanelWithOptions(&options);
+    }
+}
 
 pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let item =
@@ -31,16 +89,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         "kayet",
         true,
         &[
-            &PredefinedMenuItem::about(
-                app,
-                Some("About kayet"),
-                Some(AboutMetadata {
-                    // Explicit so the panel shows the app icon even when running unbundled
-                    // (`tauri dev`), where macOS would fall back to a generic icon.
-                    icon: Some(tauri::include_image!("icons/128x128@2x.png")),
-                    ..AboutMetadata::default()
-                }),
-            )?,
+            // Custom instead of `PredefinedMenuItem::about`, whose credits are plain text: the
+            // panel's links have to be clickable (see `show_about`).
+            &item(ABOUT, "About kayet", None)?,
             &item("check-updates", "Check for Updates…", None)?,
             &sep()?,
             &item("open-settings", "Settings…", Some("CmdOrCtrl+,"))?,
