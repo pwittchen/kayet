@@ -527,6 +527,37 @@ button:focus-visible {
   padding: var(--titlebar-height) 16px 8px 8px;
 }
 
+/* While the title bar is shown, scroll areas start below it so their scrollbars aren't
+   covered; the top padding shrinks by the same amount, so the text doesn't move. */
+.chrome-visible #editor {
+  padding-top: var(--titlebar-height);
+}
+
+.chrome-visible #editor .cm-content {
+  padding-top: 32px;
+}
+
+.chrome-visible .zen #editor .cm-content {
+  padding-top: calc(25vh - var(--titlebar-height));
+}
+
+.chrome-visible #editor .cm-code-mode .cm-content {
+  padding-top: 0;
+}
+
+.chrome-visible #preview-pane {
+  border-top: var(--titlebar-height) solid transparent;
+}
+
+.chrome-visible #preview {
+  padding-top: 32px;
+}
+
+.chrome-visible #tree {
+  border-top: var(--titlebar-height) solid transparent;
+  padding-top: 8px;
+}
+
 #editor .cm-gutters {
   background: var(--bg);
   border: none;

@@ -48,6 +48,7 @@ export class Chrome {
     if (this.visible) return;
     this.visible = true;
     this.titlebar.classList.add("visible");
+    document.body.classList.add("chrome-visible");
     void api.setChromeVisible(true);
     this.onShow();
   }
@@ -58,6 +59,7 @@ export class Chrome {
     if (!this.visible || this.pinned || this.holds > 0) return;
     this.visible = false;
     this.titlebar.classList.remove("visible");
+    document.body.classList.remove("chrome-visible");
     void api.setChromeVisible(false);
   }
 

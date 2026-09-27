@@ -38,6 +38,7 @@ beforeEach(() => {
   titlebar = document.createElement("div");
   edgeHandle = document.createElement("div");
   document.body.replaceChildren(titlebar, edgeHandle);
+  document.body.className = "";
   treeVisible = false;
   onPinnedChange = vi.fn<(pinned: boolean) => void>();
   onShow = vi.fn<() => void>();
@@ -93,6 +94,15 @@ describe("title bar hover-reveal", () => {
     vi.advanceTimersByTime(1);
     expect(titlebarShown()).toBe(false);
     expect(api.setChromeVisible).toHaveBeenLastCalledWith(false);
+  });
+
+  it("marks the body while shown so scroll areas start below the title bar", () => {
+    const marked = () => document.body.classList.contains("chrome-visible");
+    expect(marked()).toBe(false);
+    move(300, 10);
+    expect(marked()).toBe(true);
+    chrome.hide();
+    expect(marked()).toBe(false);
   });
 
   it("does not restart the hide delay on further moves outside the zone", () => {
