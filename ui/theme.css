@@ -500,6 +500,7 @@ button:focus-visible {
   caret-color: var(--caret);
   -webkit-user-select: text;
   user-select: text;
+  cursor: text;
 }
 
 /* Zen mode: extra room above and below the text. Lines further in are kept vertically
