@@ -34,7 +34,7 @@ const ABOUT_CREDITS: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     "</p>\
     <p><a href=\"https://getkayet.app\">getkayet.app</a></p>\
-    <p><a href=\"https://github.com/pwittchen/kayet\">Source code on GitHub</a></p>\
+    <p><a href=\"https://github.com/pwittchen/kayet\">source code on GitHub</a></p>\
     <p>made by Piotr Wittchen</p>\
     <p><a href=\"https://wittchen.io\">wittchen.io</a></p>"
 );
