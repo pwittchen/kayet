@@ -52,6 +52,7 @@ const els = {
   docEdited: $("doc-edited"),
   docStats: $("doc-stats"),
   btnPalette: $<HTMLButtonElement>("btn-palette"),
+  btnRecent: $<HTMLButtonElement>("btn-recent"),
   btnPin: $<HTMLButtonElement>("btn-pin"),
   btnZen: $<HTMLButtonElement>("btn-zen"),
   btnCode: $<HTMLButtonElement>("btn-code"),
@@ -1264,6 +1265,7 @@ function run(id: string): void {
 }
 
 els.btnPalette.addEventListener("click", () => run("palette"));
+els.btnRecent.addEventListener("click", () => run("open-recent"));
 els.btnPin.addEventListener("click", () => run("toggle-chrome"));
 els.btnZen.addEventListener("click", () => run("toggle-zen"));
 els.btnCode.addEventListener("click", () => run("toggle-code-mode"));
@@ -1281,6 +1283,7 @@ els.btnStatus.addEventListener("click", () => void promptSave().catch(showError)
 els.edgeHandle.addEventListener("click", () => run("toggle-tree"));
 
 els.btnPalette.innerHTML = icons.command;
+els.btnRecent.innerHTML = icons.recent;
 els.btnPin.innerHTML = icons.pin;
 els.btnZen.innerHTML = icons.zen;
 els.btnCode.innerHTML = icons.lineNumbers;

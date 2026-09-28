@@ -191,6 +191,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | × (close) | Close the open file — **only shown when a file or more than one tab is open** | — |
   | + (new tab) | Open a new tab with an empty untitled document (see 4.4) | `⌘T` |
   | ⌘ (command) | Open the command palette (see 5.4) | `⌘K` |
+  | Clock (recent) | Open a recently opened file (the palette's Open Recent list) | — |
   | Zen | Zen mode: cursor line kept vertically centered, extra top/bottom padding, all but the current paragraph dimmed — **hidden in code editor mode** | `⌘⇧J` |
   | Numbered lines | Toggle code editor mode (off by default, see 7) | — |
   | Cursor (I-beam) | Toggle text cursor blinking (on by default); when off the cursor stays still | — |
