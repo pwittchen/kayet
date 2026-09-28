@@ -25,14 +25,19 @@ pub const CLEAR_RECENT: &str = "clear-recent";
 /// Menu id of kayet → About kayet.
 pub const ABOUT: &str = "about";
 
-/// Credits of the About panel: project website, source code and author. The charset is explicit
-/// because the HTML importer would otherwise decode the bytes as Latin-1.
-const ABOUT_CREDITS: &str = "<meta charset=\"utf-8\">\
+/// Credits of the About panel: version, project website, source code and author. The charset is
+/// explicit because the HTML importer would otherwise decode the bytes as Latin-1.
+const ABOUT_CREDITS: &str = concat!(
+    "<meta charset=\"utf-8\">\
     <style>p { font: 11px -apple-system; text-align: center; margin: 0 0 6px }</style>\
+    <p>version ",
+    env!("CARGO_PKG_VERSION"),
+    "</p>\
     <p><a href=\"https://getkayet.app\">getkayet.app</a></p>\
     <p><a href=\"https://github.com/pwittchen/kayet\">Source code on GitHub</a></p>\
-    <p>Made by Piotr Wittchen</p>\
-    <p><a href=\"https://wittchen.io\">wittchen.io</a></p>";
+    <p>made by Piotr Wittchen</p>\
+    <p><a href=\"https://wittchen.io\">wittchen.io</a></p>"
+);
 
 /// Shows the standard macOS About panel with `ABOUT_CREDITS` (links clickable). Must run on the
 /// main thread, as menu events do.
@@ -42,8 +47,9 @@ pub fn show_about() {
     use objc2::rc::Retained;
     use objc2::runtime::AnyObject;
     use objc2_app_kit::{
-        NSAboutPanelOptionApplicationIcon, NSAboutPanelOptionCredits, NSAboutPanelOptionVersion,
-        NSApplication, NSAttributedStringAppKitDocumentFormats, NSImage,
+        NSAboutPanelOptionApplicationIcon, NSAboutPanelOptionApplicationVersion,
+        NSAboutPanelOptionCredits, NSAboutPanelOptionVersion, NSApplication,
+        NSAttributedStringAppKitDocumentFormats, NSImage,
     };
     use objc2_foundation::{MainThreadMarker, NSAttributedString, NSData, NSDictionary, NSString};
 
@@ -73,10 +79,14 @@ pub fn show_about() {
         keys.push(unsafe { NSAboutPanelOptionCredits });
         values.push(credits.into());
     }
-    // The build version is the same as the app version, so the panel would show it twice
-    // ("Version 0.3.3 (0.3.3)"); an empty one drops the parenthesized part.
-    keys.push(unsafe { NSAboutPanelOptionVersion });
-    values.push(NSString::new().into());
+    // The panel's own version line reads "Version 0.3.3 (0.3.3)"; empty versions hide it, and the
+    // version is shown in lowercase at the top of the credits instead.
+    for key in [unsafe { NSAboutPanelOptionApplicationVersion }, unsafe {
+        NSAboutPanelOptionVersion
+    }] {
+        keys.push(key);
+        values.push(NSString::new().into());
+    }
 
     let options = NSDictionary::from_retained_objects(&keys, &values);
     // SAFETY: every value has the type its About panel option key expects.
