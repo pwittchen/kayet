@@ -42,8 +42,8 @@ pub fn show_about() {
     use objc2::rc::Retained;
     use objc2::runtime::AnyObject;
     use objc2_app_kit::{
-        NSAboutPanelOptionApplicationIcon, NSAboutPanelOptionCredits, NSApplication,
-        NSAttributedStringAppKitDocumentFormats, NSImage,
+        NSAboutPanelOptionApplicationIcon, NSAboutPanelOptionCredits, NSAboutPanelOptionVersion,
+        NSApplication, NSAttributedStringAppKitDocumentFormats, NSImage,
     };
     use objc2_foundation::{MainThreadMarker, NSAttributedString, NSData, NSDictionary, NSString};
 
@@ -73,6 +73,10 @@ pub fn show_about() {
         keys.push(unsafe { NSAboutPanelOptionCredits });
         values.push(credits.into());
     }
+    // The build version is the same as the app version, so the panel would show it twice
+    // ("Version 0.3.3 (0.3.3)"); an empty one drops the parenthesized part.
+    keys.push(unsafe { NSAboutPanelOptionVersion });
+    values.push(NSString::new().into());
 
     let options = NSDictionary::from_retained_objects(&keys, &values);
     // SAFETY: every value has the type its About panel option key expects.
