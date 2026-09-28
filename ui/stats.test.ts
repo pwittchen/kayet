@@ -35,4 +35,11 @@ describe("formatStats", () => {
     expect(formatStats(99)).toBe("99 words · 1 min read");
     expect(formatStats(1234)).toBe("1,234 words · 6 min read");
   });
+
+  it("shows hours and minutes past an hour of reading", () => {
+    expect(formatStats(12_000)).toBe("12,000 words · 60 min read");
+    expect(formatStats(12_200)).toBe("12,200 words · 1 h 1 min read");
+    expect(formatStats(24_000)).toBe("24,000 words · 2 h read");
+    expect(formatStats(30_000)).toBe("30,000 words · 2 h 30 min read");
+  });
 });

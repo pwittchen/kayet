@@ -180,7 +180,8 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   subtle pill), a dot while it has unsaved changes that turns into a close × on hover; the strip
   scrolls sideways when the tabs don't fit.
   For prose (Markdown, plain text, untitled — not code files, not in code editor mode) a muted `· 1,234 words · 6 min read`
-  follows (200 words per minute, at least 1 min; hidden for an empty document). Words are runs of
+  follows (200 words per minute, at least 1 min; past 60 min shown as hours and minutes, e.g.
+  `1 h 12 min read` or `2 h read`; hidden for an empty document). Words are runs of
   non-whitespace containing a letter or digit, so Markdown markers (`#`, `-`, `>`) don't count.
   The count is refreshed only while the title bar is visible.
 - **Right:** icon-only controls (monochrome, 16px, SF Symbols–like line icons):

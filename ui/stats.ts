@@ -13,9 +13,16 @@ export function countWords(text: string): number {
   return count;
 }
 
-/** `1,234 words · 7 min read`; empty for a document without words. */
+/** `1,234 words · 7 min read` (`1 h 12 min read` past an hour); empty for a document without words. */
 export function formatStats(words: number): string {
   if (words === 0) return "";
   const minutes = Math.max(1, Math.round(words / WORDS_PER_MINUTE));
-  return `${words.toLocaleString("en-US")} ${words === 1 ? "word" : "words"} · ${minutes} min read`;
+  return `${words.toLocaleString("en-US")} ${words === 1 ? "word" : "words"} · ${formatDuration(minutes)} read`;
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes <= 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
 }
