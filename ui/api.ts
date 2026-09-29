@@ -146,6 +146,8 @@ export const api = {
     invoke<string>("render_export", { text, base }),
   /** Bytes of an image the preview may show, to embed into an HTML export. */
   readImage: (path: string) => invoke<ArrayBuffer>("read_image", { path }),
+  /** Downloads a web image (once) into ~/.kayet/cache/images/; returns the local copy's path. */
+  cacheImage: (url: string) => invoke<string>("cache_image", { url }),
   /** Prints the document prepared in `#print` into a PDF at `path`. */
   exportPdf: (path: string) => invoke<void>("export_pdf", { path }),
   /** Enables File → Export as HTML… / PDF…. */

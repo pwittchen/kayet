@@ -2,6 +2,7 @@
 
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { api, dirname, isMarkdown, safeDecode } from "./api";
+import { isWebImage, knownCopy, localCopy } from "./images";
 
 const RENDER_DELAY_MS = 150;
 
@@ -51,8 +52,13 @@ export class Preview {
       const src = img.getAttribute("src") ?? "";
       if (src.startsWith("/")) {
         img.src = convertFileSrc(safeDecode(src));
+      } else if (isWebImage(src)) {
+        const copy = knownCopy(src);
+        if (copy) img.src = convertFileSrc(copy);
+        else void localCopy(src).then((path) => (img.src = convertFileSrc(path)), () => {});
       }
-      img.addEventListener("load", () => this.measure(), { once: true });
+      // Not `once`: a web image may load again from its local copy.
+      img.addEventListener("load", () => this.measure());
     }
     const blocks = this.body.querySelectorAll<HTMLElement>("pre > code[class*='language-']");
     if (blocks.length > 0) {

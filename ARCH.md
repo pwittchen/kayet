@@ -56,6 +56,7 @@ kayet/
 │   │   ├── search.rs       workspace-wide literal text search
 │   │   ├── markdown.rs     pulldown-cmark → ammonia sanitizer, line anchors
 │   │   ├── export.rs       PDF export through NSPrintOperation on the web view
+│   │   ├── image_cache.rs  web images downloaded via curl into ~/.kayet/cache/images/
 │   │   ├── recovery.rs     crash recovery backup (~/.kayet/recovery/buffer.json)
 │   │   ├── update.rs       update check / install from GitHub Releases
 │   │   ├── menu.rs         native menu bar, Open Recent, check items, About
@@ -75,6 +76,7 @@ kayet/
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)
 │   ├── export.ts           HTML / PDF export
+│   ├── images.ts           web images → their downloaded copies (preview and export)
 │   ├── tree.ts             file tree
 │   ├── palette.ts          command palette, file finder, workspace search
 │   ├── chrome.ts           auto-hiding title bar and left-edge handle
@@ -181,7 +183,7 @@ command goes through `AppState::authorize`:
 The `allowed` set holds files the user picked explicitly: open / save dialogs, drag and drop,
 Finder / the `kayet` command, Open Recent and the files restored from the last session. When a
 file is allowed, its directory is also added to the asset protocol scope, so the preview can
-show images next to it. On top of that:
+show images next to it; so is `~/.kayet/cache/images/` (downloaded web images). On top of that:
 
 - Rendered Markdown is sanitized by `ammonia` before it reaches the DOM.
 - The CSP (`tauri.conf.json`) allows scripts only from the app itself, no frames, no objects,
@@ -371,14 +373,22 @@ place, so the file on disk is never half-written; permissions of an existing fil
                                               │
                                               ▼
                                       ammonia sanitizer
+                              + relative raw HTML <img src> → absolute paths
                                               │
                                               ▼
                         preview.ts: innerHTML, image src → asset:// URLs,
+                        web images → invoke("cache_image") → local copy,
                         lazy highlight.js for code blocks, measure anchors
                         for editor ↔ preview scroll sync
 ```
 
 A sequence number drops results of renders overtaken by newer ones.
+
+Web images are downloaded by `image_cache.rs` through the system's `curl` (http / https only,
+20MB max, 30s timeout) into `~/.kayet/cache/images/<FNV-1a hash of the URL>.<ext>`, the
+extension taken from the content type (or the URL); anything that isn't an image is discarded.
+`images.ts` remembers each URL's download for the session, so re-renders while typing reuse it
+without a round trip, and forgets failures after a minute so they are retried.
 
 ### Export
 
@@ -387,6 +397,8 @@ A sequence number drops results of renders overtaken by newer ones.
      │
      ▼
   invoke("render_export")  (no line anchors, relative links kept as written)
+     │
+     ├─ web images → their downloaded copies (cache_image), as local images
      │
      ├─ HTML: images inlined as data: URIs (read_image) + markdown-body.css
      │        → one self-contained .html → write_file
@@ -457,6 +469,8 @@ No HTTP client is compiled in; network and disk work goes through the system's `
 │                        — settings, window geometry, open / recent files, skipped version;
 │                          edited as a normal document from Settings (⌘,), reloaded on save
 ├── workspace/           default workspace (used when none is configured or it is gone)
+├── cache/
+│   └── images/          web images shown in the preview / exports, downloaded once
 └── recovery/
     └── buffer.json      unsaved buffers, present only while there are unsaved changes
                          (or after a crash)

@@ -565,6 +565,17 @@ pub async fn read_image(app: AppHandle, path: String) -> CmdResult<tauri::ipc::R
     Ok(tauri::ipc::Response::new(std::fs::read(&p).map_err(err)?))
 }
 
+/// Downloads a web image the preview shows (once, see `image_cache`); returns its local path.
+#[tauri::command]
+pub async fn cache_image(url: String) -> CmdResult<String> {
+    let path = tauri::async_runtime::spawn_blocking(move || {
+        crate::image_cache::fetch(&crate::image_cache::dir(), &url)
+    })
+    .await
+    .map_err(err)??;
+    Ok(path_string(&path))
+}
+
 /// Prints the rendered document the frontend prepared for printing into a PDF at `path`.
 #[tauri::command]
 pub async fn export_pdf(

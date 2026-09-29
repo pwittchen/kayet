@@ -2,6 +2,7 @@
 
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { api, dirname, safeDecode } from "./api";
+import { useLocalCopies } from "./images";
 import markdownCss from "./markdown-body.css?raw";
 
 /** Longest wait for an image to load before the PDF is printed without it. */
@@ -80,6 +81,7 @@ export async function renderForExport(text: string, path: string): Promise<HTMLE
   body.innerHTML = await api.renderExport(text, dirname(path));
   const blocks = body.querySelectorAll<HTMLElement>("pre > code[class*='language-']");
   if (blocks.length > 0) (await import("./highlight")).highlightBlocks(blocks);
+  await useLocalCopies(body);
   return body;
 }
 
@@ -110,7 +112,7 @@ ${body}
 `;
 }
 
-/** Local images (absolute paths, as the renderer resolves them) in `body`. */
+/** Local images (absolute paths, as the renderer resolves them, or downloaded copies) in `body`. */
 function localImages(body: HTMLElement): HTMLImageElement[] {
   return [...body.querySelectorAll("img")].filter((img) => img.getAttribute("src")?.startsWith("/"));
 }
@@ -131,8 +133,8 @@ function dataUrl(bytes: ArrayBuffer, type: string): Promise<string> {
 }
 
 /**
- * Embeds local images as data URLs so the page works anywhere. Images that cannot be read
- * (missing, too large) link to the file instead.
+ * Embeds local images (and the downloaded copies of web images) as data URLs so the page
+ * works anywhere. Images that cannot be read (missing, too large) link to the file instead.
  */
 async function embedImages(body: HTMLElement): Promise<void> {
   await Promise.all(

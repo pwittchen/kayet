@@ -7,6 +7,7 @@ mod commands;
 mod config;
 mod export;
 mod fs_ops;
+mod image_cache;
 mod markdown;
 mod menu;
 mod recovery;
@@ -54,6 +55,9 @@ fn main() {
             state.start_watcher(app.handle());
             state.refresh_recent_menu(app.handle());
             update::start_background_checks(app.handle());
+            let _ = app
+                .asset_protocol_scope()
+                .allow_directory(image_cache::dir(), false);
             for file in state.config.lock().unwrap().session.restored_files() {
                 if let Some(dir) = std::path::Path::new(file).parent() {
                     let _ = app.asset_protocol_scope().allow_directory(dir, true);
@@ -127,6 +131,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::render_markdown,
         commands::render_export,
         commands::read_image,
+        commands::cache_image,
         commands::export_pdf,
         commands::set_chrome_visible,
         commands::set_menu_check,

@@ -2,8 +2,9 @@
 //!
 //! Every top-level block is preceded by an empty `<span data-line="N">` anchor (0-based
 //! source line) so the preview can approximately sync its scroll position with the editor.
-//! Relative image and link targets are resolved against `base` into absolute file paths;
-//! the frontend turns those into asset URLs / in-editor navigation.
+//! Relative image and link targets are resolved against `base` into absolute file paths
+//! (images also in raw HTML `<img>` tags); the frontend turns those into asset URLs /
+//! in-editor navigation.
 //!
 //! Exports (`render_export`) get neither the anchors nor resolved links, which stay as written
 //! so they keep working next to the exported file; images are still resolved, to be embedded.
@@ -84,8 +85,68 @@ fn render_with(text: &str, base: Option<&Path>, mode: Mode) -> String {
 
     let mut out = String::with_capacity(text.len() * 3 / 2);
     html::push_html(&mut out, events.into_iter());
-    SANITIZER.clean(&out).to_string()
+    let clean = SANITIZER.clean(&out).to_string();
+    match base {
+        Some(base) if clean.contains("<img ") => resolve_html_images(&clean, base),
+        _ => clean,
+    }
 }
+
+/// Resolves relative `src`s of `<img>` tags written as raw HTML (Markdown images are resolved
+/// while parsing). Works on the sanitizer's output, which always writes attributes as
+/// `name="value"` with `&` and `"` escaped.
+fn resolve_html_images(html: &str, base: &Path) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(start) = rest.find("<img ") {
+        let (before, tag) = rest.split_at(start + "<img".len());
+        out.push_str(before);
+        rest = tag;
+        // Attributes: ` name="value"` until the tag ends.
+        while let Some(attr) = rest.strip_prefix(' ') {
+            let Some((name, value_and_rest)) = attr.split_once("=\"") else {
+                break;
+            };
+            let Some((value, after)) = value_and_rest.split_once('"') else {
+                break;
+            };
+            out.push(' ');
+            out.push_str(name);
+            out.push_str("=\"");
+            if name == "src" {
+                let url = value.replace("&amp;", "&");
+                let resolved = resolve_url(CowStr::from(url.as_str()), base);
+                if *resolved == *url {
+                    out.push_str(value);
+                } else {
+                    let encoded: String =
+                        percent_encoding::utf8_percent_encode(&resolved, URL_UNSAFE).collect();
+                    out.push_str(&encoded.replace('&', "&amp;"));
+                }
+            } else {
+                out.push_str(value);
+            }
+            out.push('"');
+            rest = after;
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Characters percent-encoded in a resolved image path (as the HTML writer does).
+const URL_UNSAFE: &percent_encoding::AsciiSet = &percent_encoding::CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'<')
+    .add(b'>')
+    .add(b'`')
+    .add(b'%')
+    .add(b'\\')
+    .add(b'^')
+    .add(b'{')
+    .add(b'|')
+    .add(b'}');
 
 fn resolve_tag<'a>(tag: Tag<'a>, base: Option<&Path>, mode: Mode) -> Tag<'a> {
     let Some(base) = base else { return tag };
@@ -227,6 +288,24 @@ mod tests {
         assert!(html.contains("href=\"/notes/other.md#top\""), "{html}");
         assert!(html.contains("href=\"https://example.com\""));
         assert!(html.contains("href=\"#frag\""));
+    }
+
+    #[test]
+    fn resolves_relative_images_in_raw_html() {
+        let html = render(
+            "<p><img alt=\"a b\" src=\"img/a b.png?x=1&y=2\" width=\"40\"></p>\n\n\
+             Inline <img src=\"https://example.com/a.png\"> and <img src=\"/abs/c.png\">\n",
+            Some(Path::new("/notes")),
+        );
+        assert!(
+            html.contains("src=\"/notes/img/a%20b.png?x=1&amp;y=2\""),
+            "{html}"
+        );
+        assert!(html.contains("width=\"40\""), "{html}");
+        assert!(html.contains("src=\"https://example.com/a.png\""), "{html}");
+        assert!(html.contains("src=\"/abs/c.png\""), "{html}");
+        let export = render_export("<img src=\"b.png\">", Some(Path::new("/notes")));
+        assert!(export.contains("src=\"/notes/b.png\""), "{export}");
     }
 
     #[test]
