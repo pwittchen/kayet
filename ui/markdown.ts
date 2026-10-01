@@ -4,6 +4,16 @@ import { EditorSelection, EditorState, Extension, Prec, StateCommand } from "@co
 import { EditorView, keymap } from "@codemirror/view";
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand, pasteURLAsLink } from "@codemirror/lang-markdown";
 
+/**
+ * Markdown syntax that rarely shows up in plain text: a heading, list item, quote, code fence or
+ * table rule starting a line, or bold text, a link / image or inline code anywhere.
+ */
+const MARKDOWN_SYNTAX =
+  /^ {0,3}(?:#{1,6}[ \t]+\S|[-*+][ \t]+\S|\d{1,9}[.)][ \t]+\S|>|```|~~~|\|?[ \t]*:?-{3,}:?[ \t]*\|)|\*\*\S[^*\n]*\*\*|__\S[^_\n]*__|!?\[[^\]\n]+\]\([^)\s]+\)|`[^`\n]+`/m;
+
+/** Whether `text` (e.g. an untitled document) looks like it is written in Markdown. */
+export const looksLikeMarkdown = (text: string): boolean => MARKDOWN_SYNTAX.test(text);
+
 /** Saves a pasted image next to the document; resolves to its path relative to it, or null. */
 export type ImageSaver = (image: File) => Promise<string | null>;
 

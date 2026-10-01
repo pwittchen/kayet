@@ -148,7 +148,8 @@ in CI or releases.
 Three regions, left to right:
 1. **File tree** (optional, hidden by default).
 2. **Editor** (always present).
-3. **Preview pane** (optional, hidden by default, only for `.md` / `.markdown` files).
+3. **Preview pane** (optional, hidden by default, only for `.md` / `.markdown` files and untitled
+   documents written in Markdown).
 
 Both the file tree and the preview pane can be hidden at any time and are **hidden by default**,
 so a fresh window shows only the editor. Each is shown on demand via its title bar control or
@@ -201,7 +202,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
   | Presentation (screen) | Start presentation mode; turns into an exit icon while presenting (see 8.2) — **only shown for `.md` files and untitled documents** | — |
-  | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
+  | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files and untitled documents written in Markdown** (see 8) | `⌘⇧P` |
 
 ### 5.4 Command palette
 - Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
@@ -316,7 +317,10 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 ## 8. Markdown Preview
 
 - A **preview icon** (eye) appears in the title bar controls **only when the active file is
-  `.md` or `.markdown`**.
+  `.md` or `.markdown`**, or when it is an **untitled document written in Markdown**: once its
+  text (checked ~300ms after typing pauses) holds Markdown syntax — a heading, list item, quote,
+  code fence or table line, or bold text, a link, an image or inline code — the icon appears and
+  stays until the document is saved. Saved under another extension, it loses the preview.
 - The preview is **hidden by default**, including when a Markdown file is opened.
 - Clicking it opens the **right pane** with a rendered preview of the current document;
   clicking it again (or `⌘⇧P`) hides the pane.
@@ -334,7 +338,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Scroll sync between editor and preview (approximate, by source line mapping).
 - Preview typography mirrors the app theme (light/dark), GitHub-like but more restrained.
 - Preview state (open/closed) is remembered per session; it closes automatically when a
-  non-Markdown file is opened.
+  non-Markdown file is opened (or an untitled document is saved as one).
 
 ### 8.1 Export
 - `File → Export as HTML…` / `Export as PDF…` (or the command palette) export the open Markdown
@@ -562,7 +566,7 @@ kayet/
 3. Hovering the top edge reveals the title bar with traffic lights and controls; they fade out after the mouse leaves.
 4. The file tree can be toggled and shows the workspace contents; changing the workspace updates the tree and is remembered across restarts.
 5. Theme defaults to System and follows macOS appearance live; Light/Dark can be forced and are persisted.
-6. Opening a `.md` file shows the preview icon; clicking it shows a live-updating rendered preview in the right pane. Non-Markdown files show no preview icon.
+6. Opening a `.md` file shows the preview icon; clicking it shows a live-updating rendered preview in the right pane. Non-Markdown files show no preview icon; an untitled document shows it once Markdown is typed into it.
 7. Files can be created, opened, edited, saved, renamed and trashed from within the app.
 8. The UI uses a consistent, minimal macOS/Linear-style visual language in both themes.
 

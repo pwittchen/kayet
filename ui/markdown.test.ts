@@ -4,7 +4,7 @@ import { EditorView, runScopeHandlers } from "@codemirror/view";
 import { LanguageSupport } from "@codemirror/language";
 import { markdownLanguage } from "@codemirror/lang-markdown";
 
-import { ImageSaver, linkTarget, markdownEditing } from "./markdown";
+import { ImageSaver, linkTarget, looksLikeMarkdown, markdownEditing } from "./markdown";
 
 let view: EditorView;
 
@@ -147,4 +147,40 @@ describe("pasting", () => {
 it("wraps link targets that need it", () => {
   expect(linkTarget("a-1.png")).toBe("a-1.png");
   expect(linkTarget("a b.png")).toBe("<a b.png>");
+});
+
+describe("looksLikeMarkdown", () => {
+  it("finds Markdown syntax", () => {
+    for (const text of [
+      "# Title",
+      "notes\n## Section",
+      "- item",
+      "* item",
+      "1. first",
+      "> quote",
+      "```js\ncode\n```",
+      "| a | b |\n|---|---|",
+      "some **bold** text",
+      "a [link](https://example.com)",
+      "![image](pic.png)",
+      "run `npm ci`",
+    ]) {
+      expect(looksLikeMarkdown(text), text).toBe(true);
+    }
+  });
+
+  it("ignores plain text", () => {
+    for (const text of [
+      "",
+      "Just a note.",
+      "#hashtag",
+      "2 * 3 = 6",
+      "-not a list",
+      "costs 5 - 3 = 2",
+      "see [1] for details",
+      "snake_case_name",
+    ]) {
+      expect(looksLikeMarkdown(text), text).toBe(false);
+    }
+  });
 });

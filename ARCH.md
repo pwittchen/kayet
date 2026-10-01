@@ -70,7 +70,8 @@ kayet/
 │   ├── main.ts             app controller: tabs, open / save, autosave, recovery, commands
 │   ├── api.ts              typed wrappers for backend commands + path helpers
 │   ├── editor.ts           CodeMirror setup, settings, snapshots per tab
-│   ├── markdown.ts         smart Markdown editing (lists, bold / italic, pasting images)
+│   ├── markdown.ts         smart Markdown editing (lists, bold / italic, pasting images),
+│   │                       Markdown detection for untitled documents
 │   ├── languages.ts        code highlighting by file extension (lazy legacy modes)
 │   ├── find.ts             in-document find / replace bar
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
@@ -386,6 +387,11 @@ place, so the file on disk is never half-written; permissions of an existing fil
 ```
 
 A sequence number drops results of renders overtaken by newer ones.
+
+The preview is offered for `.md` / `.markdown` files and for untitled documents written in
+Markdown: while an untitled tab isn't known to be Markdown yet, `onChange` schedules a check
+(300ms) of its text with `looksLikeMarkdown` (`markdown.ts`); a match sets the tab's `markdown`
+flag, which shows the preview icon while the tab has no path (`loadDoc` resets it).
 
 Web images are downloaded by `image_cache.rs` through the system's `curl` (http / https only,
 20MB max, 30s timeout) into `~/.kayet/cache/images/<FNV-1a hash of the URL>.<ext>`, the

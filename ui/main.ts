@@ -24,7 +24,7 @@ import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings, EditorSnapshot } from "./editor";
 import { exportHtml, exportPdf } from "./export";
-import { imageExtension } from "./markdown";
+import { imageExtension, looksLikeMarkdown } from "./markdown";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
 import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
@@ -102,9 +102,19 @@ interface Tab {
   pendingDisk: string | null;
   /** The editor state while another tab is shown. */
   editor: EditorSnapshot | null;
+  /** Whether the untitled document was found to be written in Markdown (kept until it is saved). */
+  markdown: boolean;
 }
 
-const newTab = (): Tab => ({ path: null, saved: Text.empty, disk: "", savedOnce: false, pendingDisk: null, editor: null });
+const newTab = (): Tab => ({
+  path: null,
+  saved: Text.empty,
+  disk: "",
+  savedOnce: false,
+  pendingDisk: null,
+  editor: null,
+  markdown: false,
+});
 
 /** Open documents in tab order; `doc` is the one shown. */
 const tabs: Tab[] = [newTab()];
@@ -113,6 +123,7 @@ let previewOpen = false; // remembered per session only
 let exportEnabled: boolean | null = null;
 let autosaveTimer: number | undefined;
 let statsTimer: number | undefined;
+let markdownTimer: number | undefined;
 
 /**
  * Documents longer than this (UTF-16 code units, ~10MB of text) are edited in large file mode:
@@ -138,6 +149,7 @@ const editor = new Editor(els.editor, defaultEditorSettings(), {
   onChange: () => {
     if (checkLarge()) applyLarge();
     updateTitle();
+    scheduleMarkdownCheck();
     if (previewVisible()) preview.update(() => editor.text(), doc.path);
     if (presentation.active) presentation.update(() => editor.text());
     scheduleAutosave();
@@ -165,6 +177,7 @@ const tree = new FileTree(els.tree, {
     if (!gone.length) return;
     for (const tab of gone) {
       // Keep the text around as an unsaved, untitled document.
+      tab.markdown = isMarkdown(tab.path);
       tab.path = null;
       tab.saved = null;
     }
@@ -307,7 +320,24 @@ systemDark.addEventListener("change", (e) => {
 
 // ---- layout ----
 
-const previewVisible = () => previewOpen && isMarkdown(doc.path) && !largeDoc;
+/** Whether the shown document is Markdown: a `.md` file, or an untitled document written in it. */
+const markdownDoc = () => isMarkdown(doc.path) || (!doc.path && doc.markdown);
+
+const previewVisible = () => previewOpen && markdownDoc() && !largeDoc;
+
+/** Checks soon whether the untitled document being edited became Markdown (see `markdownDoc`). */
+function scheduleMarkdownCheck(): void {
+  if (doc.path || doc.markdown || largeDoc || markdownTimer !== undefined) return;
+  markdownTimer = window.setTimeout(checkMarkdown, 300);
+}
+
+function checkMarkdown(): void {
+  window.clearTimeout(markdownTimer);
+  markdownTimer = undefined;
+  if (doc.path || doc.markdown || largeDoc || !looksLikeMarkdown(editor.text())) return;
+  doc.markdown = true;
+  updateLayout();
+}
 
 function updateLayout(): void {
   const ui = cfg.ui;
@@ -319,12 +349,12 @@ function updateLayout(): void {
   els.btnCloseFile.hidden = !doc.path && tabs.length < 2;
 
   const md = isMarkdown(doc.path);
-  if (!md) previewOpen = false;
+  if (!markdownDoc()) previewOpen = false;
   if (exportEnabled !== md) {
     exportEnabled = md;
     void api.setExportEnabled(md).catch(() => {});
   }
-  els.btnPreview.hidden = !md || largeDoc;
+  els.btnPreview.hidden = !markdownDoc() || largeDoc;
   els.btnPreview.classList.toggle("on", previewVisible());
   els.previewPane.hidden = !previewVisible();
   els.previewDivider.hidden = !previewVisible();
@@ -521,7 +551,7 @@ async function toggleTree(): Promise<void> {
 }
 
 async function togglePreview(): Promise<void> {
-  if (!isMarkdown(doc.path)) return;
+  if (!markdownDoc()) return;
   if (largeDoc) return notify("Preview is off for large files");
   previewOpen = !previewOpen;
   updateLayout();
@@ -687,6 +717,9 @@ function loadDoc(path: string | null, text: string, recent = true): void {
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
+  doc.markdown = false;
+  window.clearTimeout(markdownTimer);
+  markdownTimer = undefined;
   applySpellCheck();
   editor.load(text, isMarkdown(path) && text.length <= LARGE_DOC ? "markdown" : null);
   checkLarge();
@@ -1203,7 +1236,7 @@ function paletteCommands(): PaletteItem[] {
       label: cfg.ui.sidebar_visible ? "Hide File Tree" : "Show File Tree",
       shortcut: "⌘\\",
     },
-    md && !largeDoc && {
+    markdownDoc() && !largeDoc && {
       id: "toggle-preview",
       label: previewVisible() ? "Hide Preview" : "Show Preview",
       shortcut: "⌘⇧P",
