@@ -394,6 +394,62 @@ kbd {
 .palette-box li.selected { background: color-mix(in srgb, var(--text) 7%, transparent); }
 .palette-box kbd { min-width: 0; padding: 0; border: 0; background: none; font-size: 12px; }
 
+/* ---- presentation ---- */
+.present { max-width: 1040px; margin: 0 auto; padding-bottom: 140px; }
+.present h2 {
+  text-align: center;
+  font-size: clamp(36px, 5.5vw, 56px);
+  line-height: 1.08;
+}
+.present-lead { margin: 16px auto 56px; max-width: 40em; text-align: center; color: var(--text-muted); font-size: 19px; }
+.present-lead code, .present .config-notes code { font: 0.9em var(--font-mono); }
+.slide-window { max-width: 880px; margin: 0 auto; aspect-ratio: 16 / 9; }
+.slide-deck { position: absolute; inset: 0; }
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 clamp(56px, 14%, 160px);
+  font-size: clamp(16px, 2.4vw, 24px);
+  opacity: 0;
+  animation: slide-cycle 9s ease-in-out infinite;
+}
+.slide:first-child { opacity: 1; }
+.slide:nth-child(2) { animation-delay: 3s; }
+.slide:nth-child(3) { animation-delay: 6s; }
+.slide p, .slide ul { margin: 0; }
+.slide ul { padding-left: 1.2em; line-height: 1.7; }
+.slide-h1 { font-size: 2.1em; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+.slide-h2 { font-size: 1.6em; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.6em !important; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+.slide-sub { margin-top: 0.5em !important; color: var(--text-muted); }
+.slide-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-top: -16px;
+  color: var(--text-muted);
+}
+.slide-nav svg { width: 18px; height: 18px; }
+.slide-prev { left: 14px; }
+.slide-next { right: 14px; }
+.slide-counter {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.slide-counter span { position: absolute; right: 0; bottom: 0; white-space: nowrap; opacity: 0; animation: slide-cycle 9s ease-in-out infinite; }
+.slide-counter span:first-child { opacity: 1; }
+.slide-counter span:nth-child(2) { animation-delay: 3s; }
+.slide-counter span:nth-child(3) { animation-delay: 6s; }
+
 /* ---- config ---- */
 .config { max-width: 1040px; margin: 0 auto; padding-bottom: 140px; }
 .config h2 {
@@ -530,6 +586,11 @@ kbd {
   50% { transform: translateY(-8px); }
 }
 @keyframes blink { 50% { opacity: 0; } }
+@keyframes slide-cycle {
+  0%, 30% { opacity: 1; }
+  33.3%, 97% { opacity: 0; }
+  100% { opacity: 1; }
+}
 @keyframes chrome {
   0%, 30%, 100% { opacity: 0; }
   40%, 70% { opacity: 1; }

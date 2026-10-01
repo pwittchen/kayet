@@ -2,7 +2,7 @@
 
 > kayet is a quiet, distraction-free text editor for macOS (Apple Silicon), built with Rust and Tauri 2 with a CodeMirror 6 frontend. When you are writing, the only thing on screen is your text: the title bar, traffic lights and controls stay hidden until the cursor reaches the top of the window. It is free and open source under the Apache License 2.0, with no paid tiers, no feature gating and no telemetry.
 
-kayet edits plain text, Markdown and source code. It offers a live Markdown preview, an optional workspace file tree, tabs, a command palette (⌘K), a file finder (⌘P), workspace-wide search (⌘⇧F), zen mode, HTML and PDF export, crash recovery, optional spell check, light and dark themes and in-place app updates. All settings live in a single TOML file, `~/.kayet/config.toml`.
+kayet edits plain text, Markdown and source code. It offers a live Markdown preview, an optional workspace file tree, tabs, a command palette (⌘K), a file finder (⌘P), workspace-wide search (⌘⇧F), zen mode, Markdown presentations (slides divided by `---`), HTML and PDF export, crash recovery, optional spell check, light and dark themes and in-place app updates. All settings live in a single TOML file, `~/.kayet/config.toml`.
 
 ## Docs
 
