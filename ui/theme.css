@@ -808,6 +808,114 @@ button:focus-visible {
   opacity: 0.6;
 }
 
+/* ---- presentation mode ---- */
+
+/* Covers the window below the title bar; the editor underneath keeps its state but can't
+   take focus meanwhile. */
+body.presenting #app,
+body.presenting #edge-handle {
+  visibility: hidden;
+}
+
+#presentation {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--bg);
+  outline: none;
+}
+
+#slide-scroller {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow-y: auto;
+}
+
+/* Centered while it fits, scrolls from the top when it doesn't. */
+#slide.markdown-body {
+  width: 100%;
+  max-width: 44em;
+  margin: auto;
+  padding: 72px 96px;
+  font-size: clamp(17px, 2.4vmin + 6px, 34px);
+  line-height: 1.5;
+}
+
+#slide.markdown-body h1 {
+  font-size: 2.1em;
+}
+
+#slide.markdown-body h2 {
+  font-size: 1.6em;
+}
+
+.slide-nav {
+  position: absolute;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: color var(--fade), background-color var(--fade), opacity var(--fade);
+}
+
+.slide-nav svg {
+  width: 20px;
+  height: 20px;
+}
+
+.slide-nav:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.slide-nav:disabled {
+  opacity: 0.3;
+}
+
+#slide-prev {
+  left: 16px;
+}
+
+#slide-next {
+  right: 16px;
+}
+
+#slide-footer {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Back to the first slide, next to the counter on the last slide. */
+#slide-first {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  transition: color var(--fade), background-color var(--fade);
+}
+
+#slide-first:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+#slide-counter {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- toast (non-blocking notices) ---- */
 
 #toast {

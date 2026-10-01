@@ -30,6 +30,18 @@
       </section>
     </div>
 
+    <section id="presentation" tabindex="-1" aria-label="Presentation" hidden>
+      <div id="slide-scroller">
+        <article id="slide" class="markdown-body"></article>
+      </div>
+      <button id="slide-prev" class="slide-nav" type="button" title="Previous slide (←)" aria-label="Previous slide"></button>
+      <button id="slide-next" class="slide-nav" type="button" title="Next slide (→)" aria-label="Next slide"></button>
+      <div id="slide-footer">
+        <button id="slide-first" type="button" title="Back to the first slide (Home)" aria-label="Back to the first slide" hidden></button>
+        <span id="slide-counter" aria-live="polite"></span>
+      </div>
+    </section>
+
     <header id="titlebar" data-tauri-drag-region>
       <nav class="controls controls-left">
         <button id="btn-sidebar" type="button" title="Toggle file tree (⌘\)" aria-label="Toggle file tree"></button>
@@ -55,6 +67,7 @@
         <button id="btn-spell" type="button" aria-label="Spell check" aria-pressed="false" hidden></button>
         <button id="btn-settings" type="button" title="Settings (⌘,)" aria-label="Settings"></button>
         <button id="btn-theme" type="button" aria-label="Cycle theme"></button>
+        <button id="btn-present" type="button" title="Present slides" aria-label="Present slides" hidden></button>
         <button id="btn-preview" type="button" title="Toggle preview (⌘⇧P)" aria-label="Toggle preview" hidden></button>
       </nav>
     </header>

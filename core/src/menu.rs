@@ -216,6 +216,7 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 "Toggle Preview",
                 Some("CmdOrCtrl+Shift+P"),
             )?,
+            &item("toggle-presentation", "Toggle Presentation", None)?,
             &item("cycle-theme", "Cycle Theme", Some("CmdOrCtrl+Shift+L"))?,
             &item(
                 "toggle-chrome",

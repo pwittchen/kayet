@@ -25,6 +25,15 @@ export const icons = {
   eye: svg(
     `<path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>`,
   ),
+  present: svg(
+    `<rect x="1.75" y="2.25" width="12.5" height="8.5" rx="1.5"/><path d="M8 10.75v3M5.5 13.75h5M6.75 4.75v3.5l3-1.75z"/>`,
+  ),
+  exitPresent: svg(
+    `<rect x="1.75" y="2.25" width="12.5" height="8.5" rx="1.5"/><path d="M8 10.75v3M5.5 13.75h5M6.5 4.75l3 3.5M9.5 4.75l-3 3.5"/>`,
+  ),
+  toStart: svg(`<path d="M3.5 3.5v9M12 3.5 7.5 8l4.5 4.5"/>`),
+  chevronLeft: svg(`<path d="M10 3.5 5.5 8l4.5 4.5"/>`),
+  chevronRight: svg(`<path d="M6 3.5 10.5 8 6 12.5"/>`),
   edited: svg(`<circle cx="8" cy="8" r="4" fill="currentColor" stroke="none"/>`),
   saved: svg(`<path d="M3.25 8.5 6.5 11.5l6.25-7"/>`),
   closeFile: svg(`<path d="M4 4l8 8M12 4l-8 8"/>`),

@@ -200,13 +200,14 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled), hidden in code editor mode | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
   | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
+  | Presentation (screen) | Start presentation mode; turns into an exit icon while presenting (see 8.2) — **only shown for `.md` files and untitled documents** | — |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files** | `⌘⇧P` |
 
 ### 5.4 Command palette
 - Spotlight-like floating panel, centered near the top of the window, opened with `⌘K`,
   `View → Command Palette…` or the title bar command icon.
 - Lists every command with its shortcut; context-only commands (Close File, next / previous tab,
-  preview, export, syntax highlighting, spell check, Zen mode) appear only when they apply.
+  preview, presentation, export, syntax highlighting, spell check, Zen mode) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
 
@@ -348,6 +349,27 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - **PDF:** written directly (no print dialog) through the web view's native print operation:
   paginated with the system's default paper size, 0.75in margins, always light, code wrapped.
 
+### 8.2 Presentation mode
+- Markdown files (`.md` / `.markdown`) and untitled documents can be presented as slides; code and
+  other files can't (no icon, no palette command, the menu item does nothing). Large files (see 7) can't either.
+- Slides are the parts of the document between lines of `---` (three or more dashes, up to three
+  spaces of indent, nothing else on the line); such lines inside fenced code blocks don't count.
+  Slides with only whitespace are skipped; a document without separators is one slide.
+- The presentation icon in the title bar (next to the preview eye), `View → Toggle Presentation`
+  or the command palette (`Start Presentation`) start it from the first slide, showing the
+  document as currently edited (unsaved changes included).
+- One slide fills the window (over the editor, file tree and preview), vertically centered when
+  it fits and scrollable when it doesn't, rendered like the preview in larger type that scales
+  with the window. Previous / next buttons sit on the left and right edges (disabled on the first /
+  last slide), the slide number and count (`2 / 10`) in the lower right corner. On the last slide
+  a button to the left of the count goes back to the first slide.
+- `←` / `→`, `Page Up` / `Page Down`, `Space` / `⇧Space` move between slides, `Home` / `End` go to
+  the first / last one.
+- The title bar stays hover-revealed; its presentation icon turns into an exit icon. Clicking it,
+  `Esc` or `Exit Presentation` in the palette returns to the editor. Opening another document or
+  switching tabs ends the presentation too. Changes to the document meanwhile (e.g. reloaded from
+  disk) are followed.
+
 ## 9. Theming
 
 - Three modes: **System** (default), **Light**, **Dark**.
@@ -449,6 +471,7 @@ kayet/
 │   ├── tree.ts              # file tree component
 │   ├── palette.ts           # command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F)
 │   ├── preview.ts           # preview pane
+│   ├── presentation.ts      # presentation mode (slides divided by ---)
 │   ├── export.ts            # HTML / PDF export
 │   ├── images.ts            # web images shown from their downloaded copies
 │   ├── markdown-body.css    # rendered Markdown typography (preview and exports)

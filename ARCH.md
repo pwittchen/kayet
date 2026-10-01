@@ -66,7 +66,7 @@ kayet/
 │   ├── capabilities/       Tauri permissions
 │   └── tauri.conf.json     window, CSP, asset protocol, bundle
 ├── ui/                     TypeScript frontend (no framework), built by Vite into dist/
-│   ├── index.html          static DOM skeleton (sidebar, editor, preview, title bar)
+│   ├── index.html          static DOM skeleton (sidebar, editor, preview, presentation, title bar)
 │   ├── main.ts             app controller: tabs, open / save, autosave, recovery, commands
 │   ├── api.ts              typed wrappers for backend commands + path helpers
 │   ├── editor.ts           CodeMirror setup, settings, snapshots per tab
@@ -74,6 +74,7 @@ kayet/
 │   ├── languages.ts        code highlighting by file extension (lazy legacy modes)
 │   ├── find.ts             in-document find / replace bar
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
+│   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)
 │   ├── export.ts           HTML / PDF export
 │   ├── images.ts           web images → their downloaded copies (preview and export)
@@ -284,7 +285,8 @@ self-contained components that know nothing about each other.
   Editor    Preview   FileTree    Palette   Chrome     export.ts  stats.ts  bench.ts
  editor.ts preview.ts  tree.ts  palette.ts chrome.ts
      │         │
-     │         └─▶ highlight.ts  (highlight.js, loaded lazily)
+     │         ├─▶ highlight.ts  (highlight.js, loaded lazily)
+     │         └── Presentation  presentation.ts (one Preview per slide shown)
      ├─▶ markdown.ts   (smart Markdown editing)
      ├─▶ languages.ts  (code grammars, loaded lazily)
      └─▶ find.ts       (find / replace bar)
@@ -305,6 +307,7 @@ The page is a fixed skeleton from `ui/index.html`; components render into it:
 │  FileTree    │v│                                  │v│                         │
 │              │ │   Editor                         │ │   Preview               │
 ├──────────────┴─┴──────────────────────────────────┴─┴─────────────────────────┤
+│ #presentation (presentation mode, over everything but the title bar)          │
 │ #edge-handle · #toast · #print (PDF export only)                              │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```

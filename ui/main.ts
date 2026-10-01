@@ -28,6 +28,7 @@ import { imageExtension } from "./markdown";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
 import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
+import { Presentation } from "./presentation";
 import { Preview } from "./preview";
 import { countWords, formatStats } from "./stats";
 import { FileTree } from "./tree";
@@ -62,6 +63,7 @@ const els = {
   btnSettings: $<HTMLButtonElement>("btn-settings"),
   btnTheme: $<HTMLButtonElement>("btn-theme"),
   btnPreview: $<HTMLButtonElement>("btn-preview"),
+  btnPresent: $<HTMLButtonElement>("btn-present"),
   btnSyntax: $<HTMLButtonElement>("btn-syntax"),
   btnSpell: $<HTMLButtonElement>("btn-spell"),
   btnCloseFile: $<HTMLButtonElement>("btn-close-file"),
@@ -71,6 +73,13 @@ const els = {
   banner: $("banner"),
   bannerReload: $<HTMLButtonElement>("banner-reload"),
   bannerKeep: $<HTMLButtonElement>("banner-keep"),
+  presentation: $("presentation"),
+  slideScroller: $("slide-scroller"),
+  slide: $("slide"),
+  slidePrev: $<HTMLButtonElement>("slide-prev"),
+  slideNext: $<HTMLButtonElement>("slide-next"),
+  slideFirst: $<HTMLButtonElement>("slide-first"),
+  slideCounter: $("slide-counter"),
   toast: $("toast"),
   print: $("print"),
 };
@@ -130,6 +139,7 @@ const editor = new Editor(els.editor, defaultEditorSettings(), {
     if (checkLarge()) applyLarge();
     updateTitle();
     if (previewVisible()) preview.update(() => editor.text(), doc.path);
+    if (presentation.active) presentation.update(() => editor.text());
     scheduleAutosave();
     scheduleBackup();
   },
@@ -168,6 +178,20 @@ const tree = new FileTree(els.tree, {
 const preview = new Preview(els.previewPane, els.preview, {
   openFile: (path) => void openFile(path),
 });
+
+const presentation = new Presentation(
+  els.presentation,
+  els.slideScroller,
+  els.slide,
+  els.slidePrev,
+  els.slideNext,
+  els.slideFirst,
+  els.slideCounter,
+  {
+    openFile: (path) => void openFile(path),
+    exit: () => togglePresentation(),
+  },
+);
 
 const chrome = new Chrome(
   els.titlebar,
@@ -306,6 +330,10 @@ function updateLayout(): void {
   els.previewDivider.hidden = !previewVisible();
   els.app.classList.toggle("with-preview", previewVisible());
   if (!previewVisible()) preview.clear();
+
+  if (presentation.active && !presentable()) endPresentation();
+  els.btnPresent.hidden = !presentable();
+  updatePresentButton();
 }
 
 function updateTitle(): void {
@@ -507,6 +535,38 @@ function syncPreview(): void {
   if (previewVisible()) preview.syncTo(editor.topLine(), editor.atBottom());
 }
 
+// ---- presentation ----
+
+/** Markdown files and untitled documents can be presented as slides (not large ones). */
+const presentable = () => (!doc.path || isMarkdown(doc.path)) && !largeDoc;
+
+function updatePresentButton(): void {
+  const on = presentation.active;
+  els.btnPresent.innerHTML = on ? icons.exitPresent : icons.present;
+  els.btnPresent.title = on ? "Exit presentation (Esc)" : "Present slides";
+  els.btnPresent.setAttribute("aria-label", els.btnPresent.title);
+}
+
+/** Enters presentation mode (the document as edited, unsaved changes included) or leaves it. */
+function togglePresentation(): void {
+  if (presentation.active) {
+    endPresentation();
+    editor.focus();
+    return;
+  }
+  if (!presentable()) return;
+  document.body.classList.add("presenting");
+  presentation.start(editor.text(), doc.path);
+  updatePresentButton();
+}
+
+function endPresentation(): void {
+  if (!presentation.active) return;
+  presentation.stop();
+  document.body.classList.remove("presenting");
+  updatePresentButton();
+}
+
 function makeResizable(divider: HTMLElement, onMove: (x: number) => void, onDone: () => void): void {
   divider.addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -623,6 +683,7 @@ function notifyLarge(): void {
 
 /** Shows `text` as the current document; `recent` records the file for File → Open Recent. */
 function loadDoc(path: string | null, text: string, recent = true): void {
+  endPresentation();
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
@@ -661,6 +722,7 @@ async function confirmDiscard(): Promise<boolean> {
 /** Shows `tab`, putting the current document aside. */
 async function activate(tab: Tab): Promise<void> {
   if (tab === doc) return editor.focus();
+  endPresentation();
   if (tabs.includes(doc)) {
     await flushAutosave();
     doc.editor = editor.snapshot();
@@ -1087,6 +1149,7 @@ const commands: Record<string, () => unknown> = {
   replace: () => editor.replace(),
   "toggle-tree": toggleTree,
   "toggle-preview": togglePreview,
+  "toggle-presentation": togglePresentation,
   "open-settings": openSettings,
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
@@ -1144,6 +1207,10 @@ function paletteCommands(): PaletteItem[] {
       id: "toggle-preview",
       label: previewVisible() ? "Hide Preview" : "Show Preview",
       shortcut: "⌘⇧P",
+    },
+    (presentable() || presentation.active) && {
+      id: "toggle-presentation",
+      label: presentation.active ? "Exit Presentation" : "Start Presentation",
     },
     { id: "cycle-theme", label: "Cycle Theme", shortcut: "⌘⇧L" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
@@ -1275,6 +1342,7 @@ els.btnWorkspace.addEventListener("click", () => run("open-workspace"));
 els.btnSettings.addEventListener("click", () => run("open-settings"));
 els.btnTheme.addEventListener("click", () => run("cycle-theme"));
 els.btnPreview.addEventListener("click", () => run("toggle-preview"));
+els.btnPresent.addEventListener("click", () => run("toggle-presentation"));
 els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
 els.btnSpell.addEventListener("click", () => run("toggle-spell-check"));
 els.btnCloseFile.addEventListener("click", () => run("close-file"));
@@ -1292,6 +1360,9 @@ els.btnSidebar.innerHTML = icons.sidebar;
 els.btnWorkspace.innerHTML = icons.folder;
 els.btnSettings.innerHTML = icons.settings;
 els.btnPreview.innerHTML = icons.eye;
+els.slidePrev.innerHTML = icons.chevronLeft;
+els.slideNext.innerHTML = icons.chevronRight;
+els.slideFirst.innerHTML = icons.toStart;
 els.btnSyntax.innerHTML = icons.code;
 els.btnSpell.innerHTML = icons.spell;
 els.btnCloseFile.innerHTML = icons.closeFile;
