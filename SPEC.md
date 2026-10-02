@@ -402,7 +402,7 @@ bg = "#fbf1c7"
   theme is config-only (applied on save, like other settings), or picked from `Switch
   Theme…` in the command palette, which lists every palette and applies the pick
   immediately. A `gruvbox` example lives in `themes/` (copy it into `~/.kayet/themes/`
-  to use it).
+  to use it). Theme files should cite their palette's source in a comment.
 - `mode = "system"` (default) follows macOS appearance and reacts live to changes
   (`prefers-color-scheme` + Tauri theme events); `light` / `dark` pin one variant.
 - The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand

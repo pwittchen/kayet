@@ -1,4 +1,6 @@
-# gruvbox for kayet (https://github.com/morhetz/gruvbox).
+# gruvbox for kayet.
+# Source of truth for the colors: https://github.com/morhetz/gruvbox/blob/master/colors/gruvbox.vim
+# Roles follow upstream (blue links) and VS Code's gruvbox port (aqua selection).
 # Copy this file to ~/.kayet/themes/ and set `theme = "gruvbox"` in ~/.kayet/config.toml.
 # Either section may be left out: a single-variant theme looks the same in both modes.
 # See SPEC.md §9 for the format.
@@ -10,7 +12,7 @@ text = "#ebdbb2"
 text-muted = "#928374"
 border = "#3c3836"
 accent = "#83a598"
-selection = "#83a59855"
+selection = "#689d6a40"
 caret = "#ebdbb2"
 hl-keyword = "#fb4934"
 hl-string = "#b8bb26"
@@ -25,7 +27,7 @@ text = "#3c3836"
 text-muted = "#928374"
 border = "#d5c4a1"
 accent = "#076678"
-selection = "#07667855"
+selection = "#689d6a40"
 caret = "#3c3836"
 hl-keyword = "#9d0006"
 hl-string = "#79740e"
