@@ -6,6 +6,8 @@ import {
   clearCustomColors,
   effectiveMode,
   isLegacyTheme,
+  migrateLegacyTheme,
+  nextMode,
   pickSection,
 } from "./theme";
 
@@ -22,10 +24,24 @@ describe("theme resolution", () => {
     expect(isLegacyTheme("gruvbox")).toBe(false);
   });
 
-  it("lets the legacy shorthand win over the mode key", () => {
-    expect(effectiveMode("dark", "light")).toBe("dark");
+  it("lets an explicit mode win over the legacy shorthand", () => {
+    expect(effectiveMode("dark", "light")).toBe("light");
+    expect(effectiveMode("dark", "system")).toBe("dark");
     expect(effectiveMode("gruvbox", "light")).toBe("light");
     expect(effectiveMode("kayet", "system")).toBe("system");
+  });
+
+  it("cycles the mode and migrates legacy themes to the kayet palette", () => {
+    expect(nextMode("system", "system")).toEqual({ theme: "kayet", mode: "light" });
+    expect(nextMode("dark", "system")).toEqual({ theme: "kayet", mode: "system" });
+    expect(nextMode("kayet", "dark")).toEqual({ theme: "kayet", mode: "system" });
+    expect(nextMode("gruvbox", "dark")).toEqual({ theme: "gruvbox", mode: "system" });
+  });
+
+  it("migrates legacy themes preserving the effective mode", () => {
+    expect(migrateLegacyTheme("dark", "system")).toEqual({ theme: "kayet", mode: "dark" });
+    expect(migrateLegacyTheme("dark", "light")).toEqual({ theme: "kayet", mode: "light" });
+    expect(migrateLegacyTheme("gruvbox", "dark")).toEqual({ theme: "gruvbox", mode: "dark" });
   });
 
   it("picks the matching section", () => {

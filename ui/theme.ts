@@ -32,9 +32,32 @@ export function isLegacyTheme(theme: string): theme is "system" | "light" | "dar
   return theme === "system" || theme === "light" || theme === "dark";
 }
 
-/** The effective mode: the legacy shorthand wins over the `mode` key. */
+/**
+ * The effective mode: an explicitly set (non-default) mode wins, otherwise the legacy
+ * shorthand applies, so untouched old configs keep working.
+ */
 export function effectiveMode(theme: string, mode: Mode): Mode {
+  if (mode !== "system") return mode;
   return isLegacyTheme(theme) ? theme : mode;
+}
+
+/**
+ * Advances the mode, migrating a legacy theme value to the kayet palette so it stops
+ * shadowing the `mode` key afterwards. Custom palettes pass through untouched.
+ */
+export function nextMode(theme: string, mode: Mode): { theme: string; mode: Mode } {
+  const order: Mode[] = ["system", "light", "dark"];
+  const next = order[(order.indexOf(effectiveMode(theme, mode)) + 1) % order.length];
+  return { theme: isLegacyTheme(theme) ? "kayet" : theme, mode: next };
+}
+
+/**
+ * Migrates a legacy theme value to the kayet palette, preserving the effective mode;
+ * non-legacy configs pass through untouched.
+ */
+export function migrateLegacyTheme(theme: string, mode: Mode): { theme: string; mode: Mode } {
+  if (!isLegacyTheme(theme)) return { theme, mode };
+  return { theme: "kayet", mode: effectiveMode(theme, mode) };
 }
 
 /**

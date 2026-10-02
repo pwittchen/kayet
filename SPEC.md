@@ -403,7 +403,8 @@ bg = "#fbf1c7"
 - `mode = "system"` (default) follows macOS appearance and reacts live to changes
   (`prefers-color-scheme` + Tauri theme events); `light` / `dark` pin one variant.
 - The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand
-  for the built-in palette with that mode.
+  for the built-in palette with that mode; an explicitly set `mode` wins over the
+  shorthand, and cycling the mode or saving settings normalizes them to `theme` + `mode`.
 - `⌘⇧L` (View → Cycle Appearance) cycles the mode System → Light → Dark, for any palette.
 - Implemented with CSS custom properties; no hardcoded colors in components.
 

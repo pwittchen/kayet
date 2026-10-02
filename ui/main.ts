@@ -15,7 +15,6 @@ import {
   dirname,
   isMarkdown,
   isWithin,
-  Mode,
   Opened,
   relativeTo,
   SearchMatch,
@@ -36,6 +35,8 @@ import {
   clearCustomColors,
   effectiveMode,
   isLegacyTheme,
+  migrateLegacyTheme,
+  nextMode,
   pickSection,
 } from "./theme";
 import { FileTree } from "./tree";
@@ -266,6 +267,12 @@ async function reloadConfig(): Promise<void> {
   const hiddenChanged = next.workspace.show_hidden_files !== cfg.workspace.show_hidden_files;
   const pinnedChanged = next.ui.titlebar_pinned !== cfg.ui.titlebar_pinned;
   cfg = next;
+  const migrated = migrateLegacyTheme(cfg.ui.theme, cfg.ui.mode);
+  if (migrated.theme !== cfg.ui.theme) {
+    cfg.ui.theme = migrated.theme;
+    cfg.ui.mode = migrated.mode;
+    saveConfig();
+  }
   void applyTheme();
   if (pinnedChanged) chrome.setPinned(cfg.ui.titlebar_pinned);
   editor.applySettings(editorSettings());
@@ -346,8 +353,9 @@ async function applyTheme(): Promise<void> {
 }
 
 function cycleMode(): void {
-  const order: Mode[] = ["system", "light", "dark"];
-  cfg.ui.mode = order[(order.indexOf(cfg.ui.mode) + 1) % order.length];
+  const next = nextMode(cfg.ui.theme, cfg.ui.mode);
+  cfg.ui.theme = next.theme;
+  cfg.ui.mode = next.mode;
   void applyTheme();
   saveConfig();
 }
