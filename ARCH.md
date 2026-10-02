@@ -54,7 +54,7 @@ kayet/
 │   │   ├── workspace.rs    workspace resolution, list_dir, list_files, fs watcher
 │   │   ├── fs_ops.rs       read, atomic write, create, rename, trash, save image
 │   │   ├── search.rs       workspace-wide literal text search
-│   │   ├── themes.rs       custom themes from ~/.kayet/themes/
+│   │   ├── themes.rs       themes from ~/.kayet/themes/
 │   │   ├── markdown.rs     pulldown-cmark → ammonia sanitizer, line anchors
 │   │   ├── export.rs       PDF export through NSPrintOperation on the web view
 │   │   ├── image_cache.rs  web images downloaded via curl into ~/.kayet/cache/images/
@@ -481,7 +481,7 @@ No HTTP client is compiled in; network and disk work goes through the system's `
 ├── config.toml          [workspace] [ui] [editor] [window] [updates] [session]
 │                        — settings, window geometry, open / recent files, skipped version;
 │                          edited as a normal document from Settings (⌘,), reloaded on save
-├── themes/              custom themes (<name>.toml), selected via [ui] theme
+├── themes/              themes (<name>.toml), selected via [ui] theme
 ├── workspace/           default workspace (used when none is configured or it is gone)
 ├── cache/
 │   └── images/          web images shown in the preview / exports, downloaded once

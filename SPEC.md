@@ -493,7 +493,7 @@ kayet/
 │   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
 │   │   ├── update.rs        # app update check and install (GitHub Releases)
 │   │   ├── config.rs        # load/save ~/.kayet/config.toml
-│   │   └── themes.rs        # custom themes from ~/.kayet/themes/
+│   │   └── themes.rs        # themes from ~/.kayet/themes/
 │   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
 │   ├── Cargo.toml
 │   └── tauri.conf.json
@@ -511,7 +511,7 @@ kayet/
 │   ├── images.ts            # web images shown from their downloaded copies
 │   ├── markdown-body.css    # rendered Markdown typography (preview and exports)
 │   ├── chrome.ts            # hover reveal logic, title bar
-│   ├── theme.ts             # custom theme colors (see 9)
+│   ├── theme.ts             # theme colors (see 9)
 │   └── theme.css
 └── SPEC.md
 ```
@@ -542,8 +542,8 @@ kayet/
 | `export_pdf(path)`             | Print the document prepared for printing into a PDF |
 | `set_export_enabled(bool)`     | Enable / disable File → Export as HTML… / PDF… |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
-| `get_theme(name) -> Theme`   | Load a custom theme from `~/.kayet/themes/`   |
-| `list_themes() -> Vec<String>` | Names of the custom themes in `~/.kayet/themes/` |
+| `get_theme(name) -> Theme`   | Load a theme from `~/.kayet/themes/`   |
+| `list_themes() -> Vec<String>` | Names of the themes in `~/.kayet/themes/` |
 | `take_opened() -> Opened`      | File / folder kayet was launched to open      |
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |

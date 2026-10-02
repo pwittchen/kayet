@@ -1,20 +1,35 @@
-//! Custom themes from `~/.kayet/themes/<name>.toml` (see SPEC.md §9).
+//! Themes from `~/.kayet/themes/<name>.toml` (see SPEC.md §9).
 
 use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::config;
 
-/// A custom theme: CSS token values per variant. Either section may be missing; a
+/// A section's colors, keeping only string values; anything else is ignored per key
+/// (see SPEC.md §9: non-hex values are ignored).
+fn string_map<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let map = HashMap::<String, toml::Value>::deserialize(deserializer)?;
+    Ok(map
+        .into_iter()
+        .filter_map(|(key, value)| value.as_str().map(|s| (key, s.to_owned())))
+        .collect())
+}
+
+/// A theme: CSS token values per variant. Either section may be missing; a
 /// single-variant theme then looks the same in both modes (see SPEC.md §9).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ThemeFile {
+    #[serde(deserialize_with = "string_map")]
     pub light: HashMap<String, String>,
+    #[serde(deserialize_with = "string_map")]
     pub dark: HashMap<String, String>,
 }
 
@@ -83,7 +98,7 @@ fn list_from(dir: &Path) -> Result<Vec<String>, String> {
     Ok(names)
 }
 
-/// Lists the custom themes in `~/.kayet/themes/`.
+/// Lists the themes in `~/.kayet/themes/`.
 pub fn list() -> Result<Vec<String>, String> {
     list_from(&themes_dir())
 }
@@ -119,6 +134,14 @@ mod tests {
     #[test]
     fn invalid_toml_is_rejected() {
         assert!(parse("[dark]\nbg = [\n").is_err());
+    }
+
+    #[test]
+    fn non_string_values_are_ignored_per_key() {
+        let theme = parse("[dark]\nbg = \"#282828\"\ntext = 123\nnested = { a = 1 }\n").unwrap();
+        assert_eq!(theme.dark.get("bg").map(String::as_str), Some("#282828"));
+        assert!(!theme.dark.contains_key("text"));
+        assert!(!theme.dark.contains_key("nested"));
     }
 
     #[test]

@@ -64,7 +64,7 @@ export interface Opened {
   folder: string | null;
 }
 
-/** A custom theme from `~/.kayet/themes/<name>.toml`: CSS token values per variant. */
+/** A theme from `~/.kayet/themes/<name>.toml`: CSS token values per variant. */
 export interface ThemeFile {
   light: Record<string, string>;
   dark: Record<string, string>;

@@ -31,8 +31,8 @@ import { Presentation } from "./presentation";
 import { Preview } from "./preview";
 import { countWords, formatStats } from "./stats";
 import {
-  applyCustomColors,
-  clearCustomColors,
+  applyThemeColors,
+  clearThemeColors,
   effectiveMode,
   isLegacyTheme,
   migrateLegacyTheme,
@@ -310,7 +310,7 @@ const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 let systemTheme: "light" | "dark" = systemDark.matches ? "dark" : "light";
 
 function applyBuiltinTheme(mode: "system" | "light" | "dark"): void {
-  clearCustomColors();
+  clearThemeColors();
   const resolved = mode === "system" ? systemTheme : mode;
   document.documentElement.dataset.theme = resolved;
   els.btnTheme.innerHTML =
@@ -331,13 +331,13 @@ async function applyTheme(): Promise<void> {
     applyBuiltinTheme(effective);
     return;
   }
-  // Custom palette: the matching built-in as the base, the theme's colors on top.
+  // Theme file: the matching built-in as the base, the file's colors on top.
   let file;
   try {
     file = await api.getTheme(theme);
   } catch (e) {
     if (seq !== themeSeq) return;
-    applyBuiltinTheme("system");
+    applyBuiltinTheme(effective);
     els.btnTheme.title = `Theme: ${theme} (⌘⇧L)`;
     notify(String(e));
     return;
@@ -345,7 +345,7 @@ async function applyTheme(): Promise<void> {
   if (seq !== themeSeq) return;
   const variant = effective === "system" ? systemTheme : effective;
   const { dark, colors } = pickSection(file, variant);
-  const skipped = applyCustomColors(colors);
+  const skipped = applyThemeColors(colors);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   els.btnTheme.innerHTML = dark ? icons.themeDark : icons.themeLight;
   els.btnTheme.title = `Theme: ${theme} · ${dark ? "Dark" : "Light"} (⌘⇧L)`;

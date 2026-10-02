@@ -1,11 +1,11 @@
-// Custom themes (see SPEC.md §9): palette/mode resolution and applying a theme's colors.
-// A custom theme is a built-in base (light or dark, from the applied variant) with the
+// Themes (see SPEC.md §9): palette/mode resolution and applying a theme's colors.
+// A theme is a built-in base (light or dark, from the applied variant) with the
 // theme's colors set as inline custom properties on top of it.
 
 import type { Mode, ThemeFile } from "./api";
 import type { PaletteItem } from "./palette";
 
-/** Base tokens a custom theme may override; the rest derive from them (see theme.css). */
+/** Base tokens a theme may override; the rest derive from them (see theme.css). */
 export const THEME_TOKENS = [
   "bg",
   "bg-sidebar",
@@ -44,7 +44,7 @@ export function effectiveMode(theme: string, mode: Mode): Mode {
 
 /**
  * Advances the mode, migrating a legacy theme value to the kayet palette so it stops
- * shadowing the `mode` key afterwards. Custom palettes pass through untouched.
+ * shadowing the `mode` key afterwards. Other palettes pass through untouched.
  */
 export function nextMode(theme: string, mode: Mode): { theme: string; mode: Mode } {
   const order: Mode[] = ["system", "light", "dark"];
@@ -91,7 +91,7 @@ export function themeItems(names: string[], current: string): PaletteItem[] {
  * Sets the theme's colors as inline custom properties (clearing any previous ones first).
  * Unknown keys and non-hex values are skipped; returns how many were skipped.
  */
-export function applyCustomColors(colors: Record<string, string>): number {
+export function applyThemeColors(colors: Record<string, string>): number {
   const root = document.documentElement;
   const allowed = new Set<string>(THEME_TOKENS);
   for (const token of THEME_TOKENS) root.style.removeProperty(`--${token}`);
@@ -106,8 +106,8 @@ export function applyCustomColors(colors: Record<string, string>): number {
   return skipped;
 }
 
-/** Removes any custom theme colors, revealing the built-in palette underneath. */
-export function clearCustomColors(): void {
+/** Removes any theme colors, revealing the built-in palette underneath. */
+export function clearThemeColors(): void {
   const root = document.documentElement;
   for (const token of THEME_TOKENS) root.style.removeProperty(`--${token}`);
 }

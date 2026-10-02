@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { ThemeFile } from "./api";
 import {
-  applyCustomColors,
-  clearCustomColors,
+  applyThemeColors,
+  clearThemeColors,
   effectiveMode,
   isLegacyTheme,
   migrateLegacyTheme,
@@ -14,7 +14,7 @@ import {
 
 const prop = (token: string) => document.documentElement.style.getPropertyValue(`--${token}`);
 
-afterEach(() => clearCustomColors());
+afterEach(() => clearThemeColors());
 
 describe("theme resolution", () => {
   it("keeps the pre-palette values as shorthand", () => {
@@ -69,9 +69,9 @@ describe("theme resolution", () => {
   });
 });
 
-describe("custom theme colors", () => {
+describe("theme colors", () => {
   it("applies hex colors and counts the skipped keys", () => {
-    const skipped = applyCustomColors({
+    const skipped = applyThemeColors({
       bg: "#282828",
       text: "#ebdbb2",
       selection: "#83a59855",
@@ -89,11 +89,11 @@ describe("custom theme colors", () => {
   });
 
   it("clears colors the new theme does not set", () => {
-    applyCustomColors({ bg: "#282828", text: "#ebdbb2" });
-    applyCustomColors({ bg: "#1d2021" });
+    applyThemeColors({ bg: "#282828", text: "#ebdbb2" });
+    applyThemeColors({ bg: "#1d2021" });
     expect(prop("bg")).toBe("#1d2021");
     expect(prop("text")).toBe("");
-    clearCustomColors();
+    clearThemeColors();
     expect(prop("bg")).toBe("");
   });
 });
