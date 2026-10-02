@@ -379,8 +379,9 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - The palette (`theme`) and the appearance mode (`mode`) are separate: `theme` picks
   *which* colors, `mode` picks *when* light or dark is used. Both are persisted in config.
 - `theme = "kayet"` (default) is the built-in palette; any other value is the name of a
-  theme file, `~/.kayet/themes/<name>.toml` (letters, digits, `_` and `-` only). A file
-  holds the base token colors per variant (hex: `#rgb`, `#rrggbb` or `#rrggbbaa`):
+  theme file, `~/.kayet/themes/<name>.toml` (letters, digits, `_` and `-` only; `kayet`,
+  `system`, `light` and `dark` are reserved). A file holds the base token colors per
+  variant (hex: `#rgb`, `#rrggbb` or `#rrggbbaa`):
 
 ```toml
 [dark]
@@ -398,8 +399,10 @@ bg = "#fbf1c7"
   keys and non-hex values are ignored. Either section may be missing: a single-variant
   theme then looks the same in both modes. A missing or invalid file falls back to the
   built-in palette with a subtle, non-blocking notice, as do ignored colors. Activating a
-  theme is config-only (applied on save, like other settings). A `gruvbox` example lives
-  in `themes/` (copy it into `~/.kayet/themes/` to use it).
+  theme is config-only (applied on save, like other settings), or picked from `Switch
+  Theme…` in the command palette, which lists every palette and applies the pick
+  immediately. A `gruvbox` example lives in `themes/` (copy it into `~/.kayet/themes/`
+  to use it).
 - `mode = "system"` (default) follows macOS appearance and reacts live to changes
   (`prefers-color-scheme` + Tauri theme events); `light` / `dark` pin one variant.
 - The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand
@@ -540,6 +543,7 @@ kayet/
 | `set_export_enabled(bool)`     | Enable / disable File → Export as HTML… / PDF… |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
 | `get_theme(name) -> Theme`   | Load a custom theme from `~/.kayet/themes/`   |
+| `list_themes() -> Vec<String>` | Names of the custom themes in `~/.kayet/themes/` |
 | `take_opened() -> Opened`      | File / folder kayet was launched to open      |
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |

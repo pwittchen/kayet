@@ -3,6 +3,7 @@
 // theme's colors set as inline custom properties on top of it.
 
 import type { Mode, ThemeFile } from "./api";
+import type { PaletteItem } from "./palette";
 
 /** Base tokens a custom theme may override; the rest derive from them (see theme.css). */
 export const THEME_TOKENS = [
@@ -74,6 +75,16 @@ export function pickSection(
   const other = variant === "dark" ? file.light : file.dark;
   if (Object.keys(other).length > 0) return { dark: variant === "light", colors: other };
   return { dark: variant === "dark", colors: {} };
+}
+
+/** Items for switching themes: the built-in palette first, the current one marked. */
+export function themeItems(names: string[], current: string): PaletteItem[] {
+  const here = isLegacyTheme(current) ? "kayet" : current;
+  return ["kayet", ...names].map((name) => ({
+    id: name,
+    label: name,
+    ...(name === here ? { detail: "current" } : {}),
+  }));
 }
 
 /**

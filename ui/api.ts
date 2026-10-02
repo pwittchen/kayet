@@ -91,6 +91,7 @@ export const api = {
   configFile: () => invoke<string>("config_file"),
   reloadConfig: () => invoke<Config>("reload_config"),
   getTheme: (name: string) => invoke<ThemeFile>("get_theme", { name }),
+  listThemes: () => invoke<string[]>("list_themes"),
   getWorkspace: () => invoke<string>("get_workspace"),
   setWorkspace: (path: string) => invoke<string>("set_workspace", { path }),
   resetWorkspace: () => invoke<string>("reset_workspace"),

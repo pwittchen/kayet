@@ -251,6 +251,12 @@ pub fn get_theme(name: String) -> CmdResult<ThemeFile> {
     crate::themes::load(&name)
 }
 
+/// Lists the custom themes in `~/.kayet/themes/`.
+#[tauri::command]
+pub fn list_themes() -> CmdResult<Vec<String>> {
+    crate::themes::list()
+}
+
 #[tauri::command]
 pub fn get_workspace(state: State<'_, AppState>) -> String {
     path_string(&lock(&state.workspace))

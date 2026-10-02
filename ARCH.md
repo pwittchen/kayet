@@ -142,6 +142,7 @@ There are exactly two channels:
   api.renderMarkdown ──────── invoke("render_markdown") ───▶  markdown::render
                      ◀──────── sanitized HTML ──────────────
   api.getTheme ────────────── invoke("get_theme") ─────────▶  themes::load
+  api.listThemes ──────────── invoke("list_themes") ───────▶  themes::list
   api.searchWorkspace ─────── invoke("search_workspace") ──▶  search::search
   api.writeRecovery ───────── invoke("write_recovery",       recovery::write
                                bytes, kayet-backups) ─────▶

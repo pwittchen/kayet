@@ -38,6 +38,7 @@ import {
   migrateLegacyTheme,
   nextMode,
   pickSection,
+  themeItems,
 } from "./theme";
 import { FileTree } from "./tree";
 
@@ -1235,6 +1236,7 @@ const commands: Record<string, () => unknown> = {
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
   "cycle-appearance": cycleMode,
+  "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
   "toggle-code-mode": toggleCodeMode,
@@ -1294,6 +1296,7 @@ function paletteCommands(): PaletteItem[] {
       label: presentation.active ? "Exit Presentation" : "Start Presentation",
     },
     { id: "cycle-appearance", label: "Cycle Appearance", shortcut: "⌘⇧L" },
+    { id: "switch-theme", label: "Switch Theme…" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
     !codeMode && { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
     { id: "toggle-code-mode", label: codeMode ? "Exit Code Editor Mode" : "Code Editor Mode" },
@@ -1372,6 +1375,23 @@ async function toggleRecent(): Promise<void> {
     empty: files.length ? "No matching files" : "No recent files",
     pick: (path) => void api.allowRecent(path).then(openFile).catch(showError),
   });
+}
+
+/** Switch palette: the built-in one plus every theme file, the current one marked. */
+async function toggleThemes(): Promise<void> {
+  if (palette.showing === "themes") return palette.close();
+  await showPalette(themeItems(await api.listThemes(), cfg.ui.theme), {
+    kind: "themes",
+    placeholder: "Switch theme…",
+    empty: "No matching themes",
+    pick: (name) => switchTheme(name),
+  });
+}
+
+function switchTheme(name: string): void {
+  cfg.ui.theme = name;
+  void applyTheme();
+  saveConfig();
 }
 
 /** Workspace-wide search: each matching line, with its file and line number aside. */

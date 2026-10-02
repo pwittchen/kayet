@@ -9,6 +9,7 @@ import {
   migrateLegacyTheme,
   nextMode,
   pickSection,
+  themeItems,
 } from "./theme";
 
 const prop = (token: string) => document.documentElement.style.getPropertyValue(`--${token}`);
@@ -42,6 +43,15 @@ describe("theme resolution", () => {
     expect(migrateLegacyTheme("dark", "system")).toEqual({ theme: "kayet", mode: "dark" });
     expect(migrateLegacyTheme("dark", "light")).toEqual({ theme: "kayet", mode: "light" });
     expect(migrateLegacyTheme("gruvbox", "dark")).toEqual({ theme: "gruvbox", mode: "dark" });
+  });
+
+  it("lists the built-in palette first and marks the current one", () => {
+    expect(themeItems(["gruvbox", "solarized"], "gruvbox")).toEqual([
+      { id: "kayet", label: "kayet" },
+      { id: "gruvbox", label: "gruvbox", detail: "current" },
+      { id: "solarized", label: "solarized" },
+    ]);
+    expect(themeItems([], "dark")).toEqual([{ id: "kayet", label: "kayet", detail: "current" }]);
   });
 
   it("picks the matching section", () => {
