@@ -34,9 +34,10 @@ impl Default for WorkspaceConfig {
     }
 }
 
+/// Appearance mode: follow the system, or pin light / dark.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Theme {
+pub enum Mode {
     #[default]
     System,
     Light,
@@ -48,7 +49,10 @@ pub enum Theme {
 // Mirrors the `[ui]` table, where on/off settings are plain TOML booleans.
 #[allow(clippy::struct_excessive_bools)]
 pub struct UiConfig {
-    pub theme: Theme,
+    /// Palette name: "kayet" (built-in) or a file in `~/.kayet/themes/`.
+    /// "system" / "light" / "dark" are shorthand for the built-in palette with that mode.
+    pub theme: String,
+    pub mode: Mode,
     pub sidebar_visible: bool,
     /// Keep the title bar (and traffic lights) visible instead of revealing it on hover.
     pub titlebar_pinned: bool,
@@ -67,7 +71,8 @@ pub struct UiConfig {
 impl Default for UiConfig {
     fn default() -> Self {
         Self {
-            theme: Theme::System,
+            theme: "kayet".into(),
+            mode: Mode::System,
             sidebar_visible: false,
             titlebar_pinned: false,
             zen_mode: false,
@@ -300,7 +305,8 @@ mod tests {
         assert_eq!(cfg, Config::default());
         let written = fs::read_to_string(&path).unwrap();
         assert!(written.contains("[workspace]"));
-        assert!(written.contains("theme = \"system\""));
+        assert!(written.contains("theme = \"kayet\""));
+        assert!(written.contains("mode = \"system\""));
         assert_eq!(toml::from_str::<Config>(&written).unwrap(), cfg);
     }
 
@@ -310,12 +316,14 @@ mod tests {
         let path = dir.path().join("config.toml");
         fs::write(&path, "[ui]\ntheme = \"dark\"\n").unwrap();
         let cfg = load_from(&path);
-        assert_eq!(cfg.ui.theme, Theme::Dark);
+        assert_eq!(cfg.ui.theme, "dark");
+        assert_eq!(cfg.ui.mode, Mode::System);
         assert_eq!(cfg.ui.sidebar_width, 240);
         assert_eq!(cfg.editor.font_size, 15);
         let written = fs::read_to_string(&path).unwrap();
         assert!(written.contains("sidebar_width = 240"));
         assert!(written.contains("theme = \"dark\""));
+        assert!(written.contains("mode = \"system\""));
     }
 
     #[test]
@@ -333,12 +341,20 @@ mod tests {
     fn invalid_file_is_left_alone() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("config.toml");
-        fs::write(&path, "[ui]\ntheme = \"purple\"\n").unwrap();
+        fs::write(&path, "[ui]\ntheme = 123\n").unwrap();
         assert_eq!(load_from(&path), Config::default());
-        assert_eq!(
-            fs::read_to_string(&path).unwrap(),
-            "[ui]\ntheme = \"purple\"\n"
-        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), "[ui]\ntheme = 123\n");
+    }
+
+    #[test]
+    fn theme_and_mode_roundtrip() {
+        let cfg = parse("[ui]\ntheme = \"gruvbox\"\nmode = \"dark\"\n").unwrap();
+        assert_eq!(cfg.ui.theme, "gruvbox");
+        assert_eq!(cfg.ui.mode, Mode::Dark);
+        let written = toml::to_string_pretty(&cfg).unwrap();
+        assert!(written.contains("theme = \"gruvbox\""));
+        assert!(written.contains("mode = \"dark\""));
+        assert_eq!(parse(&written).unwrap(), cfg);
     }
 
     #[test]

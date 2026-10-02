@@ -2,12 +2,13 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
-export type ThemeMode = "system" | "light" | "dark";
+export type Mode = "system" | "light" | "dark";
 
 export interface Config {
   workspace: { path: string; show_hidden_files: boolean };
   ui: {
-    theme: ThemeMode;
+    theme: string;
+    mode: Mode;
     sidebar_visible: boolean;
     titlebar_pinned: boolean;
     zen_mode: boolean;
@@ -63,6 +64,12 @@ export interface Opened {
   folder: string | null;
 }
 
+/** A custom theme from `~/.kayet/themes/<name>.toml`: CSS token values per variant. */
+export interface ThemeFile {
+  light: Record<string, string>;
+  dark: Record<string, string>;
+}
+
 /** An unsaved buffer backed up for crash recovery; `path: null` means untitled. */
 export interface Backup {
   path: string | null;
@@ -83,6 +90,7 @@ export const api = {
   setConfig: (cfg: Config) => invoke<void>("set_config", { cfg }),
   configFile: () => invoke<string>("config_file"),
   reloadConfig: () => invoke<Config>("reload_config"),
+  getTheme: (name: string) => invoke<ThemeFile>("get_theme", { name }),
   getWorkspace: () => invoke<string>("get_workspace"),
   setWorkspace: (path: string) => invoke<string>("set_workspace", { path }),
   resetWorkspace: () => invoke<string>("reset_workspace"),
