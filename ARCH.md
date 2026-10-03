@@ -81,7 +81,7 @@ kayet/
 │   ├── export.ts           HTML / PDF export
 │   ├── images.ts           web images → their downloaded copies (preview and export)
 │   ├── tree.ts             file tree
-│   ├── palette.ts          command palette, file finder, workspace search
+│   ├── palette.ts          command palette, file finder, workspace search (highlight hook for live theme previews)
 │   ├── chrome.ts           auto-hiding title bar and left-edge handle
 │   ├── theme.ts            palette/mode resolution, token allowlist, apply / clear
 │   ├── stats.ts            word count
