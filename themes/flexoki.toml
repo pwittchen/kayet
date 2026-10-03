@@ -1,0 +1,37 @@
+# Flexoki for kayet: an inky color scheme for prose and code.
+# Source of truth for the colors: https://stephango.com/flexoki
+# Roles follow upstream (green keywords, cyan strings, purple numbers, orange headings);
+# comments use tx-2 rather than tx-3 so they stay legible.
+# Bundled with kayet: set `theme = "flexoki"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/flexoki.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#100f0f"
+bg-sidebar = "#1c1b1a"
+text = "#cecdc3"
+text-muted = "#878580"
+border = "#282726"
+accent = "#4385be"
+selection = "#4385be33"
+caret = "#cecdc3"
+hl-keyword = "#879a39"
+hl-string = "#3aa99f"
+hl-number = "#8b7ec8"
+hl-title = "#da702c"
+hl-comment = "#878580"
+
+[light]
+bg = "#fffcf0"
+bg-sidebar = "#f2f0e5"
+text = "#100f0f"
+text-muted = "#6f6e69"
+border = "#e6e4d9"
+accent = "#205ea6"
+selection = "#205ea633"
+caret = "#100f0f"
+hl-keyword = "#66800b"
+hl-string = "#24837b"
+hl-number = "#5e409d"
+hl-title = "#bc5215"
+hl-comment = "#6f6e69"

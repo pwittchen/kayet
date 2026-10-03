@@ -1,0 +1,37 @@
+# Kanagawa for kayet: wave (dark) and lotus (light).
+# Source of truth for the colors: https://github.com/rebelot/kanagawa.nvim/blob/master/lua/kanagawa/colors.lua
+# Roles follow upstream (violet keywords, green strings, pink numbers, blue titles,
+# fujiGray / lotusGray3 comments, waveBlue1 / lotusViolet3 selection).
+# Bundled with kayet: set `theme = "kanagawa"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/kanagawa.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#1f1f28"
+bg-sidebar = "#181820"
+text = "#dcd7ba"
+text-muted = "#727169"
+border = "#2a2a37"
+accent = "#7fb4ca"
+selection = "#223249"
+caret = "#c8c093"
+hl-keyword = "#957fb8"
+hl-string = "#98bb6c"
+hl-number = "#d27e99"
+hl-title = "#7e9cd8"
+hl-comment = "#727169"
+
+[light]
+bg = "#f2ecbc"
+bg-sidebar = "#e5ddb0"
+text = "#545464"
+text-muted = "#8a8980"
+border = "#dcd5ac"
+accent = "#6693bf"
+selection = "#c9cbd1"
+caret = "#43436c"
+hl-keyword = "#624c83"
+hl-string = "#6f894e"
+hl-number = "#b35b79"
+hl-title = "#4d699b"
+hl-comment = "#8a8980"

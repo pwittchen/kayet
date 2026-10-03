@@ -1,0 +1,37 @@
+# Rosé Pine for kayet: main (dark) and dawn (light).
+# Source of truth for the colors: https://rosepinetheme.com/palette/ingredients/
+# Roles follow rose-pine/neovim (pine keywords, gold strings and numbers, muted comments),
+# with iris links and foam titles.
+# Bundled with kayet: set `theme = "rose-pine"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/rose-pine.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#191724"
+bg-sidebar = "#1f1d2e"
+text = "#e0def4"
+text-muted = "#908caa"
+border = "#26233a"
+accent = "#c4a7e7"
+selection = "#403d52"
+caret = "#e0def4"
+hl-keyword = "#31748f"
+hl-string = "#f6c177"
+hl-number = "#ebbcba"
+hl-title = "#9ccfd8"
+hl-comment = "#6e6a86"
+
+[light]
+bg = "#faf4ed"
+bg-sidebar = "#fffaf3"
+text = "#575279"
+text-muted = "#797593"
+border = "#f2e9e1"
+accent = "#907aa9"
+selection = "#dfdad9"
+caret = "#575279"
+hl-keyword = "#286983"
+hl-string = "#ea9d34"
+hl-number = "#d7827e"
+hl-title = "#56949f"
+hl-comment = "#9893a5"

@@ -1,0 +1,21 @@
+# Nord for kayet.
+# Source of truth for the colors: https://www.nordtheme.com/docs/colors-and-palettes
+# Roles follow nord-vim (frost keywords, green strings, purple numbers, grey-blue comments).
+# Bundled with kayet: set `theme = "nord"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/nord.toml takes precedence.
+# Nord is a dark palette only, so it looks the same in both modes. See SPEC.md §9.
+
+[dark]
+bg = "#2e3440"
+bg-sidebar = "#3b4252"
+text = "#d8dee9"
+text-muted = "#7b88a1"
+border = "#434c5e"
+accent = "#88c0d0"
+selection = "#88c0d033"
+caret = "#d8dee9"
+hl-keyword = "#81a1c1"
+hl-string = "#a3be8c"
+hl-number = "#b48ead"
+hl-title = "#88c0d0"
+hl-comment = "#616e88"

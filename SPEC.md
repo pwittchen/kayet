@@ -401,9 +401,10 @@ bg = "#fbf1c7"
   built-in palette with a subtle, non-blocking notice, as do ignored colors. Activating a
   theme is config-only (applied on save, like other settings), or picked from `Switch
   Theme…` in the command palette, which lists every palette and applies the pick
-  immediately. Themes in `themes/` (currently `gruvbox`) are bundled with the app and
-  always listed; a file of the same name in `~/.kayet/themes/` overrides a bundled one.
-  Theme files should cite their palette's source in a comment.
+  immediately. Themes in `themes/` are bundled with the app and always listed; a file of
+  the same name in `~/.kayet/themes/` overrides a bundled one. Bundled themes are kept
+  subtle (muted, low-contrast palettes): `everforest`, `flexoki`, `gruvbox`, `kanagawa`,
+  `nord` (dark only), `rose-pine`, `solarized` and `zenwritten`. Theme files should cite their palette's source in a comment.
 - `mode = "system"` (default) follows macOS appearance and reacts live to changes
   (`prefers-color-scheme` + Tauri theme events); `light` / `dark` pin one variant.
 - The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand

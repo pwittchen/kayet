@@ -35,7 +35,16 @@ pub struct ThemeFile {
 
 /// Themes shipped with the app (`themes/` in the repository), embedded at compile time.
 /// A file of the same name in `~/.kayet/themes/` takes precedence.
-const BUNDLED: &[(&str, &str)] = &[("gruvbox", include_str!("../../themes/gruvbox.toml"))];
+const BUNDLED: &[(&str, &str)] = &[
+    ("everforest", include_str!("../../themes/everforest.toml")),
+    ("flexoki", include_str!("../../themes/flexoki.toml")),
+    ("gruvbox", include_str!("../../themes/gruvbox.toml")),
+    ("kanagawa", include_str!("../../themes/kanagawa.toml")),
+    ("nord", include_str!("../../themes/nord.toml")),
+    ("rose-pine", include_str!("../../themes/rose-pine.toml")),
+    ("solarized", include_str!("../../themes/solarized.toml")),
+    ("zenwritten", include_str!("../../themes/zenwritten.toml")),
+];
 
 fn bundled(name: &str) -> Option<&'static str> {
     BUNDLED
@@ -129,6 +138,10 @@ pub fn list() -> Result<Vec<String>, String> {
 mod tests {
     use super::*;
 
+    fn bundled_names() -> Vec<String> {
+        BUNDLED.iter().map(|(name, _)| (*name).to_owned()).collect()
+    }
+
     #[test]
     fn names_are_plain_file_names() {
         assert!(valid_name("gruvbox-dark"));
@@ -188,21 +201,36 @@ mod tests {
             fs::write(dir.path().join(name), "[dark]\n").unwrap();
         }
         fs::create_dir(dir.path().join("dir.toml")).unwrap();
-        assert_eq!(list_from(dir.path()).unwrap(), ["a", "b", "gruvbox"]);
+        let mut expected = bundled_names();
+        expected.extend(["a".to_owned(), "b".to_owned()]);
+        expected.sort();
+        assert_eq!(list_from(dir.path()).unwrap(), expected);
     }
 
     #[test]
     fn missing_themes_dir_lists_bundled() {
         let dir = tempfile::tempdir().unwrap();
-        assert_eq!(list_from(&dir.path().join("nope")).unwrap(), ["gruvbox"]);
+        assert_eq!(
+            list_from(&dir.path().join("nope")).unwrap(),
+            bundled_names()
+        );
         assert!(list().is_ok());
     }
 
     #[test]
     fn bundled_themes_parse() {
+        assert!(BUNDLED.is_sorted_by_key(|(name, _)| *name));
         for (name, text) in BUNDLED {
+            assert!(valid_name(name) && !reserved(name), "{name}");
             let theme = parse(text).unwrap_or_else(|e| panic!("{name}: {e}"));
-            assert!(!theme.light.is_empty() && !theme.dark.is_empty(), "{name}");
+            assert!(!theme.dark.is_empty(), "{name}");
+            for (key, value) in theme.dark.iter().chain(&theme.light) {
+                let hex = value.strip_prefix('#').unwrap_or_default();
+                assert!(
+                    matches!(hex.len(), 3 | 6 | 8) && hex.bytes().all(|b| b.is_ascii_hexdigit()),
+                    "{name}: {key} = {value}"
+                );
+            }
         }
     }
 
@@ -219,6 +247,6 @@ mod tests {
         let user = load_from(dir.path(), "gruvbox").unwrap();
         assert_eq!(user.dark.get("bg").map(String::as_str), Some("#000000"));
         assert!(user.light.is_empty());
-        assert_eq!(list_from(dir.path()).unwrap(), ["gruvbox"]);
+        assert_eq!(list_from(dir.path()).unwrap(), bundled_names());
     }
 }

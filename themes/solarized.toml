@@ -1,0 +1,37 @@
+# Solarized for kayet.
+# Source of truth for the colors: https://ethanschoonover.com/solarized/
+# Roles follow vim-colors-solarized (green keywords, cyan strings and numbers,
+# orange titles, base01 / base1 comments).
+# Bundled with kayet: set `theme = "solarized"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/solarized.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#002b36"
+bg-sidebar = "#073642"
+text = "#839496"
+text-muted = "#586e75"
+border = "#073642"
+accent = "#268bd2"
+selection = "#268bd233"
+caret = "#93a1a1"
+hl-keyword = "#859900"
+hl-string = "#2aa198"
+hl-number = "#d33682"
+hl-title = "#cb4b16"
+hl-comment = "#586e75"
+
+[light]
+bg = "#fdf6e3"
+bg-sidebar = "#eee8d5"
+text = "#657b83"
+text-muted = "#93a1a1"
+border = "#eee8d5"
+accent = "#268bd2"
+selection = "#268bd233"
+caret = "#586e75"
+hl-keyword = "#859900"
+hl-string = "#2aa198"
+hl-number = "#d33682"
+hl-title = "#cb4b16"
+hl-comment = "#93a1a1"

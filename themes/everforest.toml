@@ -1,0 +1,36 @@
+# Everforest (medium) for kayet.
+# Source of truth for the colors: https://github.com/sainnhe/everforest/blob/master/palette.md
+# Roles follow upstream (red keywords, aqua strings, purple numbers, grey comments).
+# Bundled with kayet: set `theme = "everforest"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/everforest.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#2d353b"
+bg-sidebar = "#232a2e"
+text = "#d3c6aa"
+text-muted = "#859289"
+border = "#3d484d"
+accent = "#a7c080"
+selection = "#a7c08033"
+caret = "#d3c6aa"
+hl-keyword = "#e67e80"
+hl-string = "#83c092"
+hl-number = "#d699b6"
+hl-title = "#e69875"
+hl-comment = "#859289"
+
+[light]
+bg = "#fdf6e3"
+bg-sidebar = "#efebd4"
+text = "#5c6a72"
+text-muted = "#939f91"
+border = "#e6e2cc"
+accent = "#8da101"
+selection = "#8da10133"
+caret = "#5c6a72"
+hl-keyword = "#f85552"
+hl-string = "#35a77c"
+hl-number = "#df69ba"
+hl-title = "#f57d26"
+hl-comment = "#939f91"

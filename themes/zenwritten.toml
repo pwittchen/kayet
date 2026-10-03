@@ -1,0 +1,38 @@
+# Zenwritten for kayet: a near-monochrome palette that tells text apart by lightness.
+# Source of truth for the colors: https://github.com/zenbones-theme/zenbones.nvim (zenwritten)
+# Upstream separates syntax with bold / italic rather than hue; themes here can only set
+# colors, so keywords, numbers and titles stay the text color and only strings and
+# comments are dimmed. Links use water.
+# Bundled with kayet: set `theme = "zenwritten"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/zenwritten.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#191919"
+bg-sidebar = "#202020"
+text = "#bbbbbb"
+text-muted = "#6d6d6d"
+border = "#2c2c2c"
+accent = "#6099c0"
+selection = "#40404099"
+caret = "#c9c9c9"
+hl-keyword = "#bbbbbb"
+hl-string = "#9b9b9b"
+hl-number = "#bbbbbb"
+hl-title = "#c9c9c9"
+hl-comment = "#6d6d6d"
+
+[light]
+bg = "#eeeeee"
+bg-sidebar = "#e5e5e5"
+text = "#353535"
+text-muted = "#8e8e8e"
+border = "#d8d8d8"
+accent = "#286486"
+selection = "#d7d7d799"
+caret = "#2c2c2c"
+hl-keyword = "#353535"
+hl-string = "#5f5f5f"
+hl-number = "#353535"
+hl-title = "#2c2c2c"
+hl-comment = "#8e8e8e"
