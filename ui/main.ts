@@ -328,9 +328,16 @@ async function refreshSystemTheme(): Promise<boolean> {
   return systemTheme !== before;
 }
 
-/** macOS appearance may have changed: re-applies a theme that follows it. */
+/**
+ * The theme/mode last rendered: `cfg.ui`, or a picker's preview. Pinning a previewed
+ * appearance itself reports a `prefers-color-scheme` change, which must not revert the preview.
+ */
+let shownTheme: { theme: string; mode: Mode } | null = null;
+
+/** macOS appearance may have changed: re-renders the shown theme if it follows it. */
 function systemAppearanceChanged(): void {
-  if (effectiveMode(cfg.ui.theme, cfg.ui.mode) === "system") void applyTheme();
+  const { theme, mode } = shownTheme ?? cfg.ui;
+  if (effectiveMode(theme, mode) === "system") void renderTheme(theme, mode, themePreview !== null);
 }
 
 /** Pins the window (and app) appearance, or follows macOS with null. */
@@ -382,6 +389,7 @@ async function applyTheme(): Promise<void> {
  */
 async function renderTheme(theme: string, mode: Mode, preview: boolean): Promise<void> {
   const seq = ++themeSeq;
+  shownTheme = { theme, mode };
   const effective = effectiveMode(theme, mode);
   const systemChanged = effective === "system" ? refreshSystemTheme() : Promise.resolve(false);
   if (theme === "kayet" || isLegacyTheme(theme)) {
