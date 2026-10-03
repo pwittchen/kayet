@@ -30,6 +30,8 @@ export interface PaletteOptions {
   search?: (query: string) => Promise<PaletteItem[]>;
   /** Shown while the query is empty, in search mode. */
   prompt?: string;
+  /** Initially selected item index; defaults to 0. */
+  selected?: number;
 }
 
 /** Typing pause after which a search runs. */
@@ -113,6 +115,7 @@ export class Palette {
       this.closed = new Promise((resolve) => (this.done = resolve));
     }
     this.filter();
+    if (options.selected !== undefined) this.select(options.selected);
     this.input.focus();
     return this.closed;
   }

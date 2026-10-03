@@ -97,6 +97,14 @@ describe("Palette", () => {
     expect(pickFile).not.toHaveBeenCalled();
   });
 
+  it("preselects the given item so Enter picks it", async () => {
+    const pick = vi.fn();
+    const closed = palette.open(items, { ...options(pick), selected: 1 });
+    key("Enter");
+    await closed;
+    expect(pick).toHaveBeenCalledWith("b");
+  });
+
   describe("search mode", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());

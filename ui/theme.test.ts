@@ -7,6 +7,7 @@ import {
   effectiveMode,
   isLegacyTheme,
   migrateLegacyTheme,
+  modeItems,
   nextMode,
   onlyVariant,
   pickSection,
@@ -55,6 +56,14 @@ describe("theme resolution", () => {
       { id: "solarized", label: "solarized" },
     ]);
     expect(themeItems([], "dark")).toEqual([{ id: "kayet", label: "kayet", detail: "current" }]);
+  });
+
+  it("lists the appearance modes and marks the current one", () => {
+    expect(modeItems("light")).toEqual([
+      { id: "system", label: "System" },
+      { id: "light", label: "Light", detail: "current" },
+      { id: "dark", label: "Dark" },
+    ]);
   });
 
   it("picks the matching section", () => {
