@@ -8,7 +8,6 @@ import {
   isLegacyTheme,
   migrateLegacyTheme,
   modeItems,
-  nextMode,
   onlyVariant,
   pickSection,
   themeItems,
@@ -32,15 +31,6 @@ describe("theme resolution", () => {
     expect(effectiveMode("dark", "system")).toBe("dark");
     expect(effectiveMode("gruvbox", "light")).toBe("light");
     expect(effectiveMode("kayet", "system")).toBe("system");
-  });
-
-  it("cycles the mode and migrates legacy themes to the kayet palette", () => {
-    expect(nextMode("kayet", "system")).toEqual({ theme: "kayet", mode: "light" });
-    expect(nextMode("kayet", "light")).toEqual({ theme: "kayet", mode: "dark" });
-    expect(nextMode("kayet", "dark")).toEqual({ theme: "kayet", mode: "system" });
-    expect(nextMode("gruvbox", "dark")).toEqual({ theme: "gruvbox", mode: "system" });
-    expect(nextMode("system", "system")).toEqual({ theme: "kayet", mode: "light" });
-    expect(nextMode("dark", "system")).toEqual({ theme: "kayet", mode: "system" });
   });
 
   it("migrates legacy themes preserving the effective mode", () => {

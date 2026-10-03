@@ -43,16 +43,6 @@ export function effectiveMode(theme: string, mode: Mode): Mode {
 }
 
 /**
- * Advances the mode System → Light → Dark, migrating a legacy theme value to the kayet
- * palette so it stops shadowing the `mode` key afterwards. Other palettes pass through untouched.
- */
-export function nextMode(theme: string, mode: Mode): { theme: string; mode: Mode } {
-  const order: Mode[] = ["system", "light", "dark"];
-  const next = order[(order.indexOf(effectiveMode(theme, mode)) + 1) % order.length];
-  return { theme: isLegacyTheme(theme) ? "kayet" : theme, mode: next };
-}
-
-/**
  * Migrates a legacy theme value to the kayet palette, preserving the effective mode;
  * non-legacy configs pass through untouched.
  */

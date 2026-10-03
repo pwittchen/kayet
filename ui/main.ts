@@ -38,7 +38,6 @@ import {
   isLegacyTheme,
   migrateLegacyTheme,
   modeItems,
-  nextMode,
   onlyVariant,
   pickSection,
   themeItems,
@@ -1471,7 +1470,7 @@ async function toggleRecent(): Promise<void> {
   });
 }
 
-/** Switch palette: the built-in one plus every theme file, the current one marked. */
+/** Switch palette: the built-in one plus every theme file, the current one marked and preselected. */
 async function toggleThemes(): Promise<void> {
   if (palette.showing === "themes") return palette.close();
   const listed = await api.listThemes();
@@ -1480,10 +1479,12 @@ async function toggleThemes(): Promise<void> {
   // interleaved dismiss can disarm the restore before the picker opens.
   cancelThemePreview();
   themePreview = { theme: cfg.ui.theme, mode: cfg.ui.mode };
-  await showPalette(themeItems(listed, cfg.ui.theme), {
+  const items = themeItems(listed, cfg.ui.theme);
+  await showPalette(items, {
     kind: "themes",
     placeholder: "Switch theme…",
     empty: "No matching themes",
+    selected: Math.max(0, items.findIndex((item) => item.detail === "current")),
     pick: (name) => switchTheme(name),
     onHighlight: (name) => void renderTheme(name, cfg.ui.mode, true),
   });
@@ -1495,7 +1496,7 @@ function switchTheme(name: string): void {
   saveConfig();
 }
 
-/** Appearance picker: System / Light / Dark, the current mode marked, the next preselected. */
+/** Appearance picker: System / Light / Dark, the current mode marked and preselected. */
 async function toggleAppearance(): Promise<void> {
   if (fixedVariant) return;
   if (palette.showing === "appearance") return palette.close();
@@ -1503,13 +1504,12 @@ async function toggleAppearance(): Promise<void> {
   cancelThemePreview();
   themePreview = { theme: cfg.ui.theme, mode: cfg.ui.mode };
   const current = effectiveMode(cfg.ui.theme, cfg.ui.mode);
-  const next = nextMode(cfg.ui.theme, cfg.ui.mode).mode;
   const items = modeItems(current);
   await showPalette(items, {
     kind: "appearance",
     placeholder: "Switch appearance…",
     empty: "No matching modes",
-    selected: items.findIndex((item) => item.id === next),
+    selected: items.findIndex((item) => item.id === current),
     pick: (mode) => switchMode(mode as Mode),
     // Like switchMode, previewed against the kayet palette for a legacy theme value.
     onHighlight: (mode) =>
