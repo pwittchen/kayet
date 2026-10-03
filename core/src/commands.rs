@@ -245,13 +245,13 @@ pub fn reload_config(state: State<'_, AppState>) -> CmdResult<Config> {
     Ok(current.clone())
 }
 
-/// Loads a theme from `~/.kayet/themes/<name>.toml`.
+/// Loads a theme from `~/.kayet/themes/<name>.toml` or a bundled one.
 #[tauri::command]
 pub fn get_theme(name: String) -> CmdResult<ThemeFile> {
     crate::themes::load(&name)
 }
 
-/// Lists the themes in `~/.kayet/themes/`.
+/// Lists the bundled themes and those in `~/.kayet/themes/`.
 #[tauri::command]
 pub fn list_themes() -> CmdResult<Vec<String>> {
     crate::themes::list()

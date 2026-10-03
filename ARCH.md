@@ -54,7 +54,7 @@ kayet/
 │   │   ├── workspace.rs    workspace resolution, list_dir, list_files, fs watcher
 │   │   ├── fs_ops.rs       read, atomic write, create, rename, trash, save image
 │   │   ├── search.rs       workspace-wide literal text search
-│   │   ├── themes.rs       themes from ~/.kayet/themes/
+│   │   ├── themes.rs       bundled themes (themes/, embedded) + ~/.kayet/themes/
 │   │   ├── markdown.rs     pulldown-cmark → ammonia sanitizer, line anchors
 │   │   ├── export.rs       PDF export through NSPrintOperation on the web view
 │   │   ├── image_cache.rs  web images downloaded via curl into ~/.kayet/cache/images/

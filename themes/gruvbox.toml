@@ -1,7 +1,8 @@
 # gruvbox for kayet.
 # Source of truth for the colors: https://github.com/morhetz/gruvbox/blob/master/colors/gruvbox.vim
 # Roles follow upstream (blue links) and VS Code's gruvbox port (aqua selection).
-# Copy this file to ~/.kayet/themes/ and set `theme = "gruvbox"` in ~/.kayet/config.toml.
+# Bundled with kayet: set `theme = "gruvbox"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/gruvbox.toml takes precedence.
 # Either section may be left out: a single-variant theme looks the same in both modes.
 # See SPEC.md §9 for the format.
 

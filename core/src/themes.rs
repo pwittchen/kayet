@@ -1,4 +1,4 @@
-//! Themes from `~/.kayet/themes/<name>.toml` (see SPEC.md §9).
+//! Themes bundled with the app and from `~/.kayet/themes/<name>.toml` (see SPEC.md §9).
 
 use std::collections::HashMap;
 use std::fs;
@@ -33,6 +33,17 @@ pub struct ThemeFile {
     pub dark: HashMap<String, String>,
 }
 
+/// Themes shipped with the app (`themes/` in the repository), embedded at compile time.
+/// A file of the same name in `~/.kayet/themes/` takes precedence.
+const BUNDLED: &[(&str, &str)] = &[("gruvbox", include_str!("../../themes/gruvbox.toml"))];
+
+fn bundled(name: &str) -> Option<&'static str> {
+    BUNDLED
+        .iter()
+        .find(|(bundled, _)| *bundled == name)
+        .map(|(_, text)| *text)
+}
+
 /// `~/.kayet/themes/`
 fn themes_dir() -> PathBuf {
     config::kayet_dir().join("themes")
@@ -52,19 +63,28 @@ fn parse(text: &str) -> Result<ThemeFile, toml::de::Error> {
     toml::from_str(text)
 }
 
-/// Loads `~/.kayet/themes/<name>.toml`.
+/// Loads `~/.kayet/themes/<name>.toml`, or the bundled theme of that name.
 pub fn load(name: &str) -> Result<ThemeFile, String> {
+    load_from(&themes_dir(), name)
+}
+
+fn load_from(dir: &Path, name: &str) -> Result<ThemeFile, String> {
     if !valid_name(name) {
         return Err(format!("invalid theme name: {name}"));
     }
-    let path = themes_dir().join(format!("{name}.toml"));
-    let text = fs::read_to_string(&path).map_err(|e| {
-        if e.kind() == io::ErrorKind::NotFound {
-            format!("theme '{name}' not found (looked in ~/.kayet/themes/)")
-        } else {
-            format!("cannot read theme '{name}': {e}")
-        }
-    })?;
+    let path = dir.join(format!("{name}.toml"));
+    let text = match fs::read_to_string(&path) {
+        Ok(text) => text,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => match bundled(name) {
+            Some(text) => text.to_owned(),
+            None => {
+                return Err(format!(
+                    "theme '{name}' not found (looked in ~/.kayet/themes/)"
+                ));
+            }
+        },
+        Err(e) => return Err(format!("cannot read theme '{name}': {e}")),
+    };
     parse(&text).map_err(|e| format!("invalid theme '{name}': {e}"))
 }
 
@@ -73,9 +93,10 @@ fn reserved(name: &str) -> bool {
     matches!(name, "kayet" | "system" | "light" | "dark")
 }
 
-/// Lists the loadable theme names in `dir`: `.toml` files with valid, unreserved names.
+/// Lists the loadable theme names: the bundled themes plus the `.toml` files in `dir`
+/// with valid, unreserved names.
 fn list_from(dir: &Path) -> Result<Vec<String>, String> {
-    let mut names = Vec::new();
+    let mut names: Vec<String> = BUNDLED.iter().map(|(name, _)| (*name).to_owned()).collect();
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(names),
@@ -95,10 +116,11 @@ fn list_from(dir: &Path) -> Result<Vec<String>, String> {
         }
     }
     names.sort();
+    names.dedup();
     Ok(names)
 }
 
-/// Lists the themes in `~/.kayet/themes/`.
+/// Lists the bundled themes and those in `~/.kayet/themes/`.
 pub fn list() -> Result<Vec<String>, String> {
     list_from(&themes_dir())
 }
@@ -166,13 +188,37 @@ mod tests {
             fs::write(dir.path().join(name), "[dark]\n").unwrap();
         }
         fs::create_dir(dir.path().join("dir.toml")).unwrap();
-        assert_eq!(list_from(dir.path()).unwrap(), ["a", "b"]);
+        assert_eq!(list_from(dir.path()).unwrap(), ["a", "b", "gruvbox"]);
     }
 
     #[test]
-    fn missing_themes_dir_lists_nothing() {
+    fn missing_themes_dir_lists_bundled() {
         let dir = tempfile::tempdir().unwrap();
-        assert_eq!(list_from(&dir.path().join("nope")), Ok(Vec::new()));
+        assert_eq!(list_from(&dir.path().join("nope")).unwrap(), ["gruvbox"]);
         assert!(list().is_ok());
+    }
+
+    #[test]
+    fn bundled_themes_parse() {
+        for (name, text) in BUNDLED {
+            let theme = parse(text).unwrap_or_else(|e| panic!("{name}: {e}"));
+            assert!(!theme.light.is_empty() && !theme.dark.is_empty(), "{name}");
+        }
+    }
+
+    #[test]
+    fn user_theme_overrides_bundled() {
+        let dir = tempfile::tempdir().unwrap();
+        let bundled = load_from(dir.path(), "gruvbox").unwrap();
+        assert_eq!(bundled.dark.get("bg").map(String::as_str), Some("#282828"));
+        fs::write(
+            dir.path().join("gruvbox.toml"),
+            "[dark]\nbg = \"#000000\"\n",
+        )
+        .unwrap();
+        let user = load_from(dir.path(), "gruvbox").unwrap();
+        assert_eq!(user.dark.get("bg").map(String::as_str), Some("#000000"));
+        assert!(user.light.is_empty());
+        assert_eq!(list_from(dir.path()).unwrap(), ["gruvbox"]);
     }
 }
