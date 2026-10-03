@@ -17,6 +17,7 @@ const ZEN: &str = "toggle-zen";
 const CODE_MODE: &str = "toggle-code-mode";
 const EXPORT_HTML: &str = "export-html";
 const EXPORT_PDF: &str = "export-pdf";
+const APPEARANCE: &str = "cycle-appearance";
 
 /// Menu id prefix of the File → Open Recent entries, followed by the entry's index.
 pub const RECENT_PREFIX: &str = "recent:";
@@ -217,11 +218,7 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 Some("CmdOrCtrl+Shift+P"),
             )?,
             &item("toggle-presentation", "Toggle Presentation", None)?,
-            &item(
-                "cycle-appearance",
-                "Cycle Appearance",
-                Some("CmdOrCtrl+Shift+L"),
-            )?,
+            &item(APPEARANCE, "Cycle Appearance", Some("CmdOrCtrl+Shift+L"))?,
             &item(
                 "toggle-chrome",
                 "Keep Title Bar Visible",
@@ -290,6 +287,17 @@ pub fn set_export_enabled<R: Runtime>(app: &AppHandle<R>, enabled: bool) {
         if let Some(item) = file.get(id).and_then(|i| i.as_menuitem().cloned()) {
             let _ = item.set_enabled(enabled);
         }
+    }
+}
+
+/// Enables or disables View → Cycle Appearance (off while a single-variant theme is applied).
+pub fn set_appearance_enabled<R: Runtime>(app: &AppHandle<R>, enabled: bool) {
+    let Some(view) = app.menu().and_then(|m| m.get(VIEW)) else {
+        return;
+    };
+    let item = view.as_submenu().and_then(|v| v.get(APPEARANCE));
+    if let Some(item) = item.and_then(|i| i.as_menuitem().cloned()) {
+        let _ = item.set_enabled(enabled);
     }
 }
 

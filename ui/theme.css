@@ -316,9 +316,13 @@ body.resizing * {
   transition: color var(--fade), background-color var(--fade);
 }
 
-.controls button:hover {
+.controls button:hover:not(:disabled) {
   color: var(--text);
   background: var(--hover);
+}
+
+.controls button:disabled {
+  opacity: 0.45;
 }
 
 .controls button.on {

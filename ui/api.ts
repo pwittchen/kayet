@@ -92,6 +92,7 @@ export const api = {
   reloadConfig: () => invoke<Config>("reload_config"),
   getTheme: (name: string) => invoke<ThemeFile>("get_theme", { name }),
   listThemes: () => invoke<string[]>("list_themes"),
+  systemAppearance: () => invoke<"light" | "dark">("system_appearance"),
   getWorkspace: () => invoke<string>("get_workspace"),
   setWorkspace: (path: string) => invoke<string>("set_workspace", { path }),
   resetWorkspace: () => invoke<string>("reset_workspace"),
@@ -161,6 +162,8 @@ export const api = {
   exportPdf: (path: string) => invoke<void>("export_pdf", { path }),
   /** Enables File → Export as HTML… / PDF…. */
   setExportEnabled: (enabled: boolean) => invoke<void>("set_export_enabled", { enabled }),
+  /** Enables View → Cycle Appearance (off for single-variant themes). */
+  setAppearanceEnabled: (enabled: boolean) => invoke<void>("set_appearance_enabled", { enabled }),
   setChromeVisible: (visible: boolean) =>
     invoke<void>("set_chrome_visible", { visible }),
   /** Updates the View menu's Syntax Highlighting or Check Spelling item. */

@@ -19,7 +19,7 @@ mod workspace;
 use serde::Serialize;
 use tauri::menu::MenuEvent;
 use tauri::{
-    AppHandle, DragDropEvent, Emitter, LogicalPosition, LogicalSize, Manager, Theme, WebviewWindow,
+    AppHandle, DragDropEvent, Emitter, LogicalPosition, LogicalSize, Manager, WebviewWindow,
     Window, WindowEvent,
 };
 
@@ -105,6 +105,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::reload_config,
         commands::get_theme,
         commands::list_themes,
+        commands::system_appearance,
         commands::get_workspace,
         commands::set_workspace,
         commands::reset_workspace,
@@ -139,6 +140,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::set_chrome_visible,
         commands::set_menu_check,
         commands::set_export_enabled,
+        commands::set_appearance_enabled,
         commands::open_file_dialog,
         commands::save_file_dialog,
         commands::pick_workspace,
@@ -179,13 +181,9 @@ fn on_window_event(window: &Window, event: &WindowEvent) {
             }
         }
         WindowEvent::Destroyed => state.save_config(),
-        WindowEvent::ThemeChanged(theme) => {
-            let name = if *theme == Theme::Dark {
-                "dark"
-            } else {
-                "light"
-            };
-            let _ = app.emit("theme://changed", name);
+        // The event's theme is the app's (pinned by a theme), so report the system setting.
+        WindowEvent::ThemeChanged(_) => {
+            let _ = app.emit("theme://changed", chrome::system_appearance());
         }
         WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) => {
             if let Some(file) = paths.iter().find(|p| p.is_file()) {

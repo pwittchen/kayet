@@ -3,7 +3,7 @@
 # Roles follow nord-vim (frost keywords, green strings, purple numbers, grey-blue comments).
 # Bundled with kayet: set `theme = "nord"` in ~/.kayet/config.toml or pick it from
 # `Switch Theme…`. A copy in ~/.kayet/themes/nord.toml takes precedence.
-# Nord is a dark palette only, so it looks the same in both modes. See SPEC.md §9.
+# Nord is a dark palette only, so it is always shown dark. See SPEC.md §9.
 
 [dark]
 bg = "#2e3440"

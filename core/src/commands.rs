@@ -257,6 +257,12 @@ pub fn list_themes() -> CmdResult<Vec<String>> {
     crate::themes::list()
 }
 
+/// The macOS appearance setting, `"dark"` or `"light"`, regardless of the window's theme.
+#[tauri::command]
+pub fn system_appearance() -> &'static str {
+    crate::chrome::system_appearance()
+}
+
 #[tauri::command]
 pub fn get_workspace(state: State<'_, AppState>) -> String {
     path_string(&lock(&state.workspace))
@@ -616,6 +622,11 @@ pub fn set_menu_check(app: AppHandle, id: &str, enabled: bool, checked: bool) {
 #[tauri::command]
 pub fn set_export_enabled(app: AppHandle, enabled: bool) {
     crate::menu::set_export_enabled(&app, enabled);
+}
+
+#[tauri::command]
+pub fn set_appearance_enabled(app: AppHandle, enabled: bool) {
+    crate::menu::set_appearance_enabled(&app, enabled);
 }
 
 #[tauri::command]

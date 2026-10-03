@@ -3,7 +3,7 @@
 # Roles follow upstream (blue links) and VS Code's gruvbox port (aqua selection).
 # Bundled with kayet: set `theme = "gruvbox"` in ~/.kayet/config.toml or pick it from
 # `Switch Theme…`. A copy in ~/.kayet/themes/gruvbox.toml takes precedence.
-# Either section may be left out: a single-variant theme looks the same in both modes.
+# Either section may be left out: a single-variant theme is always shown in that variant.
 # See SPEC.md §9 for the format.
 
 [dark]

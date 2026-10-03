@@ -200,7 +200,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Code | Toggle syntax highlighting — **only shown for code and data/config files, or for any file in code editor mode** | — |
   | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled), hidden in code editor mode | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
-  | Theme | Cycle appearance: System → Light → Dark | `⌘⇧L` |
+  | Theme | Cycle appearance: System → Light → Dark; disabled for single-variant themes (see 9) | `⌘⇧L` |
   | Presentation (screen) | Start presentation mode; turns into an exit icon while presenting (see 8.2) — **only shown for `.md` files and untitled documents** | — |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files and untitled documents written in Markdown** (see 8) | `⌘⇧P` |
 
@@ -397,7 +397,9 @@ bg = "#fbf1c7"
 
   A theme is the matching built-in (light or dark) with the file's colors on top; unknown
   keys and non-hex values are ignored. Either section may be missing: a single-variant
-  theme then looks the same in both modes. A missing or invalid file falls back to the
+  theme (e.g. `nord`, dark only) is always shown in its variant, whatever the mode, and
+  the appearance toggle is disabled while it is applied (the `mode` setting is kept for
+  other themes). A missing or invalid file falls back to the
   built-in palette with a subtle, non-blocking notice, as do ignored colors. Activating a
   theme is config-only (applied on save, like other settings), or picked from `Switch
   Theme…` in the command palette, which lists every palette and applies the pick
@@ -410,7 +412,9 @@ bg = "#fbf1c7"
 - The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand
   for the built-in palette with that mode; an explicitly set `mode` wins over the
   shorthand, and cycling the mode or saving settings normalizes them to `theme` + `mode`.
-- `⌘⇧L` (View → Cycle Appearance) cycles the mode System → Light → Dark, for any palette.
+- `⌘⇧L` (View → Cycle Appearance) cycles the mode System → Light → Dark, for the built-in
+  palette and every theme with both variants; the theme button shows the mode (System /
+  Light / Dark icon) for all of them.
 - Implemented with CSS custom properties; no hardcoded colors in components.
 
 ### Palette (indicative)
@@ -543,9 +547,11 @@ kayet/
 | `cache_image(url) -> path`     | Download a web image (once) into `~/.kayet/cache/images/` |
 | `export_pdf(path)`             | Print the document prepared for printing into a PDF |
 | `set_export_enabled(bool)`     | Enable / disable File → Export as HTML… / PDF… |
+| `set_appearance_enabled(bool)` | Enable / disable View → Cycle Appearance (single-variant themes) |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
 | `get_theme(name) -> Theme`   | Load a theme from `~/.kayet/themes/` or a bundled one |
 | `list_themes() -> Vec<String>` | Names of the bundled themes and those in `~/.kayet/themes/` |
+| `system_appearance() -> String` | macOS appearance setting (`dark` / `light`), whatever the window's theme |
 | `take_opened() -> Opened`      | File / folder kayet was launched to open      |
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |

@@ -143,6 +143,7 @@ There are exactly two channels:
                      ◀──────── sanitized HTML ──────────────
   api.getTheme ────────────── invoke("get_theme") ─────────▶  themes::load
   api.listThemes ──────────── invoke("list_themes") ───────▶  themes::list
+  api.systemAppearance ────── invoke("system_appearance") ─▶  chrome::system_appearance
   api.searchWorkspace ─────── invoke("search_workspace") ──▶  search::search
   api.writeRecovery ───────── invoke("write_recovery",       recovery::write
                                bytes, kayet-backups) ─────▶

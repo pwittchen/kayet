@@ -43,8 +43,8 @@ export function effectiveMode(theme: string, mode: Mode): Mode {
 }
 
 /**
- * Advances the mode, migrating a legacy theme value to the kayet palette so it stops
- * shadowing the `mode` key afterwards. Other palettes pass through untouched.
+ * Advances the mode System → Light → Dark, migrating a legacy theme value to the kayet
+ * palette so it stops shadowing the `mode` key afterwards. Other palettes pass through untouched.
  */
 export function nextMode(theme: string, mode: Mode): { theme: string; mode: Mode } {
   const order: Mode[] = ["system", "light", "dark"];
@@ -75,6 +75,16 @@ export function pickSection(
   const other = variant === "dark" ? file.light : file.dark;
   if (Object.keys(other).length > 0) return { dark: variant === "light", colors: other };
   return { dark: variant === "dark", colors: {} };
+}
+
+/**
+ * The only variant a theme defines, or null when it defines both (or neither). Such a
+ * theme is shown in that variant whatever the mode, and the appearance can't be toggled.
+ */
+export function onlyVariant(file: ThemeFile): "light" | "dark" | null {
+  const light = Object.keys(file.light).length > 0;
+  const dark = Object.keys(file.dark).length > 0;
+  return light === dark ? null : dark ? "dark" : "light";
 }
 
 /** Items for switching themes: the built-in palette first, the current one marked. */

@@ -104,3 +104,24 @@ pub fn enable_spell_checking() {
 
 #[cfg(not(target_os = "macos"))]
 pub fn enable_spell_checking() {}
+
+/// The macOS appearance setting, `"dark"` or `"light"`. Read from the user defaults rather
+/// than the app: once the window's theme is set, the app's own appearance (and with it
+/// `prefers-color-scheme` and window theme events) reports that instead of the system one.
+#[cfg(target_os = "macos")]
+pub fn system_appearance() -> &'static str {
+    use objc2_foundation::{NSUserDefaults, ns_string};
+
+    let style =
+        NSUserDefaults::standardUserDefaults().stringForKey(ns_string!("AppleInterfaceStyle"));
+    if style.is_some_and(|s| s.to_string().eq_ignore_ascii_case("dark")) {
+        "dark"
+    } else {
+        "light"
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn system_appearance() -> &'static str {
+    "light"
+}

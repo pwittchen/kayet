@@ -15,6 +15,7 @@ import {
   dirname,
   isMarkdown,
   isWithin,
+  Mode,
   Opened,
   relativeTo,
   SearchMatch,
@@ -37,6 +38,7 @@ import {
   isLegacyTheme,
   migrateLegacyTheme,
   nextMode,
+  onlyVariant,
   pickSection,
   themeItems,
 } from "./theme";
@@ -307,17 +309,61 @@ function rememberSession(): void {
 // ---- theme ----
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+/** The macOS appearance: a first guess, replaced by the setting itself (see refreshSystemTheme). */
 let systemTheme: "light" | "dark" = systemDark.matches ? "dark" : "light";
 
+/**
+ * Reads the macOS appearance setting. The app's own appearance cannot tell: setting the
+ * window theme pins the whole app, and `prefers-color-scheme` and window theme events then
+ * report the pin. Returns whether the appearance changed.
+ */
+async function refreshSystemTheme(): Promise<boolean> {
+  const before = systemTheme;
+  try {
+    systemTheme = await api.systemAppearance();
+  } catch {
+    // Keep the last known appearance.
+  }
+  return systemTheme !== before;
+}
+
+/** macOS appearance may have changed: re-applies a theme that follows it. */
+function systemAppearanceChanged(): void {
+  if (effectiveMode(cfg.ui.theme, cfg.ui.mode) === "system") void applyTheme();
+}
+
+/** Pins the window (and app) appearance, or follows macOS with null. */
+function setWindowAppearance(appearance: "light" | "dark" | null): void {
+  // Also drives the native traffic lights and sidebar vibrancy appearance.
+  void appWindow.setTheme(appearance).catch(() => {});
+}
+
+/** The variant of a theme that defines only one, which then can't be toggled. */
+let fixedVariant: "light" | "dark" | null = null;
+
+function setFixedVariant(variant: "light" | "dark" | null): void {
+  if (variant === fixedVariant) return;
+  fixedVariant = variant;
+  els.btnTheme.disabled = variant !== null;
+  void api.setAppearanceEnabled(variant === null).catch(() => {});
+}
+
+const modeLabel = (mode: Mode) => `${mode[0].toUpperCase()}${mode.slice(1)}`;
+
+/** Shows the appearance mode on the theme button: System, Light or Dark. */
+function setModeButton(mode: Mode): void {
+  els.btnTheme.innerHTML =
+    mode === "system" ? icons.themeSystem : mode === "light" ? icons.themeLight : icons.themeDark;
+}
+
 function applyBuiltinTheme(mode: "system" | "light" | "dark"): void {
+  setFixedVariant(null);
   clearThemeColors();
   const resolved = mode === "system" ? systemTheme : mode;
   document.documentElement.dataset.theme = resolved;
-  els.btnTheme.innerHTML =
-    mode === "system" ? icons.themeSystem : mode === "light" ? icons.themeLight : icons.themeDark;
-  els.btnTheme.title = `Theme: ${mode[0].toUpperCase()}${mode.slice(1)} (⌘⇧L)`;
-  // Also drives the native traffic lights and sidebar vibrancy appearance.
-  void appWindow.setTheme(mode === "system" ? null : mode).catch(() => {});
+  setModeButton(mode);
+  els.btnTheme.title = `Theme: ${modeLabel(mode)} (⌘⇧L)`;
+  setWindowAppearance(mode === "system" ? null : mode);
 }
 
 // Sequence number drops the results of theme loads overtaken by newer ones.
@@ -327,15 +373,19 @@ async function applyTheme(): Promise<void> {
   const seq = ++themeSeq;
   const { theme, mode } = cfg.ui;
   const effective = effectiveMode(theme, mode);
+  const systemChanged = effective === "system" ? refreshSystemTheme() : Promise.resolve(false);
   if (theme === "kayet" || isLegacyTheme(theme)) {
+    // Shown right away with the last known system appearance, corrected if that was stale.
     applyBuiltinTheme(effective);
+    if ((await systemChanged) && seq === themeSeq) applyBuiltinTheme(effective);
     return;
   }
   // Theme file: the matching built-in as the base, the file's colors on top.
   let file;
   try {
-    file = await api.getTheme(theme);
+    [file] = await Promise.all([api.getTheme(theme), systemChanged]);
   } catch (e) {
+    await systemChanged;
     if (seq !== themeSeq) return;
     applyBuiltinTheme(effective);
     els.btnTheme.title = `Theme: ${theme} (⌘⇧L)`;
@@ -343,17 +393,26 @@ async function applyTheme(): Promise<void> {
     return;
   }
   if (seq !== themeSeq) return;
-  const variant = effective === "system" ? systemTheme : effective;
+  // A single-variant theme is always shown in its variant; the mode is kept for other themes.
+  const only = onlyVariant(file);
+  setFixedVariant(only);
+  const variant = only ?? (effective === "system" ? systemTheme : effective);
   const { dark, colors } = pickSection(file, variant);
   const skipped = applyThemeColors(colors);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
-  els.btnTheme.innerHTML = dark ? icons.themeDark : icons.themeLight;
-  els.btnTheme.title = `Theme: ${theme} · ${dark ? "Dark" : "Light"} (⌘⇧L)`;
-  void appWindow.setTheme(dark ? "dark" : "light").catch(() => {});
+  if (only) {
+    els.btnTheme.innerHTML = dark ? icons.themeDark : icons.themeLight;
+    els.btnTheme.title = `Theme: ${theme} · ${dark ? "Dark" : "Light"} only`;
+  } else {
+    setModeButton(effective);
+    els.btnTheme.title = `Theme: ${theme} · ${modeLabel(effective)} (⌘⇧L)`;
+  }
+  setWindowAppearance(only ?? (effective === "system" ? null : variant));
   if (skipped > 0) notify(`Theme '${theme}': ${skipped} invalid ${skipped === 1 ? "color" : "colors"} ignored`);
 }
 
-function cycleMode(): void {
+function cycleAppearance(): void {
+  if (fixedVariant) return;
   const next = nextMode(cfg.ui.theme, cfg.ui.mode);
   cfg.ui.theme = next.theme;
   cfg.ui.mode = next.mode;
@@ -361,11 +420,7 @@ function cycleMode(): void {
   saveConfig();
 }
 
-systemDark.addEventListener("change", (e) => {
-  if (effectiveMode(cfg.ui.theme, cfg.ui.mode) !== "system") return;
-  systemTheme = e.matches ? "dark" : "light";
-  void applyTheme();
-});
+systemDark.addEventListener("change", systemAppearanceChanged);
 
 // ---- layout ----
 
@@ -1235,7 +1290,7 @@ const commands: Record<string, () => unknown> = {
   "open-settings": openSettings,
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
-  "cycle-appearance": cycleMode,
+  "cycle-appearance": cycleAppearance,
   "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
@@ -1295,7 +1350,7 @@ function paletteCommands(): PaletteItem[] {
       id: "toggle-presentation",
       label: presentation.active ? "Exit Presentation" : "Start Presentation",
     },
-    { id: "cycle-appearance", label: "Cycle Appearance", shortcut: "⌘⇧L" },
+    !fixedVariant && { id: "cycle-appearance", label: "Cycle Appearance", shortcut: "⌘⇧L" },
     { id: "switch-theme", label: "Switch Theme…" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
     !codeMode && { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
@@ -1534,11 +1589,7 @@ async function init(): Promise<void> {
       void tree.refresh();
       if (doc.path && e.payload.paths.includes(doc.path)) void checkDiskChange();
     }),
-    listen<string>("theme://changed", (e) => {
-      systemTheme = e.payload === "dark" ? "dark" : "light";
-      if (effectiveMode(cfg.ui.theme, cfg.ui.mode) !== "system") return;
-      void applyTheme();
-    }),
+    listen<string>("theme://changed", systemAppearanceChanged),
     listen<string>("notice", (e) => notify(e.payload)),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
