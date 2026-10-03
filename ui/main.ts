@@ -371,8 +371,17 @@ function applyBuiltinTheme(mode: "system" | "light" | "dark"): void {
 let themeSeq = 0;
 
 async function applyTheme(): Promise<void> {
-  const seq = ++themeSeq;
   const { theme, mode } = cfg.ui;
+  return renderTheme(theme, mode, false);
+}
+
+/**
+ * Applies `theme`/`mode` to the window (DOM, theme button, appearance pin), in memory only:
+ * callers persist `cfg.ui` themselves. A preview additionally skips the invalid-theme notice,
+ * which the confirm path surfaces through the normal apply instead.
+ */
+async function renderTheme(theme: string, mode: Mode, preview: boolean): Promise<void> {
+  const seq = ++themeSeq;
   const effective = effectiveMode(theme, mode);
   const systemChanged = effective === "system" ? refreshSystemTheme() : Promise.resolve(false);
   if (theme === "kayet" || isLegacyTheme(theme)) {
@@ -390,7 +399,7 @@ async function applyTheme(): Promise<void> {
     if (seq !== themeSeq) return;
     applyBuiltinTheme(effective);
     els.btnTheme.title = `Theme: ${theme} (⌘⇧L)`;
-    notify(String(e));
+    if (!preview) notify(String(e));
     return;
   }
   if (seq !== themeSeq) return;
@@ -409,7 +418,22 @@ async function applyTheme(): Promise<void> {
     els.btnTheme.title = `Theme: ${theme} · ${modeLabel(effective)} (⌘⇧L)`;
   }
   setWindowAppearance(only ?? (effective === "system" ? null : variant));
-  if (skipped > 0) notify(`Theme '${theme}': ${skipped} invalid ${skipped === 1 ? "color" : "colors"} ignored`);
+  if (skipped > 0 && !preview)
+    notify(`Theme '${theme}': ${skipped} invalid ${skipped === 1 ? "color" : "colors"} ignored`);
+}
+
+/**
+ * The look on screen before a theme/appearance picker opened, restored when it is dismissed
+ * without a choice; null while no previewing picker is open. Previewing never touches
+ * `cfg.ui`, so the snapshot stays the pre-picker look until the picker closes.
+ */
+let themePreview: { theme: string; mode: Mode } | null = null;
+
+/** Restores the pre-picker look after a dismissal; a no-op without an active preview. */
+function cancelThemePreview(): void {
+  const snapshot = themePreview;
+  themePreview = null;
+  if (snapshot) void renderTheme(snapshot.theme, snapshot.mode, true);
 }
 
 function switchMode(mode: Mode): void {
@@ -1308,7 +1332,12 @@ const commands: Record<string, () => unknown> = {
 
 // ---- command palette ----
 
-const palette = new Palette(() => editor.focus());
+const palette = new Palette(() => {
+  // Dismissal without a choice (Esc, outside click, blur, shortcut re-press); a no-op for
+  // other lists and, on confirm, overtaken at once by the pick applying the choice.
+  cancelThemePreview();
+  editor.focus();
+});
 
 /** Everything the palette offers, in menu order; context-only commands appear when they apply. */
 function paletteCommands(): PaletteItem[] {
@@ -1381,6 +1410,9 @@ function paletteCommands(): PaletteItem[] {
 /** Opens the palette with `items`, switches it to them, or closes it if it shows them already. */
 async function showPalette(items: PaletteItem[], options: PaletteOptions): Promise<void> {
   if (palette.showing === options.kind) return palette.close();
+  // Switching lists bypasses Palette.close, so a theme/appearance preview is reverted here;
+  // the two previewing pickers revert it themselves before snapshotting the pre-picker look.
+  if (!options.onHighlight) cancelThemePreview();
   const wasOpen = palette.isOpen;
   const closed = palette.open(items, options);
   // Keeps the title bar up while the palette is open, if it was showing.
@@ -1434,11 +1466,15 @@ async function toggleRecent(): Promise<void> {
 /** Switch palette: the built-in one plus every theme file, the current one marked. */
 async function toggleThemes(): Promise<void> {
   if (palette.showing === "themes") return palette.close();
+  // A preview from the appearance picker is reverted first (list switches bypass close).
+  cancelThemePreview();
+  themePreview = { theme: cfg.ui.theme, mode: cfg.ui.mode };
   await showPalette(themeItems(await api.listThemes(), cfg.ui.theme), {
     kind: "themes",
     placeholder: "Switch theme…",
     empty: "No matching themes",
     pick: (name) => switchTheme(name),
+    onHighlight: (name) => void renderTheme(name, cfg.ui.mode, true),
   });
 }
 
@@ -1452,6 +1488,9 @@ function switchTheme(name: string): void {
 async function toggleAppearance(): Promise<void> {
   if (fixedVariant) return;
   if (palette.showing === "appearance") return palette.close();
+  // A preview from the themes picker is reverted first (list switches bypass close).
+  cancelThemePreview();
+  themePreview = { theme: cfg.ui.theme, mode: cfg.ui.mode };
   const current = effectiveMode(cfg.ui.theme, cfg.ui.mode);
   const next = nextMode(cfg.ui.theme, cfg.ui.mode).mode;
   const items = modeItems(current);
@@ -1461,6 +1500,9 @@ async function toggleAppearance(): Promise<void> {
     empty: "No matching modes",
     selected: items.findIndex((item) => item.id === next),
     pick: (mode) => switchMode(mode as Mode),
+    // Like switchMode, previewed against the kayet palette for a legacy theme value.
+    onHighlight: (mode) =>
+      void renderTheme(isLegacyTheme(cfg.ui.theme) ? "kayet" : cfg.ui.theme, mode as Mode, true),
   });
 }
 

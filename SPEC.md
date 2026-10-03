@@ -415,7 +415,8 @@ bg = "#fbf1c7"
   shorthand, and switching the mode or saving settings normalizes them to `theme` + `mode`.
 - `⌘⇧L` (View → Switch Appearance…) lists the System / Light / Dark modes with the next one preselected, for the built-in
   palette and every theme with both variants; the theme button shows the mode (System /
-  Light / Dark icon) for all of them.
+  Light / Dark icon) for all of them. Moving the highlight in either picker live-previews the look in the window;
+  dismissing the picker restores the previous look, confirming applies and saves it.
 - Implemented with CSS custom properties; no hardcoded colors in components.
 
 ### Palette (indicative)

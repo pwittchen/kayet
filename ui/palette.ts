@@ -32,6 +32,12 @@ export interface PaletteOptions {
   prompt?: string;
   /** Initially selected item index; defaults to 0. */
   selected?: number;
+  /**
+   * Called with the newly highlighted item's id when the highlight moves (arrow keys,
+   * Home / End, hover, or re-filtering that changes the top match). Never fires for the
+   * initial selection on open. Lists without a live preview leave it unset.
+   */
+  onHighlight?: (id: string) => void;
 }
 
 /** Typing pause after which a search runs. */
@@ -53,6 +59,10 @@ export class Palette {
   private searchTimer: number | undefined;
   /** Bumped by each search and by `open`, so stale results are dropped. */
   private searchId = 0;
+  /** Id of the last highlight reported via `onHighlight`, so it fires only on change. */
+  private lastHighlightId: string | null = null;
+  /** Whether highlight moves are reported; armed after the initial selection on open. */
+  private highlightArmed = false;
 
   constructor(private readonly onClose: () => void) {
     this.root = document.createElement("div");
@@ -114,8 +124,12 @@ export class Palette {
       this.root.hidden = false;
       this.closed = new Promise((resolve) => (this.done = resolve));
     }
+    // The initial selection is not a highlight move: disarm reporting until it is set.
+    this.highlightArmed = false;
     this.filter();
     if (options.selected !== undefined) this.select(options.selected);
+    this.lastHighlightId = this.matches[this.selected]?.id ?? null;
+    this.highlightArmed = true;
     this.input.focus();
     return this.closed;
   }
@@ -254,6 +268,11 @@ export class Palette {
   private select(index: number, scroll = true): void {
     this.list.querySelector("[aria-selected=true]")?.setAttribute("aria-selected", "false");
     this.selected = index;
+    const id = this.matches[index]?.id ?? null;
+    if (this.highlightArmed && id !== this.lastHighlightId) {
+      this.lastHighlightId = id;
+      if (id !== null) this.options?.onHighlight?.(id);
+    }
     const item = this.list.querySelector<HTMLElement>(`[data-index="${index}"]`);
     if (!item) return this.input.removeAttribute("aria-activedescendant");
     item.setAttribute("aria-selected", "true");

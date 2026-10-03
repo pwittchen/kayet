@@ -159,4 +159,65 @@ describe("Palette", () => {
       expect(emptyText()).toBe("Type to search");
     });
   });
+
+  describe("onHighlight", () => {
+    const themes: PaletteItem[] = [
+      { id: "kayet", label: "kayet" },
+      { id: "gruvbox", label: "gruvbox" },
+      { id: "nord", label: "nord" },
+    ];
+    const hover = (index: number) =>
+      document
+        .querySelector(`#palette li[data-index="${index}"]`)!
+        .dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    const highlighted = () => vi.fn<(id: string) => void>();
+    const calls = (fn: ReturnType<typeof highlighted>) => fn.mock.calls.map((c) => c[0]);
+
+    it("does not fire on open, including with a preselected item", () => {
+      const onHighlight = highlighted();
+      palette.open(themes, { ...options(vi.fn()), kind: "themes", selected: 1, onHighlight });
+      expect(onHighlight).not.toHaveBeenCalled();
+      palette.close();
+    });
+
+    it("fires on arrow keys, Home and End, only when the id changes", () => {
+      const onHighlight = highlighted();
+      palette.open(themes, { ...options(vi.fn()), kind: "themes", onHighlight });
+      key("Home");
+      expect(onHighlight).not.toHaveBeenCalled();
+      key("ArrowDown");
+      key("ArrowDown");
+      key("ArrowUp");
+      key("Home");
+      key("End");
+      expect(calls(onHighlight)).toEqual(["gruvbox", "nord", "gruvbox", "kayet", "nord"]);
+      key("ArrowDown"); // wraps to the first row, whose id differs
+      expect(calls(onHighlight)).toEqual(["gruvbox", "nord", "gruvbox", "kayet", "nord", "kayet"]);
+      palette.close();
+    });
+
+    it("fires on hover, only when the row changes", () => {
+      const onHighlight = highlighted();
+      palette.open(themes, { ...options(vi.fn()), kind: "themes", onHighlight });
+      hover(0);
+      expect(onHighlight).not.toHaveBeenCalled();
+      hover(2);
+      hover(2);
+      hover(1);
+      expect(calls(onHighlight)).toEqual(["nord", "gruvbox"]);
+      palette.close();
+    });
+
+    it("fires on re-filtering only when the top match changes", () => {
+      const onHighlight = highlighted();
+      palette.open(themes, { ...options(vi.fn()), kind: "themes", onHighlight });
+      type("gruv");
+      expect(calls(onHighlight)).toEqual(["gruvbox"]);
+      type("gruvbox");
+      expect(calls(onHighlight)).toEqual(["gruvbox"]);
+      type("");
+      expect(calls(onHighlight)).toEqual(["gruvbox", "kayet"]);
+      palette.close();
+    });
+  });
 });
