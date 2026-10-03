@@ -26,7 +26,7 @@ pub const CLEAR_RECENT: &str = "clear-recent";
 /// Menu id of kayet → About kayet.
 pub const ABOUT: &str = "about";
 
-/// Credits of the About panel: version, project website, source code and author. The charset is
+/// Credits of the About panel: version, project website, source code, author and contributors. The charset is
 /// explicit because the HTML importer would otherwise decode the bytes as Latin-1.
 const ABOUT_CREDITS: &str = concat!(
     "<meta charset=\"utf-8\">\
@@ -37,7 +37,8 @@ const ABOUT_CREDITS: &str = concat!(
     <p><a href=\"https://getkayet.app\">getkayet.app</a></p>\
     <p><a href=\"https://github.com/pwittchen/kayet\">source code on GitHub</a></p>\
     <p>made by Piotr Wittchen</p>\
-    <p><a href=\"https://wittchen.io\">wittchen.io</a></p>"
+    <p><a href=\"https://wittchen.io\">wittchen.io</a></p>\
+    <p>and <a href=\"https://github.com/pwittchen/kayet/graphs/contributors\">open-source contributors</a></p>"
 );
 
 /// Shows the standard macOS About panel with `ABOUT_CREDITS` (links clickable). Must run on the

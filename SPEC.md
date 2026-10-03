@@ -128,7 +128,8 @@ in CI or releases.
 ### 4.6 About
 - `kayet → About kayet` shows the standard macOS About panel (icon, name, version) with clickable
   links to the website ([getkayet.app](https://getkayet.app)), the source code on GitHub
-  (`pwittchen/kayet`) and the author, Piotr Wittchen ([wittchen.io](https://wittchen.io)).
+  (`pwittchen/kayet`), the author, Piotr Wittchen ([wittchen.io](https://wittchen.io)), and the
+  open-source contributors ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)).
 
 ## 5. Window & Layout
 
