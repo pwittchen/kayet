@@ -218,7 +218,7 @@ fn view_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
                 Some("CmdOrCtrl+Shift+P"),
             )?,
             &item("toggle-presentation", "Toggle Presentation", None)?,
-            &item(APPEARANCE, "Cycle Appearance", Some("CmdOrCtrl+Shift+L"))?,
+            &item(APPEARANCE, "Switch Appearance…", Some("CmdOrCtrl+Shift+L"))?,
             &item(
                 "toggle-chrome",
                 "Keep Title Bar Visible",
@@ -290,7 +290,7 @@ pub fn set_export_enabled<R: Runtime>(app: &AppHandle<R>, enabled: bool) {
     }
 }
 
-/// Enables or disables View → Cycle Appearance (off while a single-variant theme is applied).
+/// Enables or disables View → Switch Appearance… (off while a single-variant theme is applied).
 pub fn set_appearance_enabled<R: Runtime>(app: &AppHandle<R>, enabled: bool) {
     let Some(view) = app.menu().and_then(|m| m.get(VIEW)) else {
         return;

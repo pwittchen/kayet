@@ -37,6 +37,7 @@ import {
   effectiveMode,
   isLegacyTheme,
   migrateLegacyTheme,
+  modeItems,
   nextMode,
   onlyVariant,
   pickSection,
@@ -411,11 +412,9 @@ async function applyTheme(): Promise<void> {
   if (skipped > 0) notify(`Theme '${theme}': ${skipped} invalid ${skipped === 1 ? "color" : "colors"} ignored`);
 }
 
-function cycleAppearance(): void {
-  if (fixedVariant) return;
-  const next = nextMode(cfg.ui.theme, cfg.ui.mode);
-  cfg.ui.theme = next.theme;
-  cfg.ui.mode = next.mode;
+function switchMode(mode: Mode): void {
+  cfg.ui.theme = isLegacyTheme(cfg.ui.theme) ? "kayet" : cfg.ui.theme;
+  cfg.ui.mode = mode;
   void applyTheme();
   saveConfig();
 }
@@ -1290,7 +1289,7 @@ const commands: Record<string, () => unknown> = {
   "open-settings": openSettings,
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
-  "cycle-appearance": cycleAppearance,
+  "cycle-appearance": toggleAppearance,
   "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
@@ -1350,7 +1349,7 @@ function paletteCommands(): PaletteItem[] {
       id: "toggle-presentation",
       label: presentation.active ? "Exit Presentation" : "Start Presentation",
     },
-    !fixedVariant && { id: "cycle-appearance", label: "Cycle Appearance", shortcut: "⌘⇧L" },
+    !fixedVariant && { id: "cycle-appearance", label: "Switch Appearance…", shortcut: "⌘⇧L" },
     { id: "switch-theme", label: "Switch Theme…" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
     !codeMode && { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
@@ -1447,6 +1446,22 @@ function switchTheme(name: string): void {
   cfg.ui.theme = name;
   void applyTheme();
   saveConfig();
+}
+
+/** Appearance picker: System / Light / Dark, the current mode marked, the next preselected. */
+async function toggleAppearance(): Promise<void> {
+  if (fixedVariant) return;
+  if (palette.showing === "appearance") return palette.close();
+  const current = effectiveMode(cfg.ui.theme, cfg.ui.mode);
+  const next = nextMode(cfg.ui.theme, cfg.ui.mode).mode;
+  const items = modeItems(current);
+  await showPalette(items, {
+    kind: "appearance",
+    placeholder: "Switch appearance…",
+    empty: "No matching modes",
+    selected: items.findIndex((item) => item.id === next),
+    pick: (mode) => switchMode(mode as Mode),
+  });
 }
 
 /** Workspace-wide search: each matching line, with its file and line number aside. */

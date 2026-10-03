@@ -200,7 +200,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Code | Toggle syntax highlighting — **only shown for code and data/config files, or for any file in code editor mode** | — |
   | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled), hidden in code editor mode | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
-  | Theme | Cycle appearance: System → Light → Dark; disabled for single-variant themes (see 9) | `⌘⇧L` |
+  | Theme | Switch appearance: a System / Light / Dark list; disabled for single-variant themes (see 9) | `⌘⇧L` |
   | Presentation (screen) | Start presentation mode; turns into an exit icon while presenting (see 8.2) — **only shown for `.md` files and untitled documents** | — |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files and untitled documents written in Markdown** (see 8) | `⌘⇧P` |
 
@@ -411,8 +411,8 @@ bg = "#fbf1c7"
   (`prefers-color-scheme` + Tauri theme events); `light` / `dark` pin one variant.
 - The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand
   for the built-in palette with that mode; an explicitly set `mode` wins over the
-  shorthand, and cycling the mode or saving settings normalizes them to `theme` + `mode`.
-- `⌘⇧L` (View → Cycle Appearance) cycles the mode System → Light → Dark, for the built-in
+  shorthand, and switching the mode or saving settings normalizes them to `theme` + `mode`.
+- `⌘⇧L` (View → Switch Appearance…) lists the System / Light / Dark modes with the next one preselected, for the built-in
   palette and every theme with both variants; the theme button shows the mode (System /
   Light / Dark icon) for all of them.
 - Implemented with CSS custom properties; no hardcoded colors in components.
@@ -547,7 +547,7 @@ kayet/
 | `cache_image(url) -> path`     | Download a web image (once) into `~/.kayet/cache/images/` |
 | `export_pdf(path)`             | Print the document prepared for printing into a PDF |
 | `set_export_enabled(bool)`     | Enable / disable File → Export as HTML… / PDF… |
-| `set_appearance_enabled(bool)` | Enable / disable View → Cycle Appearance (single-variant themes) |
+| `set_appearance_enabled(bool)` | Enable / disable View → Switch Appearance… (single-variant themes) |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
 | `get_theme(name) -> Theme`   | Load a theme from `~/.kayet/themes/` or a bundled one |
 | `list_themes() -> Vec<String>` | Names of the bundled themes and those in `~/.kayet/themes/` |
@@ -587,7 +587,7 @@ kayet/
 | Toggle preview (.md)   | `⌘⇧P`     |
 | Settings (config file) | `⌘,`      |
 | Command palette        | `⌘K`      |
-| Cycle appearance       | `⌘⇧L`     |
+| Switch appearance      | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘R`  |
 | Find in workspace      | `⌘⇧F`     |
 | Bold / italic (.md)    | `⌘B` / `⌘I` |

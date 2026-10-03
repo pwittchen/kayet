@@ -46,7 +46,7 @@
 | Toggle file tree | `⌘\` |
 | Toggle preview (Markdown) | `⌘⇧P` |
 | Bold / italic (Markdown) | `⌘B` / `⌘I` |
-| Cycle appearance | `⌘⇧L` |
+| Switch appearance | `⌘⇧L` |
 | Settings (config file) | `⌘,` |
 | Show chrome | `⌘.` |
 | Zoom in / out / reset | `⌘+` / `⌘-` / `⌘0` |

@@ -162,7 +162,7 @@ export const api = {
   exportPdf: (path: string) => invoke<void>("export_pdf", { path }),
   /** Enables File → Export as HTML… / PDF…. */
   setExportEnabled: (enabled: boolean) => invoke<void>("set_export_enabled", { enabled }),
-  /** Enables View → Cycle Appearance (off for single-variant themes). */
+  /** Enables View → Switch Appearance… (off for single-variant themes). */
   setAppearanceEnabled: (enabled: boolean) => invoke<void>("set_appearance_enabled", { enabled }),
   setChromeVisible: (visible: boolean) =>
     invoke<void>("set_chrome_visible", { visible }),

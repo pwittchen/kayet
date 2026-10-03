@@ -87,6 +87,16 @@ export function onlyVariant(file: ThemeFile): "light" | "dark" | null {
   return light === dark ? null : dark ? "dark" : "light";
 }
 
+/** Items for switching appearance modes: System / Light / Dark, the current one marked. */
+export function modeItems(current: Mode): PaletteItem[] {
+  const modes: Mode[] = ["system", "light", "dark"];
+  return modes.map((mode) => ({
+    id: mode,
+    label: mode[0].toUpperCase() + mode.slice(1),
+    ...(mode === current ? { detail: "current" } : {}),
+  }));
+}
+
 /** Items for switching themes: the built-in palette first, the current one marked. */
 export function themeItems(names: string[], current: string): PaletteItem[] {
   const here = isLegacyTheme(current) ? "kayet" : current;
