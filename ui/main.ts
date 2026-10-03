@@ -18,7 +18,6 @@ import {
   Opened,
   relativeTo,
   SearchMatch,
-  ThemeMode,
 } from "./api";
 import { afterPaint, runBench } from "./bench";
 import { Chrome } from "./chrome";
@@ -31,6 +30,16 @@ import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
 import { Presentation } from "./presentation";
 import { Preview } from "./preview";
 import { countWords, formatStats } from "./stats";
+import {
+  applyThemeColors,
+  clearThemeColors,
+  effectiveMode,
+  isLegacyTheme,
+  migrateLegacyTheme,
+  nextMode,
+  pickSection,
+  themeItems,
+} from "./theme";
 import { FileTree } from "./tree";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -259,7 +268,13 @@ async function reloadConfig(): Promise<void> {
   const hiddenChanged = next.workspace.show_hidden_files !== cfg.workspace.show_hidden_files;
   const pinnedChanged = next.ui.titlebar_pinned !== cfg.ui.titlebar_pinned;
   cfg = next;
-  applyTheme();
+  const migrated = migrateLegacyTheme(cfg.ui.theme, cfg.ui.mode);
+  if (migrated.theme !== cfg.ui.theme) {
+    cfg.ui.theme = migrated.theme;
+    cfg.ui.mode = migrated.mode;
+    saveConfig();
+  }
+  void applyTheme();
   if (pinnedChanged) chrome.setPinned(cfg.ui.titlebar_pinned);
   editor.applySettings(editorSettings());
   applyCodeMode();
@@ -294,8 +309,8 @@ function rememberSession(): void {
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 let systemTheme: "light" | "dark" = systemDark.matches ? "dark" : "light";
 
-function applyTheme(): void {
-  const mode = cfg.ui.theme;
+function applyBuiltinTheme(mode: "system" | "light" | "dark"): void {
+  clearThemeColors();
   const resolved = mode === "system" ? systemTheme : mode;
   document.documentElement.dataset.theme = resolved;
   els.btnTheme.innerHTML =
@@ -305,17 +320,51 @@ function applyTheme(): void {
   void appWindow.setTheme(mode === "system" ? null : mode).catch(() => {});
 }
 
-function cycleTheme(): void {
-  const order: ThemeMode[] = ["system", "light", "dark"];
-  cfg.ui.theme = order[(order.indexOf(cfg.ui.theme) + 1) % order.length];
-  applyTheme();
+// Sequence number drops the results of theme loads overtaken by newer ones.
+let themeSeq = 0;
+
+async function applyTheme(): Promise<void> {
+  const seq = ++themeSeq;
+  const { theme, mode } = cfg.ui;
+  const effective = effectiveMode(theme, mode);
+  if (theme === "kayet" || isLegacyTheme(theme)) {
+    applyBuiltinTheme(effective);
+    return;
+  }
+  // Theme file: the matching built-in as the base, the file's colors on top.
+  let file;
+  try {
+    file = await api.getTheme(theme);
+  } catch (e) {
+    if (seq !== themeSeq) return;
+    applyBuiltinTheme(effective);
+    els.btnTheme.title = `Theme: ${theme} (⌘⇧L)`;
+    notify(String(e));
+    return;
+  }
+  if (seq !== themeSeq) return;
+  const variant = effective === "system" ? systemTheme : effective;
+  const { dark, colors } = pickSection(file, variant);
+  const skipped = applyThemeColors(colors);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  els.btnTheme.innerHTML = dark ? icons.themeDark : icons.themeLight;
+  els.btnTheme.title = `Theme: ${theme} · ${dark ? "Dark" : "Light"} (⌘⇧L)`;
+  void appWindow.setTheme(dark ? "dark" : "light").catch(() => {});
+  if (skipped > 0) notify(`Theme '${theme}': ${skipped} invalid ${skipped === 1 ? "color" : "colors"} ignored`);
+}
+
+function cycleMode(): void {
+  const next = nextMode(cfg.ui.theme, cfg.ui.mode);
+  cfg.ui.theme = next.theme;
+  cfg.ui.mode = next.mode;
+  void applyTheme();
   saveConfig();
 }
 
 systemDark.addEventListener("change", (e) => {
-  if (cfg.ui.theme !== "system") return;
+  if (effectiveMode(cfg.ui.theme, cfg.ui.mode) !== "system") return;
   systemTheme = e.matches ? "dark" : "light";
-  applyTheme();
+  void applyTheme();
 });
 
 // ---- layout ----
@@ -1186,7 +1235,8 @@ const commands: Record<string, () => unknown> = {
   "open-settings": openSettings,
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
-  "cycle-theme": cycleTheme,
+  "cycle-appearance": cycleMode,
+  "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),
   "toggle-zen": toggleZen,
   "toggle-code-mode": toggleCodeMode,
@@ -1245,7 +1295,8 @@ function paletteCommands(): PaletteItem[] {
       id: "toggle-presentation",
       label: presentation.active ? "Exit Presentation" : "Start Presentation",
     },
-    { id: "cycle-theme", label: "Cycle Theme", shortcut: "⌘⇧L" },
+    { id: "cycle-appearance", label: "Cycle Appearance", shortcut: "⌘⇧L" },
+    { id: "switch-theme", label: "Switch Theme…" },
     { id: "toggle-chrome", label: "Keep Title Bar Visible", shortcut: "⌘." },
     !codeMode && { id: "toggle-zen", label: cfg.ui.zen_mode ? "Exit Zen Mode" : "Zen Mode", shortcut: "⌘⇧J" },
     { id: "toggle-code-mode", label: codeMode ? "Exit Code Editor Mode" : "Code Editor Mode" },
@@ -1326,6 +1377,23 @@ async function toggleRecent(): Promise<void> {
   });
 }
 
+/** Switch palette: the built-in one plus every theme file, the current one marked. */
+async function toggleThemes(): Promise<void> {
+  if (palette.showing === "themes") return palette.close();
+  await showPalette(themeItems(await api.listThemes(), cfg.ui.theme), {
+    kind: "themes",
+    placeholder: "Switch theme…",
+    empty: "No matching themes",
+    pick: (name) => switchTheme(name),
+  });
+}
+
+function switchTheme(name: string): void {
+  cfg.ui.theme = name;
+  void applyTheme();
+  saveConfig();
+}
+
 /** Workspace-wide search: each matching line, with its file and line number aside. */
 function toggleWorkspaceSearch(): Promise<void> {
   const found = new Map<string, SearchMatch>();
@@ -1373,7 +1441,7 @@ els.btnBlink.addEventListener("click", () => run("toggle-cursor-blink"));
 els.btnSidebar.addEventListener("click", () => run("toggle-tree"));
 els.btnWorkspace.addEventListener("click", () => run("open-workspace"));
 els.btnSettings.addEventListener("click", () => run("open-settings"));
-els.btnTheme.addEventListener("click", () => run("cycle-theme"));
+els.btnTheme.addEventListener("click", () => run("cycle-appearance"));
 els.btnPreview.addEventListener("click", () => run("toggle-preview"));
 els.btnPresent.addEventListener("click", () => run("toggle-presentation"));
 els.btnSyntax.addEventListener("click", () => run("toggle-syntax"));
@@ -1452,7 +1520,7 @@ async function init(): Promise<void> {
   workspace = await api.getWorkspace();
   configPath = await api.configFile();
   systemTheme = systemDark.matches ? "dark" : "light";
-  applyTheme();
+  void applyTheme();
   if (cfg.ui.titlebar_pinned) chrome.setPinned(true);
   editor.applySettings(editorSettings());
   applyCodeMode();
@@ -1467,9 +1535,9 @@ async function init(): Promise<void> {
       if (doc.path && e.payload.paths.includes(doc.path)) void checkDiskChange();
     }),
     listen<string>("theme://changed", (e) => {
-      if (cfg.ui.theme !== "system") return;
       systemTheme = e.payload === "dark" ? "dark" : "light";
-      applyTheme();
+      if (effectiveMode(cfg.ui.theme, cfg.ui.mode) !== "system") return;
+      void applyTheme();
     }),
     listen<string>("notice", (e) => notify(e.payload)),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),

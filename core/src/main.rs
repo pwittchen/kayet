@@ -12,6 +12,7 @@ mod markdown;
 mod menu;
 mod recovery;
 mod search;
+mod themes;
 mod update;
 mod workspace;
 
@@ -102,6 +103,8 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::set_config,
         commands::config_file,
         commands::reload_config,
+        commands::get_theme,
+        commands::list_themes,
         commands::get_workspace,
         commands::set_workspace,
         commands::reset_workspace,

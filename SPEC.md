@@ -200,7 +200,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Code | Toggle syntax highlighting — **only shown for code and data/config files, or for any file in code editor mode** | — |
   | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled), hidden in code editor mode | — |
   | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
-  | Theme | Cycle theme: System → Light → Dark | `⌘⇧L` |
+  | Theme | Cycle appearance: System → Light → Dark | `⌘⇧L` |
   | Presentation (screen) | Start presentation mode; turns into an exit icon while presenting (see 8.2) — **only shown for `.md` files and untitled documents** | — |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files and untitled documents written in Markdown** (see 8) | `⌘⇧P` |
 
@@ -376,10 +376,39 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 
 ## 9. Theming
 
-- Three modes: **System** (default), **Light**, **Dark**.
-- System mode follows macOS appearance and reacts live to changes (`prefers-color-scheme` +
-  Tauri theme events).
-- Theme choice is persisted in config.
+- The palette (`theme`) and the appearance mode (`mode`) are separate: `theme` picks
+  *which* colors, `mode` picks *when* light or dark is used. Both are persisted in config.
+- `theme = "kayet"` (default) is the built-in palette; any other value is the name of a
+  theme file, `~/.kayet/themes/<name>.toml` (letters, digits, `_` and `-` only; `kayet`,
+  `system`, `light` and `dark` are reserved). A file holds the base token colors per
+  variant (hex: `#rgb`, `#rrggbb` or `#rrggbbaa`):
+
+```toml
+[dark]
+bg = "#282828"
+text = "#ebdbb2"
+# bg-sidebar, text-muted, border, accent, selection, caret,
+# hl-keyword, hl-string, hl-number, hl-title, hl-comment
+
+[light]  # optional
+bg = "#fbf1c7"
+# ...
+```
+
+  A theme is the matching built-in (light or dark) with the file's colors on top; unknown
+  keys and non-hex values are ignored. Either section may be missing: a single-variant
+  theme then looks the same in both modes. A missing or invalid file falls back to the
+  built-in palette with a subtle, non-blocking notice, as do ignored colors. Activating a
+  theme is config-only (applied on save, like other settings), or picked from `Switch
+  Theme…` in the command palette, which lists every palette and applies the pick
+  immediately. A `gruvbox` example lives in `themes/` (copy it into `~/.kayet/themes/`
+  to use it). Theme files should cite their palette's source in a comment.
+- `mode = "system"` (default) follows macOS appearance and reacts live to changes
+  (`prefers-color-scheme` + Tauri theme events); `light` / `dark` pin one variant.
+- The pre-palette `theme` values `system` / `light` / `dark` keep working as shorthand
+  for the built-in palette with that mode; an explicitly set `mode` wins over the
+  shorthand, and cycling the mode or saving settings normalizes them to `theme` + `mode`.
+- `⌘⇧L` (View → Cycle Appearance) cycles the mode System → Light → Dark, for any palette.
 - Implemented with CSS custom properties; no hardcoded colors in components.
 
 ### Palette (indicative)
@@ -408,7 +437,8 @@ path = "~/.kayet/workspace"
 show_hidden_files = false
 
 [ui]
-theme = "system"          # "system" | "light" | "dark"
+theme = "kayet"           # palette: "kayet" (built-in) or a file from ~/.kayet/themes/ (see 9)
+mode = "system"           # "system" | "light" | "dark"
 sidebar_visible = false
 zen_mode = false
 code_mode = false         # code editor mode: line numbers, no paddings / wrapping (see 7)
@@ -462,7 +492,8 @@ kayet/
 │   │   ├── image_cache.rs   # web images downloaded into ~/.kayet/cache/images/
 │   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
 │   │   ├── update.rs        # app update check and install (GitHub Releases)
-│   │   └── config.rs        # load/save ~/.kayet/config.toml
+│   │   ├── config.rs        # load/save ~/.kayet/config.toml
+│   │   └── themes.rs        # themes from ~/.kayet/themes/
 │   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
 │   ├── Cargo.toml
 │   └── tauri.conf.json
@@ -480,6 +511,7 @@ kayet/
 │   ├── images.ts            # web images shown from their downloaded copies
 │   ├── markdown-body.css    # rendered Markdown typography (preview and exports)
 │   ├── chrome.ts            # hover reveal logic, title bar
+│   ├── theme.ts             # theme colors (see 9)
 │   └── theme.css
 └── SPEC.md
 ```
@@ -510,6 +542,8 @@ kayet/
 | `export_pdf(path)`             | Print the document prepared for printing into a PDF |
 | `set_export_enabled(bool)`     | Enable / disable File → Export as HTML… / PDF… |
 | `set_chrome_visible(bool)`     | Show/hide traffic lights (macOS)              |
+| `get_theme(name) -> Theme`   | Load a theme from `~/.kayet/themes/`   |
+| `list_themes() -> Vec<String>` | Names of the themes in `~/.kayet/themes/` |
 | `take_opened() -> Opened`      | File / folder kayet was launched to open      |
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |
@@ -545,7 +579,7 @@ kayet/
 | Toggle preview (.md)   | `⌘⇧P`     |
 | Settings (config file) | `⌘,`      |
 | Command palette        | `⌘K`      |
-| Cycle theme            | `⌘⇧L`     |
+| Cycle appearance       | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘R`  |
 | Find in workspace      | `⌘⇧F`     |
 | Bold / italic (.md)    | `⌘B` / `⌘I` |
@@ -565,10 +599,10 @@ kayet/
    The file tree and preview are hidden by default and can each be shown and hidden again.
 3. Hovering the top edge reveals the title bar with traffic lights and controls; they fade out after the mouse leaves.
 4. The file tree can be toggled and shows the workspace contents; changing the workspace updates the tree and is remembered across restarts.
-5. Theme defaults to System and follows macOS appearance live; Light/Dark can be forced and are persisted.
+5. Appearance mode defaults to System and follows macOS appearance live; Light/Dark can be forced and are persisted.
 6. Opening a `.md` file shows the preview icon; clicking it shows a live-updating rendered preview in the right pane. Non-Markdown files show no preview icon; an untitled document shows it once Markdown is typed into it.
 7. Files can be created, opened, edited, saved, renamed and trashed from within the app.
-8. The UI uses a consistent, minimal macOS/Linear-style visual language in both themes.
+8. The UI uses a consistent, minimal macOS/Linear-style visual language in both variants.
 
 ## 15. Future Ideas (post-v1)
 - Multiple windows.

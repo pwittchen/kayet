@@ -22,7 +22,7 @@
 - **Code highlighting.** Source code and data/config files are highlighted by file extension with a muted palette; highlighting can be turned off.
 - **Never lose a word.** Unsaved changes in every tab are backed up as you type; if kayet quits unexpectedly, it offers to restore them on the next launch.
 - **Spell check.** Optional native macOS spelling underlines for prose (Markdown and plain text, never code). Nothing is corrected automatically.
-- **Light and dark.** Follows the system appearance, or pick a theme yourself.
+- **Light and dark.** Follows the system appearance, or pick a theme yourself. More palettes are TOML files in `~/.kayet/themes/`, selected with `theme = "<name>"`.
 - **Terminal and Finder.** The `kayet` shell command (installed from the app menu) opens a file or makes a folder the workspace: `kayet notes.md`, `kayet .`. `.md` and `.txt` files open from Finder via Open With → kayet.
 - **App updates.** kayet checks GitHub Releases at launch and daily, and installs a new version in place after verifying its signature.
 - **Native and fast.** Rust and Tauri under the hood; starts instantly and stays small.
@@ -46,7 +46,7 @@
 | Toggle file tree | `⌘\` |
 | Toggle preview (Markdown) | `⌘⇧P` |
 | Bold / italic (Markdown) | `⌘B` / `⌘I` |
-| Cycle theme | `⌘⇧L` |
+| Cycle appearance | `⌘⇧L` |
 | Settings (config file) | `⌘,` |
 | Show chrome | `⌘.` |
 | Zoom in / out / reset | `⌘+` / `⌘-` / `⌘0` |
@@ -61,7 +61,8 @@ path = "~/.kayet/workspace"  # folder shown in the file tree
 show_hidden_files = false    # list dotfiles in the tree
 
 [ui]
-theme = "system"             # "system" | "light" | "dark"
+theme = "kayet"              # palette: "kayet" or a file from ~/.kayet/themes/
+mode = "system"              # "system" | "light" | "dark"
 sidebar_visible = false      # file tree shown on launch
 titlebar_pinned = false      # keep the title bar visible
 zen_mode = false             # centered cursor, dimmed paragraphs

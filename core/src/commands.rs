@@ -24,6 +24,7 @@ use crate::fs_ops::{self, canonical};
 use crate::markdown;
 use crate::recovery;
 use crate::search::{self, Match};
+use crate::themes::ThemeFile;
 use crate::workspace::{self, Entry, FsWatcher};
 
 type CmdResult<T> = Result<T, String>;
@@ -242,6 +243,18 @@ pub fn reload_config(state: State<'_, AppState>) -> CmdResult<Config> {
     current.workspace.path = path;
     current.session = session;
     Ok(current.clone())
+}
+
+/// Loads a theme from `~/.kayet/themes/<name>.toml`.
+#[tauri::command]
+pub fn get_theme(name: String) -> CmdResult<ThemeFile> {
+    crate::themes::load(&name)
+}
+
+/// Lists the themes in `~/.kayet/themes/`.
+#[tauri::command]
+pub fn list_themes() -> CmdResult<Vec<String>> {
+    crate::themes::list()
 }
 
 #[tauri::command]

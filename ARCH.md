@@ -54,6 +54,7 @@ kayet/
 │   │   ├── workspace.rs    workspace resolution, list_dir, list_files, fs watcher
 │   │   ├── fs_ops.rs       read, atomic write, create, rename, trash, save image
 │   │   ├── search.rs       workspace-wide literal text search
+│   │   ├── themes.rs       themes from ~/.kayet/themes/
 │   │   ├── markdown.rs     pulldown-cmark → ammonia sanitizer, line anchors
 │   │   ├── export.rs       PDF export through NSPrintOperation on the web view
 │   │   ├── image_cache.rs  web images downloaded via curl into ~/.kayet/cache/images/
@@ -82,6 +83,7 @@ kayet/
 │   ├── tree.ts             file tree
 │   ├── palette.ts          command palette, file finder, workspace search
 │   ├── chrome.ts           auto-hiding title bar and left-edge handle
+│   ├── theme.ts            palette/mode resolution, token allowlist, apply / clear
 │   ├── stats.ts            word count
 │   ├── bench.ts            self-measurement (only with KAYET_BENCH set)
 │   └── theme.css, markdown-body.css
@@ -139,6 +141,8 @@ There are exactly two channels:
                                bytes, kayet-path header) ─▶
   api.renderMarkdown ──────── invoke("render_markdown") ───▶  markdown::render
                      ◀──────── sanitized HTML ──────────────
+  api.getTheme ────────────── invoke("get_theme") ─────────▶  themes::load
+  api.listThemes ──────────── invoke("list_themes") ───────▶  themes::list
   api.searchWorkspace ─────── invoke("search_workspace") ──▶  search::search
   api.writeRecovery ───────── invoke("write_recovery",       recovery::write
                                bytes, kayet-backups) ─────▶
@@ -477,6 +481,7 @@ No HTTP client is compiled in; network and disk work goes through the system's `
 ├── config.toml          [workspace] [ui] [editor] [window] [updates] [session]
 │                        — settings, window geometry, open / recent files, skipped version;
 │                          edited as a normal document from Settings (⌘,), reloaded on save
+├── themes/              themes (<name>.toml), selected via [ui] theme
 ├── workspace/           default workspace (used when none is configured or it is gone)
 ├── cache/
 │   └── images/          web images shown in the preview / exports, downloaded once
