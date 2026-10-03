@@ -1466,10 +1466,13 @@ async function toggleRecent(): Promise<void> {
 /** Switch palette: the built-in one plus every theme file, the current one marked. */
 async function toggleThemes(): Promise<void> {
   if (palette.showing === "themes") return palette.close();
+  const listed = await api.listThemes();
   // A preview from the appearance picker is reverted first (list switches bypass close).
+  // Snapshot only after the await: nothing yields between here and open, so no
+  // interleaved dismiss can disarm the restore before the picker opens.
   cancelThemePreview();
   themePreview = { theme: cfg.ui.theme, mode: cfg.ui.mode };
-  await showPalette(themeItems(await api.listThemes(), cfg.ui.theme), {
+  await showPalette(themeItems(listed, cfg.ui.theme), {
     kind: "themes",
     placeholder: "Switch theme…",
     empty: "No matching themes",
