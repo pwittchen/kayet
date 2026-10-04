@@ -97,4 +97,4 @@ macOS on Apple Silicon (M-series). Intel Macs are not supported.
 
 ## Support and consulting
 
-kayet is built by Piotr Wittchen (https://wittchen.io), an independent software engineer available for custom features and integrations, desktop app development (Rust, Tauri), Rust development, Java / Kotlin / Android development and support contracts for teams using kayet. Contact: piotr@wittchen.io
+kayet is built by Piotr Wittchen (https://wittchen.io), available for contracts, project development and consulting. Contact: piotr@wittchen.io

@@ -519,41 +519,29 @@ kbd {
 .contact-intro { margin: 16px auto 56px; max-width: 40em; text-align: center; color: var(--text-muted); font-size: 19px; }
 
 .contact {
-  display: grid;
-  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.3fr);
-  max-width: 1040px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 520px;
   margin: 0 auto;
+  padding: 40px;
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--card);
-  overflow: hidden;
+  text-align: center;
 }
-.contact-about, .contact-cta { display: flex; flex-direction: column; padding: 40px; }
-.contact-about { gap: 24px; border-right: 1px solid var(--border); }
 .contact-avatar {
-  width: 160px;
-  height: 160px;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 20px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--border);
 }
 .contact-name { font-size: 22px; letter-spacing: -0.02em; }
 .contact-role { margin: 4px 0 16px; font-size: 13px; color: var(--accent); }
-.contact-note { margin: 0; font-size: 15px; color: var(--text-muted); }
-.contact-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; font-size: 13px; color: var(--text-muted); }
-
-.contact-lead { margin: 0 0 20px; font-size: 15px; color: var(--text-muted); }
-.contact-list { margin: 0 0 32px; padding: 0; list-style: none; }
-.contact-list li {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 15px;
-  color: var(--text-muted);
-}
-.contact-list li:first-child { padding-top: 0; }
-.contact-list li:last-child { border-bottom: 0; }
-.contact-list strong { color: var(--text); font-weight: 600; }
-.contact-button { align-self: flex-start; margin-top: auto; }
+.contact-note { margin: 0 0 28px; font-size: 16px; color: var(--text-muted); }
+.contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0 0; font-size: 13px; color: var(--text-muted); }
 
 /* ---- footer ---- */
 .footer {
@@ -613,10 +601,7 @@ kbd {
 }
 
 @media (max-width: 800px) {
-  .contact { grid-template-columns: 1fr; }
-  .contact-about { align-items: center; text-align: center; border-right: 0; border-bottom: 1px solid var(--border); }
-  .contact-links { justify-content: center; }
-  .contact-about, .contact-cta { padding: 32px 24px; }
+  .contact { padding: 32px 24px; }
   .config-code { font-size: 12px; }
   .window-body { min-height: 0; font-size: 13px; }
   .window-controls { display: none; }
