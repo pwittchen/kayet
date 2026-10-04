@@ -554,12 +554,44 @@ kbd {
 .legal-body .legal-lead { margin: 0 0 20px; color: var(--text); font-size: 19px; line-height: 1.5; }
 .legal-body code { font: 0.88em var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
 
+/* ---- alternative landing pages ---- */
+.alt-hero { padding-bottom: 120px; }
+.alt-hero .hero-icon { width: 96px; height: 96px; }
+.alt-hero h1 { max-width: 15em; margin: 12px auto 0; font-size: clamp(36px, 6vw, 60px); line-height: 1.08; letter-spacing: -0.04em; }
+.alt-eyebrow { margin: 28px 0 0; font-size: 14px; font-weight: 500; color: var(--accent); }
+.alt-section { max-width: 880px; margin: 0 auto; padding-bottom: 120px; }
+.alt-section h2 { text-align: center; font-size: clamp(30px, 4.5vw, 44px); line-height: 1.1; margin-bottom: 40px; }
+.alt-section code, .alt-hero code { font: 0.9em var(--font-mono); }
+.alt-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.alt-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.alt-table th, .alt-table td { padding: 14px 20px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+.alt-table tbody tr:last-child > * { border-bottom: 0; }
+.alt-table thead th { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.alt-table thead th:nth-child(2) { color: var(--accent); }
+.alt-table tbody th { font-weight: 500; white-space: nowrap; }
+.alt-table td { color: var(--text-muted); }
+.alt-table td:nth-child(2) { color: var(--text); }
+.alt-notes { margin-top: 0; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.alt-lead { margin: -24px 0 20px; text-align: center; color: var(--text-muted); }
+.alt-list { max-width: 640px; margin: 0 auto; padding-left: 1.2em; color: var(--text-muted); font-size: 16px; line-height: 1.65; }
+.alt-list li + li { margin-top: 8px; }
+.alt-faq { max-width: 640px; margin: 0 auto; }
+.alt-faq > div { padding: 20px 0; border-bottom: 1px solid var(--border); }
+.alt-faq > div:first-child { border-top: 1px solid var(--border); }
+.alt-faq h3 { font-size: 17px; letter-spacing: -0.01em; }
+.alt-faq p { margin: 8px 0 0; color: var(--text-muted); font-size: 16px; line-height: 1.6; }
+.alt-more { padding-top: 96px; }
+.alt-others { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; }
+.alt-others a { padding: 6px 14px; border: 1px solid var(--border); border-radius: 980px; font-size: 14px; color: var(--text-muted); transition: color 0.2s, border-color 0.2s; }
+.alt-others a:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+.alt-disclaimer { max-width: 640px; margin: 40px auto 0; text-align: center; font-size: 12px; color: var(--text-muted); }
+
 /* ---- footer ---- */
 .footer {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   padding: 28px 24px 40px;
   background: var(--bg-soft);
   font-size: 12px;
@@ -567,6 +599,7 @@ kbd {
 }
 .footer a { color: var(--text-muted); }
 .footer a:hover { color: var(--text); }
+.footer-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
 /* ---- motion ---- */
 .js .reveal {
@@ -609,6 +642,8 @@ kbd {
   .showcase, .features, .palette, .shortcuts, .config { padding-bottom: 96px; }
   .contact-section { padding-top: 96px; padding-bottom: 96px; }
   .legal { padding-top: 64px; padding-bottom: 96px; }
+  .alt-section { padding-bottom: 88px; }
+  .alt-table th, .alt-table td { padding: 12px 14px; }
   .contact-intro br { display: none; }
 }
 
