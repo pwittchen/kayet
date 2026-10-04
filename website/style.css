@@ -543,6 +543,17 @@ kbd {
 .contact-note { margin: 0 0 28px; font-size: 16px; color: var(--text-muted); }
 .contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0 0; font-size: 13px; color: var(--text-muted); }
 
+/* ---- legal pages ---- */
+.legal { max-width: 720px; margin: 0 auto; padding-top: 96px; padding-bottom: 120px; }
+.legal h1 { font-size: clamp(40px, 6vw, 56px); line-height: 1.08; letter-spacing: -0.04em; }
+.legal-date { margin: 12px 0 48px; font-size: 14px; color: var(--text-muted); }
+.legal-lead { font-size: 19px; }
+.legal-body h2 { margin: 56px 0 4px; font-size: 26px; letter-spacing: -0.02em; }
+.legal-body h3 { margin: 28px 0 0; font-size: 17px; letter-spacing: -0.01em; }
+.legal-body p { margin: 10px 0 0; color: var(--text-muted); font-size: 16px; line-height: 1.65; }
+.legal-body .legal-lead { margin: 0 0 20px; color: var(--text); font-size: 19px; line-height: 1.5; }
+.legal-body code { font: 0.88em var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+
 /* ---- footer ---- */
 .footer {
   display: flex;
@@ -597,6 +608,7 @@ kbd {
   .hero { padding-top: 72px; }
   .showcase, .features, .palette, .shortcuts, .config { padding-bottom: 96px; }
   .contact-section { padding-top: 96px; padding-bottom: 96px; }
+  .legal { padding-top: 64px; padding-bottom: 96px; }
   .contact-intro br { display: none; }
 }
 

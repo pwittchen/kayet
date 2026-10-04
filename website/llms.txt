@@ -20,4 +20,5 @@ kayet edits plain text, Markdown and source code. It offers a live Markdown prev
 
 - [Source code](https://github.com/pwittchen/kayet): GitHub repository
 - [License](https://github.com/pwittchen/kayet/blob/master/LICENSE): Apache License 2.0
+- [Privacy policy](https://getkayet.app/privacy.html): no telemetry in the app; the website uses DataFast analytics
 - [Author](https://wittchen.io): Piotr Wittchen, available for contracts, project development and consulting (piotr@wittchen.io)
