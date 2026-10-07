@@ -658,6 +658,8 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
       <span class="dot">·</span>
       <a href="https://github.com/pwittchen/kayet/blob/master/LICENSE">License</a>
       <span class="dot">·</span>
+      <a href="https://github.com/pwittchen/kayet/releases">Changelog</a>
+      <span class="dot">·</span>
       <a href="/privacy.html">Privacy</a>
     </div>
     <div class="footer-row">
