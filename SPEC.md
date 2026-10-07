@@ -212,6 +212,8 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   preview, presentation, export, syntax highlighting, spell check, Zen mode) appear only when they apply.
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
+- A muted footer along the bottom of the panel (shared by the file finder, workspace search and
+  the theme pickers) hints at the keys: `↑` `↓` navigate, `↵` select, `esc` close.
 
 ### 5.5 File finder
 - `⌘P` (`File → Go to File…` or the command palette) opens the same floating panel listing every

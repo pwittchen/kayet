@@ -1050,6 +1050,29 @@ body.presenting #edge-handle {
   white-space: nowrap;
 }
 
+.palette-box footer {
+  flex: none;
+  display: flex;
+  gap: 16px;
+  padding: 7px 16px;
+  border-top: 1px solid var(--border);
+  font: 11px var(--font-ui);
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.palette-box footer kbd {
+  display: inline-block;
+  min-width: 16px;
+  margin-right: 3px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  background: var(--pill);
+  border-radius: 4px;
+}
+
 @keyframes palette-in {
   from {
     opacity: 0;

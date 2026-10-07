@@ -73,6 +73,11 @@ export class Palette {
       `<input type="text" spellcheck="false" autocomplete="off"` +
       ` role="combobox" aria-controls="palette-list" aria-expanded="true" />` +
       `<ul id="palette-list" role="listbox"></ul>` +
+      `<footer aria-hidden="true">` +
+      `<span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>` +
+      `<span><kbd>↵</kbd> select</span>` +
+      `<span><kbd>esc</kbd> close</span>` +
+      `</footer>` +
       `</div>`;
     this.input = this.root.querySelector("input")!;
     this.list = this.root.querySelector("ul")!;
