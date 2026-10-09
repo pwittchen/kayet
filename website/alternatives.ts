@@ -587,7 +587,7 @@ function page(a: Alt): string {
       <h1 class="reveal">The free, open-source ${a.name} alternative for Mac.</h1>
       <p class="hero-sub reveal">${esc(a.lead)}</p>
       <div class="hero-cta reveal">
-        <a class="btn btn-primary" href="${DMG}">${APPLE}Download kayet</a>
+        <a class="btn btn-primary" href="${DMG}" data-fast-goal="download" data-fast-goal-location="${a.slug}-hero">${APPLE}Download kayet</a>
         <a class="btn btn-link" href="/">See all features <span aria-hidden="true">›</span></a>
       </div>
     </section>
@@ -638,7 +638,7 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
       <h2 class="reveal">Start writing.</h2>
       <p class="reveal">Free and open source. Requires macOS on Apple Silicon.</p>
       <div class="reveal">
-        <a class="btn btn-primary" href="${DMG}">${APPLE}Download for Mac</a>
+        <a class="btn btn-primary" href="${DMG}" data-fast-goal="download" data-fast-goal-location="${a.slug}-footer">${APPLE}Download for Mac</a>
         <p class="note">Signed and notarized. <a href="https://github.com/pwittchen/kayet/releases">Release notes &amp; previous versions</a>.</p>
       </div>
     </section>
