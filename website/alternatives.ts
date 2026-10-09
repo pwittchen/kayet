@@ -1,4 +1,5 @@
-// Generates the "<app> alternative" landing pages into alternatives/ (run by `bun run build` / `dev`).
+// Generates the "<app> alternative" landing pages into alternatives/ and sitemap.xml
+// (run by `bun run build` / `dev`).
 // Keep claims about other apps general and verifiable; prices and features change.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 
@@ -545,8 +546,14 @@ function page(a: Alt): string {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:url" content="${url}">
+  <meta property="og:site_name" content="kayet">
+  <meta property="og:image" content="${SITE}/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="apple-touch-icon" href="../icon.png">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     document.documentElement.classList.add("js");
@@ -678,3 +685,13 @@ rmSync(dir, { recursive: true, force: true });
 mkdirSync(dir);
 for (const a of ALTS) writeFileSync(`${dir}${a.slug}.html`, page(a));
 console.log(`Generated ${ALTS.length} alternative pages in alternatives/`);
+
+const pages = ["/", "/privacy.html", ...ALTS.map((a) => `/alternatives/${a.slug}.html`)];
+writeFileSync(
+  new URL("./sitemap.xml", import.meta.url).pathname,
+  `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pages.map((p) => `  <url><loc>${SITE}${p}</loc></url>`).join("\n")}
+</urlset>
+`,
+);
