@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { Editor } from "./editor";
+import { Editor, cssFontFamily } from "./editor";
 
-const settings = { fontFamily: "mono" as const, fontSize: 15, lineHeight: 1.6, softWrap: true, maxLineWidth: 72 };
+const settings = { fontFamily: "mono", fontSize: 15, lineHeight: 1.6, softWrap: true, maxLineWidth: 72 };
 const callbacks = { onChange: () => {}, onScroll: () => {}, onType: () => {}, onPasteImage: async () => null };
 
 describe("spell check", () => {
@@ -97,5 +97,22 @@ describe("code editor mode", () => {
     editor.setCodeMode(true);
     editor.applySettings({ ...settings, softWrap: true });
     expect(wraps(editor)).toBe(false);
+  });
+});
+
+describe("font family", () => {
+  it("maps the keywords to the built-in stacks", () => {
+    expect(cssFontFamily("mono")).toBe("var(--font-mono)");
+    expect(cssFontFamily(" System ")).toBe("var(--font-ui)");
+    expect(cssFontFamily("")).toBe("var(--font-mono)");
+  });
+
+  it("quotes custom families and falls back to the monospace stack", () => {
+    expect(cssFontFamily("Iosevka, Sarasa Mono J")).toBe('"Iosevka", "Sarasa Mono J", var(--font-mono)');
+    expect(cssFontFamily("'Berkeley Mono', monospace")).toBe('"Berkeley Mono", monospace, var(--font-mono)');
+  });
+
+  it("cannot break out of the declaration", () => {
+    expect(cssFontFamily('a"; color: red')).toBe('"a\\"; color: red", var(--font-mono)');
   });
 });

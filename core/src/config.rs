@@ -84,14 +84,6 @@ impl Default for UiConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum FontFamily {
-    System,
-    #[default]
-    Mono,
-}
-
 /// Text cursor: blinking, or steady (always visible, no animation).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -106,7 +98,9 @@ pub enum Cursor {
 // Mirrors the `[editor]` table, where on/off settings are plain TOML booleans.
 #[allow(clippy::struct_excessive_bools)]
 pub struct EditorConfig {
-    pub font_family: FontFamily,
+    /// "mono" (SF Mono), "system" (SF Pro), or any font family name / comma-separated list of
+    /// them; the frontend appends the default monospace stack as the fallback.
+    pub font_family: String,
     pub font_size: u32,
     pub line_height: f64,
     pub soft_wrap: bool,
@@ -122,7 +116,7 @@ pub struct EditorConfig {
 impl Default for EditorConfig {
     fn default() -> Self {
         Self {
-            font_family: FontFamily::Mono,
+            font_family: "mono".into(),
             font_size: 15,
             line_height: 1.6,
             soft_wrap: true,
@@ -355,6 +349,14 @@ mod tests {
         assert!(written.contains("theme = \"gruvbox\""));
         assert!(written.contains("mode = \"dark\""));
         assert_eq!(parse(&written).unwrap(), cfg);
+    }
+
+    #[test]
+    fn font_family_accepts_custom_names() {
+        assert_eq!(Config::default().editor.font_family, "mono");
+        let cfg = parse("[editor]\nfont_family = \"Iosevka, Sarasa Mono J\"\n").unwrap();
+        assert_eq!(cfg.editor.font_family, "Iosevka, Sarasa Mono J");
+        assert_eq!(parse(&toml::to_string_pretty(&cfg).unwrap()).unwrap(), cfg);
     }
 
     #[test]

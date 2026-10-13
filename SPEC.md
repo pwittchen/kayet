@@ -458,7 +458,7 @@ preview_split = 0.5
 open_in_new_tab = false   # open files (and ⌘N) in a new tab instead of in place of the open one
 
 [editor]
-font_family = "mono"      # "mono" | "system"
+font_family = "mono"      # "mono" | "system" | font names, e.g. "Iosevka, Sarasa Mono J"
 font_size = 15
 line_height = 1.6
 soft_wrap = true
@@ -479,6 +479,9 @@ check_automatically = true  # look for a new kayet release at launch and once a 
 ```
 
 - Missing file or keys → defaults are used and written back.
+- `font_family`: `"mono"` (SF Mono) and `"system"` (SF Pro) are keywords; any other value is a font
+  family name or a comma-separated list of them (fallbacks, e.g. for CJK scripts), always followed
+  by the default monospace stack, so a font that isn't installed falls back to SF Mono.
 - The file can be edited in kayet itself (`kayet → Settings…`, `⌘,`, or the title bar sliders icon);
   saving it applies the changes immediately. Window geometry, the workspace path and the session
   are owned by the running app and are not reloaded.

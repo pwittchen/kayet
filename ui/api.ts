@@ -18,7 +18,8 @@ export interface Config {
     open_in_new_tab: boolean;
   };
   editor: {
-    font_family: "system" | "mono";
+    /** "mono", "system", or font family names separated by commas. */
+    font_family: string;
     font_size: number;
     line_height: number;
     soft_wrap: boolean;

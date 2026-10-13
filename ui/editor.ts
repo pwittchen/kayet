@@ -25,11 +25,34 @@ import { findBar, openFind } from "./find";
 import { ImageSaver, markdownEditing } from "./markdown";
 
 export interface EditorSettings {
-  fontFamily: "system" | "mono";
+  /** "mono", "system", or font family names separated by commas. */
+  fontFamily: string;
   fontSize: number;
   lineHeight: number;
   softWrap: boolean;
   maxLineWidth: number;
+}
+
+const GENERIC_FAMILIES = new Set([
+  "serif", "sans-serif", "monospace", "cursive", "fantasy", "math",
+  "system-ui", "ui-serif", "ui-sans-serif", "ui-monospace", "ui-rounded",
+]);
+
+/**
+ * The CSS `font-family` for the `font_family` setting: "mono" and "system" pick the built-in
+ * stacks; anything else is a comma-separated list of family names, quoted (so no value can
+ * break out of the declaration) and followed by the monospace stack as the fallback.
+ */
+export function cssFontFamily(setting: string): string {
+  const keyword = setting.trim().toLowerCase();
+  if (keyword === "mono" || keyword === "") return "var(--font-mono)";
+  if (keyword === "system") return "var(--font-ui)";
+  const names = setting
+    .split(",")
+    .map((n) => n.trim().replace(/^(["'])(.*)\1$/, "$2").trim())
+    .filter((n) => n !== "")
+    .map((n) => (GENERIC_FAMILIES.has(n.toLowerCase()) ? n.toLowerCase() : JSON.stringify(n)));
+  return [...names, "var(--font-mono)"].join(", ");
 }
 
 /** A document put aside while another one is shown (see `Editor.snapshot`). */
@@ -275,7 +298,7 @@ export class Editor {
     return EditorView.theme({
       "&": { fontSize: `${size}px` },
       ".cm-content": {
-        fontFamily: s.fontFamily === "mono" ? "var(--font-mono)" : "var(--font-ui)",
+        fontFamily: cssFontFamily(s.fontFamily),
         lineHeight: String(s.lineHeight),
         // The readable column excludes the horizontal padding (48px each side).
         maxWidth: s.softWrap ? `calc(${s.maxLineWidth}ch + 96px)` : "none",

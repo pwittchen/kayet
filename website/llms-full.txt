@@ -71,7 +71,7 @@ preview_split = 0.5          # editor share of the split, 0.2–0.8
 open_in_new_tab = false      # open files in a new tab
 
 [editor]
-font_family = "mono"         # "mono" | "system"
+font_family = "mono"         # "mono" | "system" | font names
 font_size = 15               # px
 line_height = 1.6
 soft_wrap = true
