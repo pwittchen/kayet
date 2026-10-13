@@ -6,7 +6,7 @@ vi.mock("@tauri-apps/api/core", () => ({
   convertFileSrc: (p: string) => p,
 }));
 
-import { Changelog, changelogStartupAction, isNewerVersion, releaseDate } from "./changelog";
+import { Changelog, changelogStartupAction, isNewerVersion } from "./changelog";
 
 describe("changelogStartupAction", () => {
   it("seeds on first run without showing", () => {
@@ -30,13 +30,6 @@ describe("isNewerVersion", () => {
     expect(isNewerVersion("v1.0.0", "0.99.99")).toBe(true);
     expect(isNewerVersion("0.1.0", "0.1.0")).toBe(false);
     expect(isNewerVersion("0.1.0", "0.2.0")).toBe(false);
-  });
-});
-
-describe("releaseDate", () => {
-  it("keeps only the date part", () => {
-    expect(releaseDate("2026-01-03T00:00:00Z")).toBe("2026-01-03");
-    expect(releaseDate("")).toBe("");
   });
 });
 

@@ -1,6 +1,6 @@
 // What's New: the GitHub release notes rendered as Markdown, on demand and once after an update.
 
-import { api, ChangelogEntry } from "./api";
+import { api, ChangelogEntry, safeDecode } from "./api";
 
 export const RELEASES_PAGE = "https://github.com/pwittchen/kayet/releases";
 
@@ -34,11 +34,6 @@ export function changelogStartupAction(
   if (!lastSeen) return "seed";
   if (lastSeen === current) return "none";
   return isNewerVersion(current, lastSeen) ? "show" : "seed";
-}
-
-/** The date part of an ISO timestamp, or the value unchanged when it has none. */
-export function releaseDate(publishedAt: string): string {
-  return publishedAt.slice(0, 10);
 }
 
 export interface ChangelogCallbacks {
@@ -96,11 +91,8 @@ export class Changelog {
       this.body.replaceChildren(this.notice());
       return;
     }
-    const sections: HTMLElement[] = [];
-    for (const entry of entries) {
-      sections.push(await this.section(entry));
-      if (seq !== this.seq) return;
-    }
+    const sections = await Promise.all(entries.map((entry) => this.section(entry)));
+    if (seq !== this.seq) return;
     this.body.replaceChildren(...sections);
     if (focusVersion) {
       this.body
@@ -117,7 +109,7 @@ export class Changelog {
     const heading = document.createElement("h2");
     heading.textContent = entry.version;
     section.append(heading);
-    const date = releaseDate(entry.published_at);
+    const date = entry.published_at.slice(0, 10);
     if (date) {
       const time = document.createElement("p");
       time.className = "changelog-date";
@@ -169,12 +161,8 @@ export class Changelog {
     e.preventDefault();
     const href = link.getAttribute("href") ?? "";
     if (href.startsWith("#")) {
-      const id = href.slice(1);
-      try {
-        this.body.querySelector(`[id="${CSS.escape(decodeURIComponent(id))}"]`)?.scrollIntoView({ block: "start" });
-      } catch {
-        // A malformed fragment: nothing to scroll to.
-      }
+      const id = safeDecode(href.slice(1));
+      this.body.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: "start" });
       return;
     }
     if (!href) return;
