@@ -141,8 +141,7 @@ in CI or releases.
 - After an update, the changelog opens once on the first launch running the new version (seeded
   silently on first install, so it never opens then); a failed fetch still counts as shown, and
   `What's New…` remains available. When the notes can't be fetched, the view offers the
-  [releases page](https://github.com/pwittchen/kayet/releases) instead. The full behavior is
-  specified in `specs/issue-8-spec.md`.
+  [releases page](https://github.com/pwittchen/kayet/releases) instead.
 
 ## 5. Window & Layout
 
