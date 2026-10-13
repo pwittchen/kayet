@@ -1,0 +1,37 @@
+# Tokyo Night for kayet: Night (dark) and Day (light).
+# Source of truth for the colors: https://github.com/folke/tokyonight.nvim (extras/)
+# Roles follow upstream (magenta keywords, green strings, orange numbers, blue titles),
+# with dark5 comments (upstream's comment color is too faint for prose) and blue links.
+# Bundled with kayet: set `theme = "tokyo-night"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/tokyo-night.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#1a1b26"
+bg-sidebar = "#16161e"
+text = "#c0caf5"
+text-muted = "#737aa2"
+border = "#292e42"
+accent = "#7aa2f7"
+selection = "#283457"
+caret = "#c0caf5"
+hl-keyword = "#bb9af7"
+hl-string = "#9ece6a"
+hl-number = "#ff9e64"
+hl-title = "#7aa2f7"
+hl-comment = "#737aa2"
+
+[light]
+bg = "#e1e2e7"
+bg-sidebar = "#e9e9ed"
+text = "#3760bf"
+text-muted = "#68709a"
+border = "#c4c8da"
+accent = "#2e7de9"
+selection = "#b7c1e3"
+caret = "#3760bf"
+hl-keyword = "#9854f1"
+hl-string = "#587539"
+hl-number = "#b15c00"
+hl-title = "#2e7de9"
+hl-comment = "#68709a"

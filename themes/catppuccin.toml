@@ -1,0 +1,37 @@
+# Catppuccin for kayet: Mocha (dark) and Latte (light).
+# Source of truth for the colors: https://catppuccin.com/palette
+# Roles follow the Catppuccin style guide (mauve keywords, green strings, peach numbers,
+# overlay2 comments, rosewater cursor), with blue titles and mauve links.
+# Bundled with kayet: set `theme = "catppuccin"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/catppuccin.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#1e1e2e"
+bg-sidebar = "#181825"
+text = "#cdd6f4"
+text-muted = "#9399b2"
+border = "#313244"
+accent = "#cba6f7"
+selection = "#9399b240"
+caret = "#f5e0dc"
+hl-keyword = "#cba6f7"
+hl-string = "#a6e3a1"
+hl-number = "#fab387"
+hl-title = "#89b4fa"
+hl-comment = "#9399b2"
+
+[light]
+bg = "#eff1f5"
+bg-sidebar = "#e6e9ef"
+text = "#4c4f69"
+text-muted = "#6c6f85"
+border = "#ccd0da"
+accent = "#8839ef"
+selection = "#7c7f9340"
+caret = "#dc8a78"
+hl-keyword = "#8839ef"
+hl-string = "#40a02b"
+hl-number = "#fe640b"
+hl-title = "#1e66f5"
+hl-comment = "#7c7f93"

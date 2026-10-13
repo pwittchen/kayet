@@ -1,0 +1,38 @@
+# Modus for kayet: Vivendi (dark) and Operandi (light), the high-contrast bundled theme.
+# Source of truth for the colors: https://protesilaos.com/emacs/modus-themes
+# Upstream targets WCAG AAA (7:1) for text; roles follow it (magenta-cooler keywords,
+# blue-warmer strings, blue-cooler constants, fg-dim comments, magenta function names
+# as titles) with blue links. Borders use bg-inactive, quieter than upstream's border.
+# Bundled with kayet: set `theme = "modus"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/modus.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]
+bg = "#000000"
+bg-sidebar = "#1e1e1e"
+text = "#ffffff"
+text-muted = "#989898"
+border = "#303030"
+accent = "#2fafff"
+selection = "#5a5a5a"
+caret = "#ffffff"
+hl-keyword = "#b6a0ff"
+hl-string = "#79a8ff"
+hl-number = "#00bcff"
+hl-title = "#feacd0"
+hl-comment = "#989898"
+
+[light]
+bg = "#ffffff"
+bg-sidebar = "#f2f2f2"
+text = "#000000"
+text-muted = "#595959"
+border = "#e0e0e0"
+accent = "#0031a9"
+selection = "#bdbdbd"
+caret = "#000000"
+hl-keyword = "#531ab6"
+hl-string = "#3548cf"
+hl-number = "#0000b0"
+hl-title = "#721045"
+hl-comment = "#595959"
