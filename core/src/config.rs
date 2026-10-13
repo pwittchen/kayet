@@ -192,6 +192,9 @@ pub struct SessionConfig {
     /// A release the user chose to skip; automatic update checks don't offer it again.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skipped_version: Option<String>,
+    /// The version the changelog was last shown for; seeded silently on first run.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_seen_version: Option<String>,
 }
 
 /// How many files File → Open Recent remembers.
@@ -383,6 +386,25 @@ mod tests {
         cfg.session.push_recent("/a.md".into());
         let text = toml::to_string_pretty(&cfg).unwrap();
         assert_eq!(parse(&text).unwrap(), cfg);
+    }
+
+    #[test]
+    fn last_seen_version_roundtrips_and_defaults_to_none() {
+        let mut cfg = Config::default();
+        assert_eq!(cfg.session.last_seen_version, None);
+        assert!(
+            !toml::to_string_pretty(&cfg)
+                .unwrap()
+                .contains("last_seen_version")
+        );
+        cfg.session.last_seen_version = Some("0.7.1".into());
+        let text = toml::to_string_pretty(&cfg).unwrap();
+        assert!(text.contains("last_seen_version = \"0.7.1\""));
+        assert_eq!(parse(&text).unwrap(), cfg);
+        // An older config without the key loads unchanged.
+        let old = parse("[session]\nskipped_version = \"0.6.0\"\n").unwrap();
+        assert_eq!(old.session.last_seen_version, None);
+        assert_eq!(old.session.skipped_version.as_deref(), Some("0.6.0"));
     }
 
     #[test]

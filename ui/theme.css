@@ -920,6 +920,90 @@ body.presenting #edge-handle {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- What's New (changelog) ---- */
+
+/* Covers the window like presentation mode; the document underneath is untouched. */
+#changelog {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--bg);
+  outline: none;
+  display: flex;
+  flex-direction: column;
+}
+
+#changelog[hidden] {
+  display: none;
+}
+
+#changelog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--titlebar-height) + 8px) 24px 8px;
+  max-width: 44em;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+#changelog-head h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+#changelog-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  transition: color var(--fade), background-color var(--fade);
+}
+
+#changelog-close:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+#changelog-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+#changelog-scroller {
+  flex: 1;
+  overflow-y: auto;
+}
+
+#changelog-body {
+  max-width: 44em;
+  margin: 0 auto;
+  padding: 8px 24px 48px;
+  box-sizing: border-box;
+}
+
+.changelog-entry {
+  padding: 16px 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.changelog-entry:last-child {
+  border-bottom: none;
+}
+
+.changelog-entry > h2 {
+  margin-top: 0;
+}
+
+.changelog-date,
+.changelog-note {
+  color: var(--text-muted);
+}
+
 /* ---- toast (non-blocking notices) ---- */
 
 #toast {

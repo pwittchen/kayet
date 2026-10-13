@@ -116,6 +116,8 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::allow_recent,
         commands::install_cli,
         commands::check_for_updates,
+        commands::get_changelog,
+        commands::mark_changelog_seen,
         commands::restart_app,
         commands::list_dir,
         commands::list_files,

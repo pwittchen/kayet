@@ -111,6 +111,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             // panel's links have to be clickable (see `show_about`).
             &item(ABOUT, "About kayet", None)?,
             &item("check-updates", "Check for Updates…", None)?,
+            &item("changelog", "What's New…", None)?,
             &sep()?,
             &item("open-settings", "Settings…", Some("CmdOrCtrl+,"))?,
             &item("install-cli", "Install ‘kayet’ Command", None)?,

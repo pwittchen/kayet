@@ -3,6 +3,7 @@
 import "./theme.css";
 import "./markdown-body.css";
 
+import { getVersion } from "@tauri-apps/api/app";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Text } from "@codemirror/state";
@@ -21,6 +22,7 @@ import {
   SearchMatch,
 } from "./api";
 import { afterPaint, runBench } from "./bench";
+import { Changelog, changelogStartupAction } from "./changelog";
 import { Chrome } from "./chrome";
 import { Editor, EditorSettings, EditorSnapshot } from "./editor";
 import { exportHtml, exportPdf } from "./export";
@@ -84,6 +86,10 @@ const els = {
   banner: $("banner"),
   bannerReload: $<HTMLButtonElement>("banner-reload"),
   bannerKeep: $<HTMLButtonElement>("banner-keep"),
+  changelog: $("changelog"),
+  changelogScroller: $("changelog-scroller"),
+  changelogBody: $("changelog-body"),
+  changelogClose: $<HTMLButtonElement>("changelog-close"),
   presentation: $("presentation"),
   slideScroller: $("slide-scroller"),
   slide: $("slide"),
@@ -216,6 +222,34 @@ const presentation = new Presentation(
     exit: () => togglePresentation(),
   },
 );
+
+const changelog = new Changelog(els.changelog, els.changelogScroller, els.changelogBody, {
+  exit: () => {
+    changelog.hide();
+    editor.focus();
+  },
+});
+
+els.changelogClose.addEventListener("click", () => {
+  changelog.hide();
+  editor.focus();
+});
+
+/** Shows What's New once after an upgrade; on first run the version is only recorded. */
+async function checkChangelogOnStartup(): Promise<void> {
+  let current: string;
+  try {
+    current = await getVersion();
+  } catch {
+    return;
+  }
+  const action = changelogStartupAction(cfg.session.last_seen_version, current);
+  if (action === "none") return;
+  // Recorded before showing, so a failed fetch never nags on the next launch.
+  cfg.session.last_seen_version = current;
+  await api.markChangelogSeen(current).catch((e) => console.error("mark_changelog_seen failed", e));
+  if (action === "show") void changelog.show(current);
+}
 
 const chrome = new Chrome(
   els.titlebar,
@@ -1320,6 +1354,7 @@ const commands: Record<string, () => unknown> = {
   "open-settings": openSettings,
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
+  changelog: () => changelog.show(),
   "cycle-appearance": toggleAppearance,
   "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),
@@ -1408,6 +1443,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "open-settings", label: "Settings…", shortcut: "⌘," },
     { id: "install-cli", label: "Install ‘kayet’ Command" },
     { id: "check-updates", label: "Check for Updates…" },
+    { id: "changelog", label: "What's New…" },
     { id: "close", label: "Close Window", shortcut: "⌘⇧W" },
     { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
   ];
@@ -1589,6 +1625,7 @@ els.slideNext.innerHTML = icons.chevronRight;
 els.slideFirst.innerHTML = icons.toStart;
 els.btnSyntax.innerHTML = icons.code;
 els.btnSpell.innerHTML = icons.spell;
+els.changelogClose.innerHTML = icons.closeFile;
 els.btnCloseFile.innerHTML = icons.closeFile;
 els.btnNewTab.innerHTML = icons.newTab;
 
@@ -1686,6 +1723,8 @@ async function init(): Promise<void> {
 
   const notice = await api.takeNotice();
   if (notice) notify(notice);
+
+  await checkChangelogOnStartup();
 }
 
 init()

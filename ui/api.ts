@@ -35,7 +35,16 @@ export interface Config {
     open_files?: string[];
     recent_files?: string[];
     skipped_version?: string | null;
+    last_seen_version?: string | null;
   };
+}
+
+/** One release's notes for What's New. */
+export interface ChangelogEntry {
+  version: string;
+  body: string;
+  page: string;
+  published_at: string;
 }
 
 export interface Entry {
@@ -106,6 +115,10 @@ export const api = {
   installCli: () => invoke<string | null>("install_cli"),
   /** Checks for a new kayet release and offers to install it (native dialogs). */
   checkForUpdates: () => invoke<void>("check_for_updates"),
+  /** Recent published release notes for What's New, newest first. */
+  getChangelog: () => invoke<ChangelogEntry[]>("get_changelog"),
+  /** Records that the changelog was shown for `version`. */
+  markChangelogSeen: (version: string) => invoke<void>("mark_changelog_seen", { version }),
   /** Restarts kayet into the update just installed. */
   restartApp: () => invoke<void>("restart_app"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),

@@ -131,6 +131,19 @@ in CI or releases.
   (`pwittchen/kayet`), the author, Piotr Wittchen ([wittchen.io](https://wittchen.io)), and the
   open-source contributors ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)).
 
+### 4.7 Changelog
+- `kayet → What's New…` (or the command palette) shows the changelog in the app: the published
+  GitHub Releases of `pwittchen/kayet` (non-draft, non-prerelease, newest first, at most 20),
+  each release's notes rendered as Markdown like the preview (see 8). Fetching uses the system's
+  `curl`, like updates (see 4.5); no HTTP client is bundled.
+- The view lives in the current window, closes with `Esc` and never touches the open document;
+  links open in the default browser. A release without notes shows a link to its release page.
+- After an update, the changelog opens once on the first launch running the new version (seeded
+  silently on first install, so it never opens then); a failed fetch still counts as shown, and
+  `What's New…` remains available. When the notes can't be fetched, the view offers the
+  [releases page](https://github.com/pwittchen/kayet/releases) instead. The full behavior is
+  specified in `specs/issue-8-spec.md`.
+
 ## 5. Window & Layout
 
 ```
@@ -481,7 +494,8 @@ check_automatically = true  # look for a new kayet release at launch and once a 
   are owned by the running app and are not reloaded.
 - The files open in tabs and the active one are restored on launch (those that still exist). They
   and the recent files are kept in a `[session]` table (`open_files`, `last_file`, `recent_files`),
-  together with a release the user chose to skip (`skipped_version`).
+  together with a release the user chose to skip (`skipped_version`) and the version the changelog
+  was last shown for (`last_seen_version`, see 4.7).
 
 ## 11. Architecture
 
@@ -499,7 +513,7 @@ kayet/
 │   │   ├── export.rs        # PDF export (web view print operation)
 │   │   ├── image_cache.rs   # web images downloaded into ~/.kayet/cache/images/
 │   │   ├── recovery.rs      # crash recovery backup in ~/.kayet/recovery/
-│   │   ├── update.rs        # app update check and install (GitHub Releases)
+│   │   ├── update.rs        # app update check and install, changelog (GitHub Releases)
 │   │   ├── config.rs        # load/save ~/.kayet/config.toml
 │   │   └── themes.rs        # bundled themes + themes from ~/.kayet/themes/
 │   ├── cli/kayet            # `kayet` launcher script (bundled as a resource)
@@ -515,6 +529,7 @@ kayet/
 │   ├── palette.ts           # command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F)
 │   ├── preview.ts           # preview pane
 │   ├── presentation.ts      # presentation mode (slides divided by ---)
+│   ├── changelog.ts         # What's New: release notes as Markdown (see 4.7)
 │   ├── export.ts            # HTML / PDF export
 │   ├── images.ts            # web images shown from their downloaded copies
 │   ├── markdown-body.css    # rendered Markdown typography (preview and exports)
@@ -559,6 +574,8 @@ kayet/
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |
 | `install_cli()`                | Install the `kayet` shell command             |
 | `check_for_updates()`          | Look for a new release and offer to install it |
+| `get_changelog() -> Vec<Entry>` | Published release notes (version, body, page, date), newest first, for What's New |
+| `mark_changelog_seen(version)` | Record that the changelog was shown for a version (see 4.7) |
 | `restart_app()`                | Restart into the update just installed        |
 
 ### Events (Rust → frontend)

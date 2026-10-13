@@ -199,8 +199,9 @@ pub fn get_config(state: State<'_, AppState>) -> Config {
     lock(&state.config).clone()
 }
 
-/// Persists the configuration. Window geometry, the workspace path, the recent files and the
-/// skipped update are owned by the backend and are kept as they are.
+/// Persists the configuration. Window geometry, the workspace path, the recent files, the
+/// skipped update and the changelog's seen version are owned by the backend and are kept as
+/// they are.
 #[tauri::command]
 pub fn set_config(state: State<'_, AppState>, cfg: Config) {
     {
@@ -209,11 +210,13 @@ pub fn set_config(state: State<'_, AppState>, cfg: Config) {
         let path = current.workspace.path.clone();
         let recent = std::mem::take(&mut current.session.recent_files);
         let skipped = current.session.skipped_version.take();
+        let seen = current.session.last_seen_version.take();
         *current = cfg;
         current.window = window;
         current.workspace.path = path;
         current.session.recent_files = recent;
         current.session.skipped_version = skipped;
+        current.session.last_seen_version = seen;
     }
     state.save_config();
 }
@@ -345,6 +348,21 @@ pub async fn check_for_updates(app: AppHandle) -> CmdResult<()> {
     tauri::async_runtime::spawn_blocking(move || crate::update::check(&app, true))
         .await
         .map_err(err)
+}
+
+/// Recent published release notes for What's New, newest first.
+#[tauri::command]
+pub async fn get_changelog() -> CmdResult<Vec<crate::update::ChangelogEntry>> {
+    tauri::async_runtime::spawn_blocking(crate::update::releases)
+        .await
+        .map_err(err)?
+}
+
+/// Records that the changelog was shown for `version`, so it is not shown again for it.
+#[tauri::command]
+pub fn mark_changelog_seen(state: State<'_, AppState>, version: String) {
+    lock(&state.config).session.last_seen_version = Some(version);
+    state.save_config();
 }
 
 /// Restarts kayet into the update just installed; the frontend has dealt with unsaved changes.
