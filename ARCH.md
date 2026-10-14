@@ -114,7 +114,7 @@ shipped app is one executable with no external web assets.
                                    kayet.app  (+ .dmg)
                                          │
                                          │  release.yml on a vX.Y.Z tag:
-                                         │  codesign → notarize → staple
+                                         │  aarch64 + x86_64: codesign → notarize → staple
                                          ▼
                                   GitHub Releases
 ```
@@ -471,7 +471,7 @@ restoring before the session is opened.
   native dialog: Install / Skip This Version / Later
      │ Install
      ▼
-  curl .dmg → hdiutil attach → codesign: same Developer ID team?
+  curl kayet-macos-<arch>.dmg → hdiutil attach → codesign: same Developer ID team?
      → ditto into place, swap the app bundle
      │
      ▼

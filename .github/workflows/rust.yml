@@ -28,8 +28,14 @@ env:
 jobs:
   build:
 
-    # Apple Silicon (aarch64-apple-darwin) only — see SPEC.md §3.
+    # Apple Silicon and Intel (SPEC.md §3): checks run natively on the Apple Silicon runner,
+    # the Intel app is cross-compiled there too.
     runs-on: macos-15
+    strategy:
+      matrix:
+        arch: [aarch64, x86_64]
+    env:
+      TARGET: ${{ matrix.arch }}-apple-darwin
 
     steps:
     - uses: actions/checkout@v7
@@ -44,6 +50,8 @@ jobs:
       run: rustup toolchain install
 
     - uses: Swatinem/rust-cache@v2
+      with:
+        key: ${{ matrix.arch }}
 
     - name: Install frontend dependencies
       run: npm ci
@@ -53,30 +61,35 @@ jobs:
       run: npm run build
 
     - name: Run frontend tests
+      if: matrix.arch == 'aarch64'
       run: npm test
 
     - name: Check formatting
+      if: matrix.arch == 'aarch64'
       run: cargo fmt --check
 
     - name: Lint
+      if: matrix.arch == 'aarch64'
       run: cargo clippy --locked --all-targets -- -D warnings -W clippy::pedantic
 
     - name: Build
+      if: matrix.arch == 'aarch64'
       run: cargo build --locked
 
     - name: Run tests
+      if: matrix.arch == 'aarch64'
       run: cargo test --locked
 
     - name: Bundle app
-      run: npx tauri build --target aarch64-apple-darwin --bundles app
+      run: npx tauri build --target "$TARGET" --bundles app
 
     - name: Package app
       run: |
-        cd target/aarch64-apple-darwin/release/bundle/macos
-        ditto -c -k --keepParent kayet.app "$GITHUB_WORKSPACE/kayet-macos-aarch64.zip"
+        cd "target/$TARGET/release/bundle/macos"
+        ditto -c -k --keepParent kayet.app "$GITHUB_WORKSPACE/kayet-macos-${{ matrix.arch }}.zip"
 
     - uses: actions/upload-artifact@v7
       with:
-        name: kayet-macos-aarch64
-        path: kayet-macos-aarch64.zip
+        name: kayet-macos-${{ matrix.arch }}
+        path: kayet-macos-${{ matrix.arch }}.zip
         if-no-files-found: error

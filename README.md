@@ -32,7 +32,7 @@ and [ROADMAP.md](ROADMAP.md) for planned work.
 
 ## Development
 
-Requirements: Rust (edition 2024), Node.js 22+, macOS on Apple Silicon.
+Requirements: Rust (edition 2024), Node.js 22+, macOS (Apple Silicon or Intel).
 
 ```sh
 npm install
@@ -139,9 +139,10 @@ git tag v0.2.0 && git push origin v0.2.0
 
 The workflow bumps the version in `core/Cargo.toml`, `Cargo.lock`, `core/tauri.conf.json`,
 `package.json` and `package-lock.json` to match the tag (committed to `master`). It then
-builds `kayet.app` and signs it with the Developer ID (hardened runtime,
-`core/entitlements.plist`). The app is notarized with `notarytool` and stapled, packaged
-into `kayet-macos-aarch64.dmg` (which is signed, notarized and stapled too), and published
+builds `kayet.app` for Apple Silicon and Intel (cross-compiled on the Apple Silicon runner)
+and signs each with the Developer ID (hardened runtime, `core/entitlements.plist`). Each app is
+notarized with `notarytool` and stapled, packaged into `kayet-macos-aarch64.dmg` /
+`kayet-macos-x86_64.dmg` (signed, notarized and stapled too), and published
 to GitHub Releases with a changelog of the commits since the previous tag. Regular CI
 builds (`rust.yml`) stay unsigned.
 

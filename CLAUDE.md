@@ -35,7 +35,7 @@ signs with the Developer ID, notarizes and publishes a `.dmg` to GitHub Releases
 Regular CI (`rust.yml`) builds stay unsigned.
 
 The Rust crate embeds `dist/` at compile time, so always build the frontend first.
-Target platform is Apple Silicon macOS only.
+Target platforms are Apple Silicon and Intel macOS (a separate build and `.dmg` per architecture).
 
 ## Conventions
 

@@ -1,8 +1,8 @@
 name: Release
 
-# Pushing a `vX.Y.Z` tag builds kayet, signs it with the Developer ID, notarizes it with
-# notarytool and publishes a .dmg to GitHub Releases, then redeploys the website so its version
-# pill matches. Regular pushes (rust.yml) stay unsigned.
+# Pushing a `vX.Y.Z` tag builds kayet for Apple Silicon and Intel, signs both with the Developer
+# ID, notarizes them with notarytool and publishes a .dmg per architecture to GitHub Releases,
+# then redeploys the website so its version pill matches. Regular pushes (rust.yml) stay unsigned.
 on:
   push:
     tags:
@@ -57,12 +57,19 @@ jobs:
           git commit -m "bump version to $version"
           git push origin HEAD:master
 
-  release:
+  build:
     needs: version-bump
-    # Apple Silicon only (SPEC.md §3). Built against the macOS 26 SDK: AppKit's title bar
-    # button layout is linked-on-or-after gated, so an older SDK would misplace the traffic
-    # lights (trafficLightPosition in tauri.conf.json) on current macOS.
+    # Apple Silicon and Intel (SPEC.md §3); the Intel app is cross-compiled on the Apple Silicon
+    # runner. Built against the macOS 26 SDK: AppKit's title bar button layout is
+    # linked-on-or-after gated, so an older SDK would misplace the traffic lights
+    # (trafficLightPosition in tauri.conf.json) on current macOS.
     runs-on: macos-26
+    strategy:
+      matrix:
+        arch: [aarch64, x86_64]
+    env:
+      TARGET: ${{ matrix.arch }}-apple-darwin
+      DMG: kayet-macos-${{ matrix.arch }}.dmg
     steps:
       - uses: actions/checkout@v7
         with:
@@ -75,19 +82,20 @@ jobs:
           node-version: 22
           cache: npm
 
+      # rust-toolchain.toml lists both targets.
       - name: Install Rust toolchain
         run: rustup toolchain install
 
       - uses: Swatinem/rust-cache@v2
         with:
-          key: release
+          key: release-${{ matrix.arch }}
 
       - name: Install frontend dependencies
         run: npm ci
 
       # beforeBuildCommand builds the frontend into dist/ before the crate embeds it.
       - name: Build app
-        run: npx tauri build --target aarch64-apple-darwin --bundles app
+        run: npx tauri build --target "$TARGET" --bundles app
 
       - name: Import Developer ID certificate
         # Imports the base64-encoded .p12 into a one-shot keychain; removed in the last step.
@@ -112,7 +120,7 @@ jobs:
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
-          app=target/aarch64-apple-darwin/release/bundle/macos/kayet.app
+          app="target/$TARGET/release/bundle/macos/kayet.app"
           codesign --force --deep --options runtime --timestamp \
             --entitlements core/entitlements.plist \
             --sign "$APPLE_SIGNING_IDENTITY" "$app"
@@ -126,7 +134,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          app=target/aarch64-apple-darwin/release/bundle/macos/kayet.app
+          app="target/$TARGET/release/bundle/macos/kayet.app"
           zip="$RUNNER_TEMP/kayet-notarize.zip"
           ditto -c -k --keepParent "$app" "$zip"
           xcrun notarytool submit "$zip" \
@@ -138,12 +146,12 @@ jobs:
         # Built with hdiutil (not Tauri's dmg bundler) so it contains the signed, stapled app.
         run: |
           staging=$(mktemp -d)
-          cp -R target/aarch64-apple-darwin/release/bundle/macos/kayet.app "$staging/"
+          cp -R "target/$TARGET/release/bundle/macos/kayet.app" "$staging/"
           ln -s /Applications "$staging/Applications"
           # hdiutil occasionally fails with "Resource busy" on GitHub runners, so retry.
           for attempt in 1 2 3; do
             hdiutil detach /Volumes/kayet -force 2>/dev/null || true
-            if hdiutil create -volname kayet -srcfolder "$staging" -ov -format UDZO kayet-macos-aarch64.dmg; then
+            if hdiutil create -volname kayet -srcfolder "$staging" -ov -format UDZO "$DMG"; then
               exit 0
             fi
             echo "::warning::hdiutil create failed (attempt $attempt), retrying in 5s"
@@ -155,8 +163,8 @@ jobs:
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
-          codesign --force --timestamp --sign "$APPLE_SIGNING_IDENTITY" kayet-macos-aarch64.dmg
-          codesign --verify --verbose=2 kayet-macos-aarch64.dmg
+          codesign --force --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$DMG"
+          codesign --verify --verbose=2 "$DMG"
 
       - name: Notarize and staple dmg
         env:
@@ -164,17 +172,37 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          xcrun notarytool submit kayet-macos-aarch64.dmg \
+          xcrun notarytool submit "$DMG" \
             --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
-          xcrun stapler staple kayet-macos-aarch64.dmg
-          xcrun stapler validate kayet-macos-aarch64.dmg
-          spctl --assess --type open --context context:primary-signature --verbose=2 kayet-macos-aarch64.dmg
+          xcrun stapler staple "$DMG"
+          xcrun stapler validate "$DMG"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
 
       - name: Clean up keychain
         if: always()
         run: |
           security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true
           rm -f "$RUNNER_TEMP/devid.p12"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.DMG }}
+          path: ${{ env.DMG }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: kayet-macos-*.dmg
+          merge-multiple: true
 
       - name: Generate changelog
         id: changelog
@@ -198,6 +226,13 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           files: kayet-macos-aarch64.dmg
           fail_on_unmatched_files: true
+
+      # Uploaded after the Apple Silicon .dmg on purpose: versions before Intel builds update
+      # from the first .dmg asset of a release, and assets are listed in upload order.
+      - name: Upload Intel dmg
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" kayet-macos-x86_64.dmg
 
   deploy-website:
     # The bump commit is pushed with GITHUB_TOKEN, which doesn't trigger deploy-website.yml on

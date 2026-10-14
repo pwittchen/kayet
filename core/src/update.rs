@@ -42,7 +42,7 @@ pub struct Release {
     pub version: String,
     /// The release's GitHub page.
     pub page: String,
-    /// Download URL of the release's `.dmg`, if it has one.
+    /// Download URL of the release's `.dmg` for this Mac's architecture, if it has one.
     pub dmg: Option<String>,
 }
 
@@ -276,7 +276,7 @@ fn fetch_json(url: &str) -> Result<String, String> {
 
 /// Fetches the latest release from the GitHub API.
 fn latest_release() -> Result<Release, String> {
-    parse_release(&fetch_json(LATEST_RELEASE)?)
+    parse_release(&fetch_json(LATEST_RELEASE)?, std::env::consts::ARCH)
 }
 
 /// Fetches the recent published releases for the changelog, newest first.
@@ -307,21 +307,20 @@ fn parse_releases(json: &str) -> Result<Vec<ChangelogEntry>, String> {
     Ok(entries)
 }
 
-fn parse_release(json: &str) -> Result<Release, String> {
+/// Parses the latest release; `arch` (`aarch64` or `x86_64`) picks the `.dmg` built for it
+/// (`kayet-macos-<arch>.dmg`), so an update never swaps in an app for the other architecture.
+fn parse_release(json: &str, arch: &str) -> Result<Release, String> {
     let release: GitHubRelease =
         serde_json::from_str(json).map_err(|e| format!("unexpected response: {e}"))?;
     let version = release.tag_name.trim_start_matches('v').to_string();
     if parse_version(&version).is_none() {
         return Err(format!("unexpected release tag {}", release.tag_name));
     }
+    let dmg_name = format!("kayet-macos-{arch}.dmg");
     let dmg = release
         .assets
         .into_iter()
-        .find(|a| {
-            Path::new(&a.name)
-                .extension()
-                .is_some_and(|e| e.eq_ignore_ascii_case("dmg"))
-        })
+        .find(|a| a.name.eq_ignore_ascii_case(&dmg_name))
         .map(|a| a.browser_download_url);
     Ok(Release {
         version,
@@ -511,17 +510,33 @@ mod tests {
             "html_url": "https://github.com/pwittchen/kayet/releases/tag/v0.2.0",
             "assets": [
                 {"name": "notes.txt", "browser_download_url": "https://example.com/notes.txt"},
-                {"name": "kayet-macos-aarch64.dmg", "browser_download_url": "https://example.com/kayet.dmg"}
+                {"name": "kayet-macos-x86_64.dmg", "browser_download_url": "https://example.com/intel.dmg"},
+                {"name": "kayet-macos-aarch64.dmg", "browser_download_url": "https://example.com/arm.dmg"}
             ]
         }"#;
         assert_eq!(
-            parse_release(json).unwrap(),
+            parse_release(json, "aarch64").unwrap(),
             Release {
                 version: "0.2.0".into(),
                 page: "https://github.com/pwittchen/kayet/releases/tag/v0.2.0".into(),
-                dmg: Some("https://example.com/kayet.dmg".into()),
+                dmg: Some("https://example.com/arm.dmg".into()),
             }
         );
+        assert_eq!(
+            parse_release(json, "x86_64").unwrap().dmg.as_deref(),
+            Some("https://example.com/intel.dmg")
+        );
+    }
+
+    #[test]
+    fn release_without_a_dmg_for_this_arch() {
+        // Releases before Intel builds only carry the Apple Silicon .dmg.
+        let json = r#"{
+            "tag_name": "v0.2.0",
+            "html_url": "https://x",
+            "assets": [{"name": "kayet-macos-aarch64.dmg", "browser_download_url": "https://x/arm.dmg"}]
+        }"#;
+        assert_eq!(parse_release(json, "x86_64").unwrap().dmg, None);
     }
 
     #[test]
@@ -583,9 +598,9 @@ mod tests {
     #[test]
     fn release_without_dmg_or_with_odd_tag() {
         let json = r#"{"tag_name": "v0.3.0", "html_url": "https://x"}"#;
-        assert_eq!(parse_release(json).unwrap().dmg, None);
+        assert_eq!(parse_release(json, "aarch64").unwrap().dmg, None);
         let json = r#"{"tag_name": "nightly", "html_url": "https://x", "assets": []}"#;
-        assert!(parse_release(json).is_err());
-        assert!(parse_release("{}").is_err());
+        assert!(parse_release(json, "aarch64").is_err());
+        assert!(parse_release("{}", "aarch64").is_err());
     }
 }

@@ -47,9 +47,10 @@ no unnecessary icons, labels or decorations.
 Primary target: **macOS**. The code should not preclude Linux/Windows builds, but they are
 not a v1 requirement.
 
-macOS builds target **Apple Silicon (M-series, `aarch64-apple-darwin`) only**. Intel Macs
-(`x86_64-apple-darwin`) and universal binaries are out of scope — no Intel builds are produced
-in CI or releases.
+macOS builds target **Apple Silicon (M-series, `aarch64-apple-darwin`)** and **Intel
+(`x86_64-apple-darwin`)**. Each architecture gets its own build and `.dmg`
+(`kayet-macos-aarch64.dmg`, `kayet-macos-x86_64.dmg`) rather than a universal binary, so
+neither download carries the other's code.
 
 ## 4. Core Concepts
 
@@ -116,13 +117,13 @@ in CI or releases.
   kayet is up to date or the check failed.
 - When a newer version is found, a native dialog offers **Update**, **Skip This Version** (automatic
   checks don't offer that version again; a manual check still does) or **Later**.
-- **Update** downloads the release's `.dmg`, verifies that the app inside has a valid signature
+- **Update** downloads the release's `.dmg` for the Mac's architecture, verifies that the app inside has a valid signature
   from the same Developer ID team as the running app and replaces the running `kayet.app` with it
   (asking for an administrator password if its folder isn't writable; the old app is restored if
   that fails). kayet then restarts, asking about unsaved changes first; if that is cancelled, the
   new version starts next time.
 - When kayet can't update itself (unsigned build, run from a disk image or a translocated copy,
-  no `.dmg` in the release) or the install fails, the release page is opened in the browser instead.
+  no `.dmg` for its architecture in the release) or the install fails, the release page is opened in the browser instead.
 - No HTTP client is bundled: the system's `curl`, `hdiutil`, `codesign` and `ditto` do the work.
 
 ### 4.6 About
