@@ -224,16 +224,21 @@ const presentation = new Presentation(
 );
 
 const changelog = new Changelog(els.changelog, els.changelogScroller, els.changelogBody, {
-  exit: () => {
-    changelog.hide();
-    editor.focus();
-  },
+  exit: closeChangelog,
 });
 
-els.changelogClose.addEventListener("click", () => {
+els.changelogClose.addEventListener("click", closeChangelog);
+
+function closeChangelog(): void {
   changelog.hide();
   editor.focus();
-});
+}
+
+/** Shows What's New over everything; presentation mode ends first so its keys don't act underneath. */
+function showChangelog(focusVersion?: string): Promise<void> {
+  endPresentation();
+  return changelog.show(focusVersion);
+}
 
 /** Shows What's New once after an upgrade; on first run the version is only recorded. */
 async function checkChangelogOnStartup(): Promise<void> {
@@ -248,7 +253,7 @@ async function checkChangelogOnStartup(): Promise<void> {
   // Recorded before showing, so a failed fetch never nags on the next launch.
   cfg.session.last_seen_version = current;
   await api.markChangelogSeen(current).catch((e) => console.error("mark_changelog_seen failed", e));
-  if (action === "show") void changelog.show(current);
+  if (action === "show") void showChangelog(current);
 }
 
 const chrome = new Chrome(
@@ -753,6 +758,7 @@ function togglePresentation(): void {
     return;
   }
   if (!presentable()) return;
+  changelog.hide();
   document.body.classList.add("presenting");
   presentation.start(editor.text(), doc.path);
   updatePresentButton();
@@ -882,6 +888,7 @@ function notifyLarge(): void {
 /** Shows `text` as the current document; `recent` records the file for File → Open Recent. */
 function loadDoc(path: string | null, text: string, recent = true): void {
   endPresentation();
+  changelog.hide();
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
@@ -924,6 +931,7 @@ async function confirmDiscard(): Promise<boolean> {
 async function activate(tab: Tab): Promise<void> {
   if (tab === doc) return editor.focus();
   endPresentation();
+  changelog.hide();
   if (tabs.includes(doc)) {
     await flushAutosave();
     doc.editor = editor.snapshot();
@@ -1354,7 +1362,7 @@ const commands: Record<string, () => unknown> = {
   "open-settings": openSettings,
   "install-cli": installCli,
   "check-updates": () => api.checkForUpdates(),
-  changelog: () => changelog.show(),
+  changelog: () => showChangelog(),
   "cycle-appearance": toggleAppearance,
   "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),

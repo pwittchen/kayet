@@ -126,12 +126,29 @@ describe("Changelog", () => {
 
   it("scrolls to the focused version's section", async () => {
     const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
     Element.prototype.scrollIntoView = function (this: Element) {
       scrolled.push(this);
     };
-    await view.show("0.7.1");
+    try {
+      await view.show("0.7.1");
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
     expect(scrolled).toHaveLength(1);
     expect((scrolled[0] as HTMLElement).dataset.version).toBe("0.7.1");
+  });
+
+  it("falls back to the release page link when notes fail to render", async () => {
+    invoke.mockImplementation((cmd: string) => {
+      if (cmd === "get_changelog") return Promise.resolve(entries);
+      if (cmd === "render_markdown") return Promise.reject(new Error("render failed"));
+      return Promise.resolve(undefined);
+    });
+    await view.show();
+    const sections = body.querySelectorAll(".changelog-entry");
+    expect(sections).toHaveLength(2);
+    expect(sections[0].querySelector("a")?.getAttribute("href")).toBe("https://example.com/8");
   });
 
   it("closes on Escape", async () => {

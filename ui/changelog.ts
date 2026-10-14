@@ -116,9 +116,11 @@ export class Changelog {
       time.textContent = date;
       section.append(time);
     }
-    if (entry.body.trim()) {
+    // Notes that fail to render fall back to the release page link, like a release without notes.
+    const html = entry.body.trim() ? await api.renderMarkdown(entry.body, null).catch(() => null) : null;
+    if (html !== null) {
       const notes = document.createElement("div");
-      notes.innerHTML = await api.renderMarkdown(entry.body, null);
+      notes.innerHTML = html;
       section.append(notes);
     } else {
       const link = document.createElement("a");
