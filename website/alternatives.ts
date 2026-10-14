@@ -5,6 +5,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 
 const SITE = "https://getkayet.app";
 const DMG = "https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-aarch64.dmg";
+const DMG_INTEL = "https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-x86_64.dmg";
 
 type Alt = {
   slug: string;
@@ -25,7 +26,7 @@ const KAYET: Record<Row, string> = {
   price: "Free, no paid tiers",
   source: "Open source (Apache 2.0)",
   storage: "Plain files in any folder you pick",
-  platforms: "macOS on Apple Silicon",
+  platforms: "macOS (Apple Silicon and Intel)",
 };
 
 const ROW_LABELS: Record<Row, string> = {
@@ -73,7 +74,7 @@ const ALTS: Alt[] = [
       ["Is kayet a free alternative to iA Writer?", "Yes. kayet is free and open source under the Apache License 2.0, with no paid tiers, no feature gating and no telemetry."],
       ["Can kayet open my iA Writer documents?", "Yes. iA Writer keeps documents as plain text and Markdown files, and kayet edits those files directly. Point kayet's workspace at the folder that holds them."],
       ["Does kayet have a focus mode like iA Writer?", "kayet has zen mode (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>J</kbd>): the current line stays vertically centered and every paragraph except the one you are writing is dimmed."],
-      ["Does kayet run on iPhone or Windows?", "No. kayet is built for macOS on Apple Silicon only."],
+      ["Does kayet run on iPhone or Windows?", "No. kayet is built for macOS only, on Apple Silicon and Intel Macs."],
     ],
   },
   {
@@ -372,11 +373,10 @@ const ALTS: Alt[] = [
     ],
     better: [
       "You want a companion app on iPhone and iPad.",
-      "You run an Intel Mac. kayet requires Apple Silicon.",
     ],
     faq: [
       ["Is kayet a good Byword alternative?", "If you liked Byword's simplicity, kayet offers the same minimal approach to Markdown with a live preview, workspace, tabs and export, for free."],
-      ["Does kayet work on Intel Macs?", "No. kayet is built for macOS on Apple Silicon."],
+      ["Does kayet work on Intel Macs?", "Yes. kayet has a separate download built for Intel Macs, next to the Apple Silicon one."],
     ],
   },
   {
@@ -518,7 +518,7 @@ function page(a: Alt): string {
       name: "kayet",
       url: SITE,
       applicationCategory: "ProductivityApplication",
-      operatingSystem: "macOS (Apple Silicon)",
+      operatingSystem: "macOS (Apple Silicon, Intel)",
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       downloadUrl: DMG,
       license: "https://www.apache.org/licenses/LICENSE-2.0",
@@ -643,10 +643,10 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
     <section class="download">
       <img class="reveal" src="../icon.png" alt="" width="72" height="72">
       <h2 class="reveal">Start writing.</h2>
-      <p class="reveal">Free and open source. Requires macOS on Apple Silicon.</p>
+      <p class="reveal">Free and open source. For Macs with Apple Silicon or Intel.</p>
       <div class="reveal">
         <a class="btn btn-primary" href="${DMG}" data-fast-goal="download" data-fast-goal-location="${a.slug}-footer">${APPLE}Download for Mac</a>
-        <p class="note">Signed and notarized. <a href="https://github.com/pwittchen/kayet/releases">Release notes &amp; previous versions</a>.</p>
+        <p class="note">Signed and notarized. On an Intel Mac? <a href="${DMG_INTEL}" data-fast-goal="download" data-fast-goal-location="${a.slug}-footer-intel">Download for Intel</a>. <a href="https://github.com/pwittchen/kayet/releases">Release notes &amp; previous versions</a>.</p>
       </div>
     </section>
 

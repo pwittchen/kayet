@@ -1,10 +1,11 @@
 # kayet
 
-> kayet is a quiet, distraction-free text editor for macOS (Apple Silicon), built with Rust and Tauri 2 with a CodeMirror 6 frontend. When you are writing, the only thing on screen is your text. It is free and open source under the Apache License 2.0, with no paid tiers, no feature gating and no telemetry.
+> kayet is a quiet, distraction-free text editor for macOS (Apple Silicon and Intel), built with Rust and Tauri 2 with a CodeMirror 6 frontend. When you are writing, the only thing on screen is your text. It is free and open source under the Apache License 2.0, with no paid tiers, no feature gating and no telemetry.
 
 - Website: https://getkayet.app
 - Source code: https://github.com/pwittchen/kayet
-- Download: https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-aarch64.dmg (signed and notarized, requires macOS on Apple Silicon)
+- Download for Apple Silicon: https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-aarch64.dmg (signed and notarized)
+- Download for Intel: https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-x86_64.dmg (signed and notarized)
 - Specification: https://raw.githubusercontent.com/pwittchen/kayet/master/SPEC.md
 
 ## Features
@@ -93,7 +94,7 @@ check_automatically = true   # look for a new release at launch and once a day
 
 ## Requirements
 
-macOS on Apple Silicon (M-series). Intel Macs are not supported.
+macOS on Apple Silicon (M-series) or Intel, each with its own download.
 
 ## Support and consulting
 
