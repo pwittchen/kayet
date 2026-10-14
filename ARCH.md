@@ -59,7 +59,7 @@ kayet/
 │   │   ├── export.rs       PDF export through NSPrintOperation on the web view
 │   │   ├── image_cache.rs  web images downloaded via curl into ~/.kayet/cache/images/
 │   │   ├── recovery.rs     crash recovery backup (~/.kayet/recovery/buffer.json)
-│   │   ├── update.rs       update check / install from GitHub Releases
+│   │   ├── update.rs       update check / install and changelog from GitHub Releases
 │   │   ├── menu.rs         native menu bar, Open Recent, check items, About
 │   │   ├── chrome.rs       traffic lights visibility, spell checking (objc2)
 │   │   └── cli.rs          installs the `kayet` shell command
@@ -77,6 +77,7 @@ kayet/
 │   ├── find.ts             in-document find / replace bar
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
 │   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview
+│   ├── changelog.ts        What's New: release notes as Markdown, once after an update
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)
 │   ├── export.ts           HTML / PDF export
 │   ├── images.ts           web images → their downloaded copies (preview and export)
@@ -145,6 +146,8 @@ There are exactly two channels:
   api.listThemes ──────────── invoke("list_themes") ───────▶  themes::list
   api.systemAppearance ────── invoke("system_appearance") ─▶  chrome::system_appearance
   api.searchWorkspace ─────── invoke("search_workspace") ──▶  search::search
+  api.getChangelog ────────── invoke("get_changelog") ─────▶  update::releases (via curl)
+  api.markChangelogSeen ───── invoke("mark_changelog_seen")▶  AppState session marker
   api.writeRecovery ───────── invoke("write_recovery",       recovery::write
                                bytes, kayet-backups) ─────▶
   api.confirm* / *Dialog ──── invoke(...) ─────────────────▶  tauri-plugin-dialog (native)
@@ -295,7 +298,8 @@ self-contained components that know nothing about each other.
      │         └── Presentation  presentation.ts (one Preview per slide shown)
      ├─▶ markdown.ts   (smart Markdown editing)
      ├─▶ languages.ts  (code grammars, loaded lazily)
-     └─▶ find.ts       (find / replace bar)
+     ├─▶ find.ts       (find / replace bar)
+     └─▶ Changelog     changelog.ts (What's New overlay)
 
                   all of them call the backend only through api.ts
 ```
@@ -314,6 +318,7 @@ The page is a fixed skeleton from `ui/index.html`; components render into it:
 │              │ │   Editor                         │ │   Preview               │
 ├──────────────┴─┴──────────────────────────────────┴─┴─────────────────────────┤
 │ #presentation (presentation mode, over everything but the title bar)          │
+│ #changelog (What's New overlay, over everything)                              │
 │ #edge-handle · #toast · #print (PDF export only)                              │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -340,7 +345,8 @@ smart Markdown editing or word count, and crash recovery backups wait for a paus
     ├─ loadRecovery()  ── backups? ──▶ offer restore (confirm_restore)
     │        └─ none / declined ──▶ openSession() (open files from config.session)
     │                               then the file from Finder / CLI, if any
-    └─ takeNotice()                                one-time toast
+    ├─ takeNotice()                                one-time toast
+    └─ checkChangelogOnStartup()                   What's New once after an upgrade
 ```
 
 ## Key flows
@@ -475,12 +481,22 @@ restoring before the session is opened.
 No HTTP client is compiled in; network and disk work goes through the system's `curl`,
 `hdiutil`, `codesign` and `ditto`.
 
+What's New reuses the same fetch path: `get_changelog` curls the releases list
+(`update::releases`, drafts and prereleases filtered out) and the frontend renders each
+body through `render_markdown`. At startup the frontend compares
+`session.last_seen_version` with the running version (`changelogStartupAction`): first
+run only records it, an upgrade shows the changelog once (scrolled to the new
+version) and records it first (so a failed fetch never nags), and
+`mark_changelog_seen` persists the marker through `AppState`, which `set_config`
+preserves like `skipped_version`.
+
 ## Persistent data
 
 ```
 ~/.kayet/
 ├── config.toml          [workspace] [ui] [editor] [window] [updates] [session]
-│                        — settings, window geometry, open / recent files, skipped version;
+│                        — settings, window geometry, open / recent files, skipped version,
+│                          last version the changelog was shown for;
 │                          edited as a normal document from Settings (⌘,), reloaded on save
 ├── themes/              themes (<name>.toml), selected via [ui] theme
 ├── workspace/           default workspace (used when none is configured or it is gone)

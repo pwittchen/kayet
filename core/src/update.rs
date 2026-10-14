@@ -11,7 +11,7 @@ use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{
     DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult,
@@ -21,6 +21,12 @@ use crate::commands::AppState;
 
 /// The latest published (non-draft, non-prerelease) release.
 const LATEST_RELEASE: &str = "https://api.github.com/repos/pwittchen/kayet/releases/latest";
+
+/// Recent published releases, for the changelog (What's New).
+const RELEASES: &str = "https://api.github.com/repos/pwittchen/kayet/releases?per_page=20";
+
+/// How many releases the changelog shows at most.
+const MAX_CHANGELOG: usize = 20;
 
 /// Delay before the first automatic check, so it never competes with startup.
 const FIRST_CHECK_DELAY: Duration = Duration::from_secs(10);
@@ -40,10 +46,31 @@ pub struct Release {
     pub dmg: Option<String>,
 }
 
+/// One release's notes for the changelog view.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ChangelogEntry {
+    /// Version without the leading `v`, e.g. `0.2.0`.
+    pub version: String,
+    /// The release notes (Markdown), empty when the release has none.
+    pub body: String,
+    /// The release's GitHub page.
+    pub page: String,
+    /// When the release was published (ISO 8601), empty when unknown.
+    pub published_at: String,
+}
+
 #[derive(Deserialize)]
 struct GitHubRelease {
     tag_name: String,
     html_url: String,
+    #[serde(default)]
+    body: Option<String>,
+    #[serde(default)]
+    published_at: Option<String>,
+    #[serde(default)]
+    draft: bool,
+    #[serde(default)]
+    prerelease: bool,
     #[serde(default)]
     assets: Vec<GitHubAsset>,
 }
@@ -226,9 +253,9 @@ fn open_page(url: &str) {
     }
 }
 
-/// Fetches the latest release from the GitHub API.
-fn latest_release() -> Result<Release, String> {
-    let json = run(Command::new("/usr/bin/curl").args([
+/// Fetches JSON from the GitHub API through the system `curl` (no HTTP client is bundled).
+fn fetch_json(url: &str) -> Result<String, String> {
+    run(Command::new("/usr/bin/curl").args([
         "--fail",
         "--silent",
         "--show-error",
@@ -243,9 +270,39 @@ fn latest_release() -> Result<Release, String> {
         "Accept: application/vnd.github+json",
         "--user-agent",
         "kayet",
-        LATEST_RELEASE,
-    ]))?;
-    parse_release(&json)
+        url,
+    ]))
+}
+
+/// Fetches the latest release from the GitHub API.
+fn latest_release() -> Result<Release, String> {
+    parse_release(&fetch_json(LATEST_RELEASE)?)
+}
+
+/// Fetches the recent published releases for the changelog, newest first.
+pub fn releases() -> Result<Vec<ChangelogEntry>, String> {
+    parse_releases(&fetch_json(RELEASES)?)
+}
+
+fn parse_releases(json: &str) -> Result<Vec<ChangelogEntry>, String> {
+    let releases: Vec<GitHubRelease> =
+        serde_json::from_str(json).map_err(|e| format!("unexpected response: {e}"))?;
+    let mut entries: Vec<ChangelogEntry> = releases
+        .into_iter()
+        .filter(|r| !r.draft && !r.prerelease)
+        .filter_map(|r| {
+            let version = r.tag_name.trim_start_matches('v').to_string();
+            parse_version(&version)?;
+            Some(ChangelogEntry {
+                version,
+                body: r.body.unwrap_or_default(),
+                page: r.html_url,
+                published_at: r.published_at.unwrap_or_default(),
+            })
+        })
+        .collect();
+    entries.truncate(MAX_CHANGELOG);
+    Ok(entries)
 }
 
 fn parse_release(json: &str) -> Result<Release, String> {
@@ -463,6 +520,62 @@ mod tests {
                 dmg: Some("https://example.com/kayet.dmg".into()),
             }
         );
+    }
+
+    #[test]
+    fn changelog_body_is_carried_through() {
+        let json = r#"[{"tag_name": "v0.2.0", "html_url": "https://x", "body": "- Fixed it"}]"#;
+        assert_eq!(parse_releases(json).unwrap()[0].body, "- Fixed it");
+        let json = r#"[{"tag_name": "v0.2.0", "html_url": "https://x", "body": null}]"#;
+        assert_eq!(parse_releases(json).unwrap()[0].body, "");
+        let json = r#"[{"tag_name": "v0.2.0", "html_url": "https://x"}]"#;
+        assert_eq!(parse_releases(json).unwrap()[0].body, "");
+    }
+
+    #[test]
+    fn changelog_keeps_order_and_drops_drafts_and_prereleases() {
+        let json = r#"[
+            {"tag_name": "v0.3.0", "html_url": "https://x/3", "body": "three", "published_at": "2026-01-03T00:00:00Z"},
+            {"tag_name": "v0.4.0-beta", "html_url": "https://x/4", "body": "beta", "prerelease": true},
+            {"tag_name": "v0.2.0", "html_url": "https://x/2", "body": null, "draft": true},
+            {"tag_name": "nightly", "html_url": "https://x/n", "body": "bad tag"},
+            {"tag_name": "v0.1.0", "html_url": "https://x/1"}
+        ]"#;
+        assert_eq!(
+            parse_releases(json).unwrap(),
+            [
+                ChangelogEntry {
+                    version: "0.3.0".into(),
+                    body: "three".into(),
+                    page: "https://x/3".into(),
+                    published_at: "2026-01-03T00:00:00Z".into(),
+                },
+                ChangelogEntry {
+                    version: "0.1.0".into(),
+                    body: String::new(),
+                    page: "https://x/1".into(),
+                    published_at: String::new(),
+                },
+            ]
+        );
+        assert!(parse_releases("{}").is_err());
+        assert_eq!(parse_releases("[]").unwrap(), []);
+    }
+
+    #[test]
+    fn changelog_is_capped() {
+        let items: Vec<String> = (0..25)
+            .map(|i| {
+                format!(
+                    r#"{{"tag_name": "v0.0.{}", "html_url": "https://x/{}"}}"#,
+                    25 - i,
+                    25 - i
+                )
+            })
+            .collect();
+        let entries = parse_releases(&format!("[{}]", items.join(","))).unwrap();
+        assert_eq!(entries.len(), MAX_CHANGELOG);
+        assert_eq!(entries[0].version, "0.0.25");
     }
 
     #[test]
