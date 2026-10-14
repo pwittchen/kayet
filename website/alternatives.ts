@@ -646,7 +646,7 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
       <p class="reveal">Free and open source. For Macs with Apple Silicon or Intel.</p>
       <div class="reveal">
         <a class="btn btn-primary" href="${DMG}" data-fast-goal="download" data-fast-goal-location="${a.slug}-footer">${APPLE}Download for Mac</a>
-        <p class="note">Signed and notarized. On an Intel Mac? <a href="${DMG_INTEL}" data-fast-goal="download" data-fast-goal-location="${a.slug}-footer-intel">Download for Intel</a>. <a href="https://github.com/pwittchen/kayet/releases">Release notes &amp; previous versions</a>.</p>
+        <p class="note">Signed and notarized. On an Intel Mac? <a href="${DMG_INTEL}" data-fast-goal="download_intel" data-fast-goal-location="${a.slug}-footer-intel">Download for Intel</a>. <a href="https://github.com/pwittchen/kayet/releases">Release notes &amp; previous versions</a>.</p>
       </div>
     </section>
 
