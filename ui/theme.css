@@ -995,8 +995,13 @@ body.presenting #edge-handle {
   border-bottom: none;
 }
 
-.changelog-entry > h2 {
+/* Version headings stand apart from the `##` headings inside the release notes (the id
+   outranks `.markdown-body h2`, which is loaded later). */
+#changelog-body .changelog-entry > h2 {
   margin-top: 0;
+  font-size: 1.75em;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .changelog-date,
