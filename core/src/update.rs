@@ -23,7 +23,7 @@ use crate::commands::AppState;
 const LATEST_RELEASE: &str = "https://api.github.com/repos/pwittchen/kayet/releases/latest";
 
 /// Recent published releases, for the changelog (What's New).
-const RELEASES: &str = "https://api.github.com/repos/pwittchen/kayet/releases?per_page=20";
+const RELEASES: &str = "https://api.github.com/repos/pwittchen/kayet/releases";
 
 /// How many releases the changelog shows at most.
 const MAX_CHANGELOG: usize = 20;
@@ -281,7 +281,9 @@ fn latest_release() -> Result<Release, String> {
 
 /// Fetches the recent published releases for the changelog, newest first.
 pub fn releases() -> Result<Vec<ChangelogEntry>, String> {
-    parse_releases(&fetch_json(RELEASES)?)
+    parse_releases(&fetch_json(&format!(
+        "{RELEASES}?per_page={MAX_CHANGELOG}"
+    ))?)
 }
 
 fn parse_releases(json: &str) -> Result<Vec<ChangelogEntry>, String> {
