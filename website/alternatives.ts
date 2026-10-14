@@ -672,6 +672,9 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
     <div class="footer-row">
 ${footerAlternatives("      ")}
     </div>
+    <div class="footer-row">
+      <span>made in Poland, Europe 🇵🇱 🇪🇺</span>
+    </div>
   </footer>
 
   <script type="module" src="../script.js"></script>
