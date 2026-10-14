@@ -942,6 +942,8 @@ body.presenting #edge-handle {
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--titlebar-height) + 8px) 24px 8px;
+  /* Same em basis as #changelog-body (a .markdown-body), so both columns line up. */
+  font-size: var(--editor-font-size);
   max-width: 44em;
   width: 100%;
   margin: 0 auto;
