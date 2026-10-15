@@ -922,11 +922,12 @@ body.presenting #edge-handle {
 
 /* ---- What's New (changelog) ---- */
 
-/* Covers the window like presentation mode; the document underneath is untouched. */
+/* Covers the window like presentation mode, but also the title bar (z-index 20), which
+   would otherwise still reveal on hover above it; the document underneath is untouched. */
 #changelog {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 25;
   background: var(--bg);
   outline: none;
   display: flex;
