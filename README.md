@@ -142,7 +142,7 @@ The workflow bumps the version in `core/Cargo.toml`, `Cargo.lock`, `core/tauri.c
 builds `kayet.app` for Apple Silicon and Intel (cross-compiled on the Apple Silicon runner)
 and signs each with the Developer ID (hardened runtime, `core/entitlements.plist`). Each app is
 notarized with `notarytool` and stapled, packaged into `kayet-macos-aarch64.dmg` /
-`kayet-macos-x86_64.dmg` (signed, notarized and stapled too), and published
+`kayet-macos-x86_64.dmg` (signed too), and published
 to GitHub Releases with a changelog of the commits since the previous tag. Regular CI
 builds (`rust.yml`) stay unsigned.
 

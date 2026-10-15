@@ -64,6 +64,8 @@ jobs:
     # linked-on-or-after gated, so an older SDK would misplace the traffic lights
     # (trafficLightPosition in tauri.conf.json) on current macOS.
     runs-on: macos-26
+    # A normal build takes ~6 min; cap it so a stuck Apple notary queue can't burn runner minutes.
+    timeout-minutes: 30
     strategy:
       matrix:
         arch: [aarch64, x86_64]
@@ -138,12 +140,15 @@ jobs:
           zip="$RUNNER_TEMP/kayet-notarize.zip"
           ditto -c -k --keepParent "$app" "$zip"
           xcrun notarytool submit "$zip" \
-            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" \
+            --wait --timeout 15m
           xcrun stapler staple "$app"
           xcrun stapler validate "$app"
 
       - name: Package dmg
         # Built with hdiutil (not Tauri's dmg bundler) so it contains the signed, stapled app.
+        # The .dmg itself is only signed, not notarized: Gatekeeper checks the notarized app
+        # inside, and a second notary round trip doubled the exposure to Apple's queue delays.
         run: |
           staging=$(mktemp -d)
           cp -R "target/$TARGET/release/bundle/macos/kayet.app" "$staging/"
@@ -165,18 +170,6 @@ jobs:
         run: |
           codesign --force --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$DMG"
           codesign --verify --verbose=2 "$DMG"
-
-      - name: Notarize and staple dmg
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          xcrun notarytool submit "$DMG" \
-            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
-          xcrun stapler staple "$DMG"
-          xcrun stapler validate "$DMG"
-          spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
 
       - name: Clean up keychain
         if: always()
