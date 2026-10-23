@@ -26,6 +26,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Fails the build on any known vulnerability in npm or Cargo dependencies. cargo audit also
+  # denies warnings (unmaintained / unsound / yanked crates); exceptions live in .cargo/audit.toml.
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 22
+
+    - name: Audit npm dependencies
+      run: npm audit
+
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-audit
+
+    - name: Audit Cargo dependencies
+      run: cargo audit --deny warnings
+
   build:
 
     # Apple Silicon and Intel (SPEC.md §3): checks run natively on the Apple Silicon runner,
