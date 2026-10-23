@@ -62,7 +62,8 @@ kayet/
 │   │   ├── update.rs       update check / install and changelog from GitHub Releases
 │   │   ├── menu.rs         native menu bar, Open Recent, check items, About
 │   │   ├── chrome.rs       traffic lights visibility, spell checking (objc2)
-│   │   └── cli.rs          installs the `kayet` shell command
+│   │   ├── cli.rs          installs the `kayet` shell command
+│   │   └── default_app.rs  makes kayet the default app for .md / .txt (Launch Services)
 │   ├── cli/kayet           shell launcher (→ `open -b com.github.pwittchen.kayet`)
 │   ├── capabilities/       Tauri permissions
 │   └── tauri.conf.json     window, CSP, asset protocol, bundle
@@ -261,6 +262,7 @@ Arrows point from a module to the modules it uses; lower layers never call upwar
                   ▼          ▼           ▼           ▼          ▼         ▼
   features     search.rs  markdown.rs  export.rs  recovery.rs  menu.rs  cli.rs
                   │                                 │           │       chrome.rs
+                  │                                 │           │       default_app.rs
                   ▼                                 │           │
   storage      workspace.rs                         │           │
                   │                                 │           │

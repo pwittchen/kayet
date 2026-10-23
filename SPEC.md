@@ -100,6 +100,8 @@ neither download carries the other's code.
 ### 4.3 Finder & terminal
 - kayet registers as an editor for `.md` / `.markdown` and `.txt` files, so they appear in
   Finder's "Open With" and open on double-click once kayet is the default app for them.
+- `kayet → Make Default Editor for .md and .txt` (or the command palette) makes kayet that
+  default app for `.md`, `.markdown` and `.txt` files through Launch Services; a toast confirms it.
 - `kayet` shell command: `kayet [file | folder]` opens a file (created empty if missing) or
   makes a folder the workspace, in the running instance or by launching kayet.
   - Installed via `kayet → Install ‘kayet’ Command` (or the command palette), which
@@ -511,6 +513,7 @@ kayet/
 │   ├── src/
 │   │   ├── main.rs          # Tauri bootstrap, window setup, Finder "open" events
 │   │   ├── cli.rs           # installs the `kayet` shell command
+│   │   ├── default_app.rs   # makes kayet the default app for .md / .txt
 │   │   ├── commands.rs      # #[tauri::command] handlers
 │   │   ├── workspace.rs     # workspace resolution, tree listing, watcher
 │   │   ├── fs_ops.rs        # read/write/rename/create/trash
@@ -579,6 +582,7 @@ kayet/
 | `add_recent(path)`             | Record an opened file for File → Open Recent  |
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |
 | `install_cli()`                | Install the `kayet` shell command             |
+| `make_default_editor()`        | Make kayet the default app for `.md` / `.markdown` / `.txt` |
 | `check_for_updates()`          | Look for a new release and offer to install it |
 | `get_changelog() -> Vec<Entry>` | Published release notes (version, body, page, date), newest first, for What's New |
 | `mark_changelog_seen(version)` | Record that the changelog was shown for a version (see 4.7) |

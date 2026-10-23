@@ -115,6 +115,11 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &sep()?,
             &item("open-settings", "Settings…", Some("CmdOrCtrl+,"))?,
             &item("install-cli", "Install ‘kayet’ Command", None)?,
+            &item(
+                "make-default-editor",
+                "Make Default Editor for .md and .txt",
+                None,
+            )?,
             &sep()?,
             &PredefinedMenuItem::services(app, None)?,
             &sep()?,

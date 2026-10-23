@@ -1280,6 +1280,15 @@ async function installCli(): Promise<void> {
   if (link) notify(`Installed ${link} — open files from a terminal with kayet <file>.`);
 }
 
+async function makeDefaultEditor(): Promise<void> {
+  try {
+    await api.makeDefaultEditor();
+    notify("kayet now opens .md and .txt files from Finder.");
+  } catch (e) {
+    showError(e);
+  }
+}
+
 /** Restarts into the kayet `version` just installed, once unsaved changes are dealt with. */
 async function restartToUpdate(version: string): Promise<void> {
   if (!(await confirmDiscardAll())) {
@@ -1361,6 +1370,7 @@ const commands: Record<string, () => unknown> = {
   "toggle-presentation": togglePresentation,
   "open-settings": openSettings,
   "install-cli": installCli,
+  "make-default-editor": makeDefaultEditor,
   "check-updates": () => api.checkForUpdates(),
   changelog: () => showChangelog(),
   "cycle-appearance": toggleAppearance,
@@ -1450,6 +1460,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "zoom-reset", label: "Actual Size", shortcut: "⌘0" },
     { id: "open-settings", label: "Settings…", shortcut: "⌘," },
     { id: "install-cli", label: "Install ‘kayet’ Command" },
+    { id: "make-default-editor", label: "Make Default Editor for .md and .txt" },
     { id: "check-updates", label: "Check for Updates…" },
     { id: "changelog", label: "What's New…" },
     { id: "close", label: "Close Window", shortcut: "⌘⇧W" },

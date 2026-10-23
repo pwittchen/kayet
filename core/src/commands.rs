@@ -342,6 +342,12 @@ pub async fn install_cli(app: AppHandle) -> CmdResult<Option<String>> {
     Ok(crate::cli::install(&script)?.then(|| crate::cli::LINK.to_string()))
 }
 
+/// Makes kayet the default app for Markdown and plain text files.
+#[tauri::command]
+pub fn make_default_editor(app: AppHandle) -> CmdResult<()> {
+    crate::default_app::make_default(&app.config().identifier)
+}
+
 /// Checks for a new kayet release and offers to install it (`kayet → Check for Updates…`).
 #[tauri::command]
 pub async fn check_for_updates(app: AppHandle) -> CmdResult<()> {

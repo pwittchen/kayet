@@ -5,6 +5,7 @@ mod chrome;
 mod cli;
 mod commands;
 mod config;
+mod default_app;
 mod export;
 mod fs_ops;
 mod image_cache;
@@ -115,6 +116,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::recent_files,
         commands::allow_recent,
         commands::install_cli,
+        commands::make_default_editor,
         commands::check_for_updates,
         commands::get_changelog,
         commands::mark_changelog_seen,

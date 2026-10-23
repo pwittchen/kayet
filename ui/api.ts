@@ -114,6 +114,8 @@ export const api = {
   /** Allows opening a recent file picked in the palette; returns its canonical path. */
   allowRecent: (path: string) => invoke<string>("allow_recent", { path }),
   installCli: () => invoke<string | null>("install_cli"),
+  /** Makes kayet the default app for .md / .markdown and .txt files. */
+  makeDefaultEditor: () => invoke<void>("make_default_editor"),
   /** Checks for a new kayet release and offers to install it (native dialogs). */
   checkForUpdates: () => invoke<void>("check_for_updates"),
   /** Recent published release notes for What's New, newest first. */
