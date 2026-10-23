@@ -184,6 +184,8 @@ export const api = {
   setAppearanceEnabled: (enabled: boolean) => invoke<void>("set_appearance_enabled", { enabled }),
   setChromeVisible: (visible: boolean) =>
     invoke<void>("set_chrome_visible", { visible }),
+  /** Shows the window, hidden at launch until the first screen is ready. */
+  showWindow: () => invoke<void>("show_window"),
   /** Updates the View menu's Syntax Highlighting or Check Spelling item. */
   setMenuCheck: (id: "toggle-zen" | "toggle-code-mode" | "toggle-syntax" | "toggle-spell-check", enabled: boolean, checked: boolean) =>
     invoke<void>("set_menu_check", { id, enabled, checked }),

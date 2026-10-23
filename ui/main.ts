@@ -1779,6 +1779,7 @@ async function init(): Promise<void> {
 }
 
 init()
+  .finally(() => api.showWindow())
   .then(async () => {
     const firstPaint = afterPaint();
     const benchDir = await api.benchDir();

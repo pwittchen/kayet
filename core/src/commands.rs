@@ -645,6 +645,16 @@ pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
     crate::chrome::set_traffic_lights_visible(&window, visible);
 }
 
+/// Shows the main window; called once the frontend has its first screen ready.
+#[tauri::command]
+pub fn show_window(window: WebviewWindow) {
+    let _ = window.show();
+    if bench_dir().is_some() {
+        // A window hidden behind others gets no frames, which stalls the benchmark.
+        let _ = window.set_focus();
+    }
+}
+
 #[tauri::command]
 pub fn set_menu_check(app: AppHandle, id: &str, enabled: bool, checked: bool) {
     crate::menu::set_check_item(&app, id, enabled, checked);

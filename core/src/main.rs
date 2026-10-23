@@ -71,11 +71,14 @@ fn main() {
                 .expect("main window is defined in tauri.conf.json");
             restore_geometry(&window, &state);
             chrome::set_traffic_lights_visible(&window, false);
-            window.show()?;
-            if commands::bench_dir().is_some() {
-                // A window hidden behind others gets no frames, which stalls the benchmark.
-                window.set_focus()?;
-            }
+            // The frontend shows the window once its first screen is ready (`show_window`),
+            // so launch never flashes an empty web view. Shown anyway if that never comes.
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_secs(3));
+                if !window.is_visible().unwrap_or(true) {
+                    commands::show_window(window);
+                }
+            });
             Ok(())
         })
         .on_window_event(on_window_event)
@@ -143,6 +146,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::cache_image,
         commands::export_pdf,
         commands::set_chrome_visible,
+        commands::show_window,
         commands::set_menu_check,
         commands::set_export_enabled,
         commands::set_appearance_enabled,

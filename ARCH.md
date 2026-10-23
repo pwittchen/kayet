@@ -226,7 +226,9 @@ show images next to it; so is `~/.kayet/cache/images/` (downloaded web images). 
          │      save_config · start_watcher · refresh_recent_menu
          │      update::start_background_checks        (release builds, after 10s, daily)
          │      allow asset dirs of restored files
-         │      restore window geometry · hide traffic lights · show window
+         │      restore window geometry · hide traffic lights
+         │      (window stays hidden until the frontend calls show_window after init;
+         │       shown anyway after 3s as a fallback)
          │  })
          ├─ .on_window_event(…)   geometry, theme, drag & drop, save config on destroy
          ├─ .invoke_handler(…)    all commands in commands.rs
