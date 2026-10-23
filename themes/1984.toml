@@ -1,0 +1,43 @@
+# 1984 for kayet: 1984 (dark) and 1984 Light (light).
+# Source of truth for the colors: https://github.com/juanmnl/vs-1984
+# (1984-color-theme.json and 1984-light-color-theme.json; MIT, © juanmnl).
+# The other 1984 variants (Cyberpunk, Unbolded, Fancy, Orwellian) are not included.
+# Roles follow the VS Code themes: hot-pink keywords and numbers, violet strings,
+# periwinkle (dark) / blue (light) headings, muted comments. Dark has a lime cursor and
+# a sky-blue accent; Light uses hot pink for both.
+# Neither JSON sets a side-bar text color in the dark theme, so its muted text comes
+# from titleBar.inactiveForeground.
+# Ported to kayet by Terre6 (https://github.com/pwittchen/kayet/issues/15).
+# Bundled with kayet: set `theme = "1984"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/1984.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]  # 1984
+bg = "#0d0f31"           # editor.background
+bg-sidebar = "#070825"   # sideBar.background
+text = "#f1f1f1"         # editor.foreground
+text-muted = "#7b7f86"   # titleBar.inactiveForeground
+border = "#181a1f"       # editorGroup.border, input.border
+accent = "#46bdff"       # focusBorder, button.background
+selection = "#ffffff3b"  # editor.selectionBackground
+caret = "#b3f361"        # editorCursor.foreground
+hl-keyword = "#ff16b0"   # keyword
+hl-string = "#df81fc"    # string.quoted
+hl-number = "#ff16b0"    # constant.numeric
+hl-title = "#96a1ff"     # markup.heading
+hl-comment = "#525863"   # comment
+
+[light]  # 1984 Light
+bg = "#e4e5f5"           # editor.background
+bg-sidebar = "#dfe0f0"   # sideBar.background
+text = "#19152c"         # editor.foreground
+text-muted = "#585d74"   # sideBar.foreground
+border = "#dcddec"       # editorGroup.border
+accent = "#ff16b0"       # button.background, activityBarBadge.background
+selection = "#ffffff"    # editor.selectionBackground
+caret = "#ff16b0"        # editorCursor.foreground
+hl-keyword = "#ff16b0"   # keyword
+hl-string = "#c300ff"    # string.quoted
+hl-number = "#ff16b0"    # constant.numeric
+hl-title = "#4d5eff"     # markup.heading
+hl-comment = "#9793b9"   # comment

@@ -1,0 +1,42 @@
+# Vitesse for kayet: Vitesse Dark (dark) and Vitesse Light (light).
+# Source of truth for the colors: https://github.com/antfu/vscode-theme-vitesse
+# (themes/vitesse-dark.json and themes/vitesse-light.json; MIT, © Anthony Fu).
+# Roles follow the VS Code themes: green keywords, accent and headings, terracotta
+# strings, teal numbers, grey-green comments. Like upstream, the sidebar shares the
+# editor background and is separated only by a hairline border.
+# Vitesse sets no cursor color, so the caret uses the editor text color (marked
+# "derived").
+# Ported to kayet by Terre6 (https://github.com/pwittchen/kayet/issues/15).
+# Bundled with kayet: set `theme = "vitesse"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/vitesse.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]  # Vitesse Dark
+bg = "#121212"           # editor.background
+bg-sidebar = "#121212"   # sideBar.background
+text = "#dbd7caee"       # editor.foreground
+text-muted = "#959da5"   # tab.inactiveForeground, breadcrumb.foreground
+border = "#191919"       # sideBar.border, panel.border
+accent = "#4d9375"       # activityBar.activeBorder, button.background
+selection = "#eeeeee18"  # editor.selectionBackground
+caret = "#dbd7ca"        # derived: editor.foreground, opaque
+hl-keyword = "#4d9375"   # keyword
+hl-string = "#c98a7d"    # string
+hl-number = "#4c9a91"    # constant.numeric
+hl-title = "#4d9375"     # markup.heading
+hl-comment = "#758575dd" # comment
+
+[light]  # Vitesse Light
+bg = "#ffffff"           # editor.background
+bg-sidebar = "#ffffff"   # sideBar.background
+text = "#393a34"         # editor.foreground
+text-muted = "#6a737d"   # tab.inactiveForeground, breadcrumb.foreground
+border = "#f0f0f0"       # sideBar.border, panel.border
+accent = "#1c6b48"       # activityBar.activeBorder, button.background
+selection = "#22222218"  # editor.selectionBackground
+caret = "#393a34"        # derived: editor.foreground
+hl-keyword = "#1e754f"   # keyword
+hl-string = "#b56959"    # string
+hl-number = "#2f798a"    # constant.numeric
+hl-title = "#1c6b48"     # markup.heading
+hl-comment = "#a0ada0"   # comment

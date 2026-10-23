@@ -1,0 +1,39 @@
+# Ayu for kayet: Ayu Dark (dark) and Ayu Light (light).
+# Source of truth for the colors: https://github.com/ayu-theme/vscode-ayu
+# (ayu-dark.json and ayu-light.json; MIT, © teabyii). Ayu Mirage is not included.
+# Roles follow the VS Code themes: orange keywords, green strings and headings,
+# purple numbers, grey comments, yellow-orange cursor and accent.
+# Ported to kayet by Terre6 (https://github.com/pwittchen/kayet/issues/15).
+# Bundled with kayet: set `theme = "ayu"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/ayu.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]  # Ayu Dark
+bg = "#10141c"           # editor.background
+bg-sidebar = "#0d1017"   # sideBar.background
+text = "#bfbdb6"         # editor.foreground
+text-muted = "#5a6378"   # foreground, tab.inactiveForeground
+border = "#1b1f29"       # sideBar.border, panel.border
+accent = "#e6b450"       # focusBorder, activityBar.activeBorder
+selection = "#3388ff40"  # editor.selectionBackground
+caret = "#e6b450"        # editorCursor.foreground
+hl-keyword = "#ff8f40"   # keyword
+hl-string = "#aad94c"    # string
+hl-number = "#d2a6ff"    # constant.numeric
+hl-title = "#aad94c"     # markup.heading
+hl-comment = "#5a6673"   # comment
+
+[light]  # Ayu Light
+bg = "#fcfcfc"           # editor.background
+bg-sidebar = "#f8f9fa"   # sideBar.background
+text = "#5c6166"         # editor.foreground
+text-muted = "#828e9f"   # foreground, tab.inactiveForeground
+border = "#6b7d8f1f"     # sideBar.border, panel.border
+accent = "#f29718"       # focusBorder, activityBar.activeBorder
+selection = "#035bd626"  # editor.selectionBackground
+caret = "#f29718"        # editorCursor.foreground
+hl-keyword = "#fa8532"   # keyword
+hl-string = "#86b300"    # string
+hl-number = "#a37acc"    # constant.numeric
+hl-title = "#86b300"     # markup.heading
+hl-comment = "#adaeb1"   # comment

@@ -36,9 +36,13 @@ pub struct ThemeFile {
 /// Themes shipped with the app (`themes/` in the repository), embedded at compile time.
 /// A file of the same name in `~/.kayet/themes/` takes precedence.
 const BUNDLED: &[(&str, &str)] = &[
+    ("1984", include_str!("../../themes/1984.toml")),
+    ("ayu", include_str!("../../themes/ayu.toml")),
+    ("bluloco", include_str!("../../themes/bluloco.toml")),
     ("catppuccin", include_str!("../../themes/catppuccin.toml")),
     ("everforest", include_str!("../../themes/everforest.toml")),
     ("flexoki", include_str!("../../themes/flexoki.toml")),
+    ("github", include_str!("../../themes/github.toml")),
     ("gruvbox", include_str!("../../themes/gruvbox.toml")),
     ("kanagawa", include_str!("../../themes/kanagawa.toml")),
     ("modus", include_str!("../../themes/modus.toml")),
@@ -46,6 +50,7 @@ const BUNDLED: &[(&str, &str)] = &[
     ("rose-pine", include_str!("../../themes/rose-pine.toml")),
     ("solarized", include_str!("../../themes/solarized.toml")),
     ("tokyo-night", include_str!("../../themes/tokyo-night.toml")),
+    ("vitesse", include_str!("../../themes/vitesse.toml")),
     ("zenwritten", include_str!("../../themes/zenwritten.toml")),
 ];
 

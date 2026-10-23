@@ -1,0 +1,41 @@
+# Bluloco for kayet: Bluloco Dark (dark) and Bluloco Light (light).
+# Source of truth for the colors:
+#   https://github.com/uloco/theme-bluloco-dark  (themes/bluloco-dark-color-theme.json)
+#   https://github.com/uloco/theme-bluloco-light (themes/bluloco-light-color-theme.json)
+# (LGPL-3.0, © uloco). Roles follow the VS Code themes: blue keywords, yellow strings
+# and headings, pink numbers, grey comments, yellow (dark) / pink-red (light) cursor,
+# blue accent.
+# Ported to kayet by Terre6 (https://github.com/pwittchen/kayet/issues/15).
+# Bundled with kayet: set `theme = "bluloco"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/bluloco.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]  # Bluloco Dark
+bg = "#282c34"           # editor.background
+bg-sidebar = "#22252a"   # sideBar.background
+text = "#abb2bf"         # editor.foreground
+text-muted = "#636d83"   # tab.inactiveForeground, editorLineNumber.foreground
+border = "#3d434f"       # editor.border, panel.border
+accent = "#3691ff"       # focusBorder, badge.background
+selection = "#0084ff4b"  # editor.selectionBackground
+caret = "#ffcc00"        # editorCursor.foreground
+hl-keyword = "#10b1fe"   # keyword
+hl-string = "#f9c859"    # string
+hl-number = "#ff78f8"    # constant.numeric
+hl-title = "#f9c859"     # markup.heading
+hl-comment = "#636d83"   # comment
+
+[light]  # Bluloco Light
+bg = "#f9f9f9"           # editor.background
+bg-sidebar = "#e8e8e8"   # sideBar.background
+text = "#383a42"         # editor.foreground
+text-muted = "#a0a1a7"   # tab.inactiveForeground, editorLineNumber.foreground
+border = "#d5d7d8"       # editor.border, panel.border
+accent = "#0099e1"       # focusBorder, badge.background
+selection = "#d2ecff"    # editor.selectionBackground
+caret = "#f31459"        # editorCursor.foreground
+hl-keyword = "#0098dd"   # keyword
+hl-string = "#c5a332"    # string
+hl-number = "#ce33c0"    # constant.numeric
+hl-title = "#c5a332"     # markup.heading
+hl-comment = "#a0a1a7"   # comment
