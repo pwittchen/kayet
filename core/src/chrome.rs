@@ -80,6 +80,26 @@ fn inset_traffic_lights(ns_window: &objc2_app_kit::NSWindow, x: f64, y: f64) {
 #[cfg(not(target_os = "macos"))]
 pub fn set_traffic_lights_visible(_window: &WebviewWindow, _visible: bool) {}
 
+/// Makes the whole window (web view and title bar) fully transparent or opaque. A window
+/// kept on screen at alpha 0 still counts as visible to `WKWebView`, which renders only then.
+#[cfg(target_os = "macos")]
+pub fn set_window_opaque(window: &WebviewWindow, opaque: bool) {
+    use objc2_app_kit::NSWindow;
+
+    let w = window.clone();
+    // AppKit must only be touched from the main thread.
+    let _ = window.run_on_main_thread(move || {
+        let Ok(ptr) = w.ns_window() else { return };
+        // SAFETY: Tauri hands out a valid NSWindow pointer for the lifetime of the window,
+        // and we are on the main thread.
+        let ns_window: &NSWindow = unsafe { &*ptr.cast::<NSWindow>() };
+        ns_window.setAlphaValue(if opaque { 1.0 } else { 0.0 });
+    });
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn set_window_opaque(_window: &WebviewWindow, _opaque: bool) {}
+
 /// Lets the web view spell check: `WKWebView` only underlines misspelled words when the app's
 /// `WebContinuousSpellCheckingEnabled` default is set (normally toggled from an Edit → Spelling
 /// menu, which kayet has not), so it is registered here; the editor's `spellcheck` attribute then

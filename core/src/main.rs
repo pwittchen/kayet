@@ -71,11 +71,15 @@ fn main() {
                 .expect("main window is defined in tauri.conf.json");
             restore_geometry(&window, &state);
             chrome::set_traffic_lights_visible(&window, false);
-            // The frontend shows the window once its first screen is ready (`show_window`),
-            // so launch never flashes an empty web view. Shown anyway if that never comes.
+            // The window goes on screen transparent: a hidden web view doesn't render, so it
+            // would still be empty when shown. The frontend makes it opaque once its first
+            // screen is painted (`show_window`), so launch never flashes an empty web view.
+            // Made opaque anyway if that never comes.
+            chrome::set_window_opaque(&window, false);
+            window.show()?;
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_secs(3));
-                if !window.is_visible().unwrap_or(true) {
+                if !commands::WINDOW_SHOWN.load(std::sync::atomic::Ordering::Relaxed) {
                     commands::show_window(window);
                 }
             });

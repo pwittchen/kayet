@@ -645,10 +645,15 @@ pub fn set_chrome_visible(window: WebviewWindow, visible: bool) {
     crate::chrome::set_traffic_lights_visible(&window, visible);
 }
 
-/// Shows the main window; called once the frontend has its first screen ready.
+/// Whether `show_window` has run, i.e. the window is no longer transparent.
+pub static WINDOW_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Makes the main window, on screen but transparent since launch, opaque; called once the
+/// frontend has painted its first screen.
 #[tauri::command]
 pub fn show_window(window: WebviewWindow) {
-    let _ = window.show();
+    WINDOW_SHOWN.store(true, std::sync::atomic::Ordering::Relaxed);
+    crate::chrome::set_window_opaque(&window, true);
     if bench_dir().is_some() {
         // A window hidden behind others gets no frames, which stalls the benchmark.
         let _ = window.set_focus();

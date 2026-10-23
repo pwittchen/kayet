@@ -91,6 +91,7 @@ kayet/
 │   ├── theme.ts            palette/mode resolution, token allowlist, apply / clear
 │   ├── stats.ts            word count
 │   ├── bench.ts            self-measurement (only with KAYET_BENCH set)
+│   ├── startup.ts          shows the window once init has painted its first screen
 │   └── theme.css, markdown-body.css
 ├── scripts/                dev.mjs (Vite launcher), bench.mjs (SPEC §13 checks)
 ├── website/                getkayet.app
@@ -227,8 +228,9 @@ show images next to it; so is `~/.kayet/cache/images/` (downloaded web images). 
          │      update::start_background_checks        (release builds, after 10s, daily)
          │      allow asset dirs of restored files
          │      restore window geometry · hide traffic lights
-         │      (window stays hidden until the frontend calls show_window after init;
-         │       shown anyway after 3s as a fallback)
+         │      show window at alpha 0 (a hidden web view doesn't render)
+         │      (made opaque when the frontend calls show_window after init's first paint;
+         │       made opaque anyway after 3s as a fallback)
          │  })
          ├─ .on_window_event(…)   geometry, theme, drag & drop, save config on destroy
          ├─ .invoke_handler(…)    all commands in commands.rs

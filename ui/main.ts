@@ -23,6 +23,7 @@ import {
 } from "./api";
 import { About } from "./about";
 import { afterPaint, runBench } from "./bench";
+import { showWhenPainted } from "./startup";
 import { Changelog, changelogStartupAction } from "./changelog";
 import { Chrome } from "./chrome";
 import { confirmRestore, confirmSave, confirmUnsaved } from "./dialog";
@@ -1778,8 +1779,7 @@ async function init(): Promise<void> {
   await checkChangelogOnStartup();
 }
 
-init()
-  .finally(() => api.showWindow())
+showWhenPainted(init(), api.showWindow)
   .then(async () => {
     const firstPaint = afterPaint();
     const benchDir = await api.benchDir();
