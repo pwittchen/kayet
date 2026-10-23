@@ -21,6 +21,7 @@ import {
   relativeTo,
   SearchMatch,
 } from "./api";
+import { About } from "./about";
 import { afterPaint, runBench } from "./bench";
 import { Changelog, changelogStartupAction } from "./changelog";
 import { Chrome } from "./chrome";
@@ -90,6 +91,9 @@ const els = {
   changelogScroller: $("changelog-scroller"),
   changelogBody: $("changelog-body"),
   changelogClose: $<HTMLButtonElement>("changelog-close"),
+  about: $("about"),
+  aboutBody: $("about-body"),
+  aboutClose: $<HTMLButtonElement>("about-close"),
   presentation: $("presentation"),
   slideScroller: $("slide-scroller"),
   slide: $("slide"),
@@ -237,7 +241,25 @@ function closeChangelog(): void {
 /** Shows What's New over everything; presentation mode ends first so its keys don't act underneath. */
 function showChangelog(focusVersion?: string): Promise<void> {
   endPresentation();
+  about.hide();
   return changelog.show(focusVersion);
+}
+
+const about = new About(els.about, els.aboutBody, { exit: closeAbout });
+
+els.aboutClose.addEventListener("click", closeAbout);
+
+function closeAbout(): void {
+  about.hide();
+  editor.focus();
+}
+
+/** Shows About over everything, like What's New. */
+async function showAbout(): Promise<void> {
+  const version = await getVersion().catch(() => "");
+  endPresentation();
+  changelog.hide();
+  about.show(version);
 }
 
 /** Shows What's New once after an upgrade; on first run the version is only recorded. */
@@ -759,6 +781,7 @@ function togglePresentation(): void {
   }
   if (!presentable()) return;
   changelog.hide();
+  about.hide();
   document.body.classList.add("presenting");
   presentation.start(editor.text(), doc.path);
   updatePresentButton();
@@ -889,6 +912,7 @@ function notifyLarge(): void {
 function loadDoc(path: string | null, text: string, recent = true): void {
   endPresentation();
   changelog.hide();
+  about.hide();
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
@@ -932,6 +956,7 @@ async function activate(tab: Tab): Promise<void> {
   if (tab === doc) return editor.focus();
   endPresentation();
   changelog.hide();
+  about.hide();
   if (tabs.includes(doc)) {
     await flushAutosave();
     doc.editor = editor.snapshot();
@@ -1373,6 +1398,7 @@ const commands: Record<string, () => unknown> = {
   "make-default-editor": makeDefaultEditor,
   "check-updates": () => api.checkForUpdates(),
   changelog: () => showChangelog(),
+  about: () => void showAbout(),
   "cycle-appearance": toggleAppearance,
   "switch-theme": toggleThemes,
   "toggle-chrome": () => chrome.togglePinned(),
@@ -1463,6 +1489,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "make-default-editor", label: "Make Default Editor for .md and .txt" },
     { id: "check-updates", label: "Check for Updates…" },
     { id: "changelog", label: "What's New…" },
+    { id: "about", label: "About kayet" },
     { id: "close", label: "Close Window", shortcut: "⌘⇧W" },
     { id: "quit", label: "Quit kayet", shortcut: "⌘Q" },
   ];
@@ -1645,6 +1672,7 @@ els.slideFirst.innerHTML = icons.toStart;
 els.btnSyntax.innerHTML = icons.code;
 els.btnSpell.innerHTML = icons.spell;
 els.changelogClose.innerHTML = icons.closeFile;
+els.aboutClose.innerHTML = icons.closeFile;
 els.btnCloseFile.innerHTML = icons.closeFile;
 els.btnNewTab.innerHTML = icons.newTab;
 

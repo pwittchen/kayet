@@ -42,13 +42,23 @@
       </div>
     </section>
 
-    <section id="changelog" tabindex="-1" aria-label="What's New" data-tauri-drag-region hidden>
-      <div id="changelog-head" data-tauri-drag-region>
+    <section id="changelog" class="overlay" tabindex="-1" aria-label="What's New" data-tauri-drag-region hidden>
+      <div class="overlay-head" data-tauri-drag-region>
         <h1 data-tauri-drag-region>What's New</h1>
-        <button id="changelog-close" type="button" title="Close (Esc)" aria-label="Close What's New"></button>
+        <button id="changelog-close" class="overlay-close" type="button" title="Close (Esc)" aria-label="Close What's New"></button>
       </div>
-      <div id="changelog-scroller">
-        <div id="changelog-body" class="markdown-body"></div>
+      <div id="changelog-scroller" class="overlay-scroller">
+        <div id="changelog-body" class="overlay-body markdown-body"></div>
+      </div>
+    </section>
+
+    <section id="about" class="overlay" tabindex="-1" aria-label="About kayet" data-tauri-drag-region hidden>
+      <div class="overlay-head" data-tauri-drag-region>
+        <h1 data-tauri-drag-region>About</h1>
+        <button id="about-close" class="overlay-close" type="button" title="Close (Esc)" aria-label="Close About"></button>
+      </div>
+      <div class="overlay-scroller">
+        <div id="about-body" class="overlay-body markdown-body"></div>
       </div>
     </section>
 

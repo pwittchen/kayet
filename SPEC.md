@@ -129,10 +129,13 @@ neither download carries the other's code.
 - No HTTP client is bundled: the system's `curl`, `hdiutil`, `codesign` and `ditto` do the work.
 
 ### 4.6 About
-- `kayet → About kayet` shows the standard macOS About panel (icon, name, version) with clickable
-  links to the website ([getkayet.app](https://getkayet.app)), the source code on GitHub
-  (`pwittchen/kayet`), the author, Piotr Wittchen ([wittchen.io](https://wittchen.io)), and the
-  open-source contributors ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)).
+- `kayet → About kayet` (or the command palette) shows About in the app, styled like What's New
+  (see 4.7): the app icon, name and version, with links to the website
+  ([getkayet.app](https://getkayet.app)), the source code on GitHub (`pwittchen/kayet`), the
+  author, Piotr Wittchen ([wittchen.io](https://wittchen.io)), and the open-source contributors
+  ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)).
+- Like What's New, it covers the window, closes with `Esc` and never touches the open document;
+  links open in the default browser.
 
 ### 4.7 Changelog
 - `kayet → What's New…` (or the command palette) shows the changelog in the app: the published
@@ -540,6 +543,7 @@ kayet/
 │   ├── preview.ts           # preview pane
 │   ├── presentation.ts      # presentation mode (slides divided by ---)
 │   ├── changelog.ts         # What's New: release notes as Markdown (see 4.7)
+│   ├── about.ts             # About: icon, version and project links (see 4.6)
 │   ├── export.ts            # HTML / PDF export
 │   ├── images.ts            # web images shown from their downloaded copies
 │   ├── markdown-body.css    # rendered Markdown typography (preview and exports)

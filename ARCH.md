@@ -60,7 +60,7 @@ kayet/
 │   │   ├── image_cache.rs  web images downloaded via curl into ~/.kayet/cache/images/
 │   │   ├── recovery.rs     crash recovery backup (~/.kayet/recovery/buffer.json)
 │   │   ├── update.rs       update check / install and changelog from GitHub Releases
-│   │   ├── menu.rs         native menu bar, Open Recent, check items, About
+│   │   ├── menu.rs         native menu bar, Open Recent, check items
 │   │   ├── chrome.rs       traffic lights visibility, spell checking (objc2)
 │   │   ├── cli.rs          installs the `kayet` shell command
 │   │   └── default_app.rs  makes kayet the default app for .md / .txt (Launch Services)
@@ -79,6 +79,7 @@ kayet/
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
 │   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview
 │   ├── changelog.ts        What's New: release notes as Markdown, once after an update
+│   ├── about.ts            About: app icon, version and project links, styled like What's New
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)
 │   ├── export.ts           HTML / PDF export
 │   ├── images.ts           web images → their downloaded copies (preview and export)
@@ -164,8 +165,8 @@ There are exactly two channels:
   listen("notice")            ◀──── message ────────────────  commands.rs, update.rs
 ```
 
-Native menu items are routed by id: Open Recent, Clear Recent and About are handled in Rust
-(the backend owns those lists and windows); every other id is forwarded as a `menu` event and
+Native menu items are routed by id: Open Recent and Clear Recent are handled in Rust
+(the backend owns that list); every other id is forwarded as a `menu` event and
 dispatched by `run(id)` in `main.ts`, the same function the command palette uses.
 
 ## Security model
@@ -301,7 +302,8 @@ self-contained components that know nothing about each other.
      ├─▶ markdown.ts   (smart Markdown editing)
      ├─▶ languages.ts  (code grammars, loaded lazily)
      ├─▶ find.ts       (find / replace bar)
-     └─▶ Changelog     changelog.ts (What's New overlay)
+     ├─▶ Changelog     changelog.ts (What's New overlay)
+     └─▶ About         about.ts (About overlay)
 
                   all of them call the backend only through api.ts
 ```
@@ -320,7 +322,7 @@ The page is a fixed skeleton from `ui/index.html`; components render into it:
 │              │ │   Editor                         │ │   Preview               │
 ├──────────────┴─┴──────────────────────────────────┴─┴─────────────────────────┤
 │ #presentation (presentation mode, over everything but the title bar)          │
-│ #changelog (What's New overlay, over everything)                              │
+│ #changelog, #about (What's New / About overlays, over everything)             │
 │ #edge-handle · #toast · #print (PDF export only)                              │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```

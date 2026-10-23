@@ -920,11 +920,11 @@ body.presenting #edge-handle {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- What's New (changelog) ---- */
+/* ---- What's New (changelog) and About ---- */
 
 /* Covers the window like presentation mode, but also the title bar (z-index 20), which
    would otherwise still reveal on hover above it; the document underneath is untouched. */
-#changelog {
+.overlay {
   position: fixed;
   inset: 0;
   z-index: 25;
@@ -934,16 +934,16 @@ body.presenting #edge-handle {
   flex-direction: column;
 }
 
-#changelog[hidden] {
+.overlay[hidden] {
   display: none;
 }
 
-#changelog-head {
+.overlay-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--titlebar-height) + 8px) 24px 8px;
-  /* Same em basis as #changelog-body (a .markdown-body), so both columns line up. */
+  /* Same em basis, width and side padding as .overlay-body, so both columns line up. */
   font-size: var(--editor-font-size);
   max-width: 44em;
   width: 100%;
@@ -951,13 +951,13 @@ body.presenting #edge-handle {
   box-sizing: border-box;
 }
 
-#changelog-head h1 {
+.overlay-head h1 {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
 }
 
-#changelog-close {
+.overlay-close {
   display: grid;
   place-items: center;
   width: 28px;
@@ -967,22 +967,23 @@ body.presenting #edge-handle {
   transition: color var(--fade), background-color var(--fade);
 }
 
-#changelog-close:hover {
+.overlay-close:hover {
   color: var(--text);
   background: var(--hover);
 }
 
-#changelog-close svg {
+.overlay-close svg {
   width: 14px;
   height: 14px;
 }
 
-#changelog-scroller {
+.overlay-scroller {
   flex: 1;
   overflow-y: auto;
 }
 
-#changelog-body {
+/* Outranks `.markdown-body` (loaded later), whose width and padding would misalign the head. */
+.overlay-body.markdown-body {
   max-width: 44em;
   margin: 0 auto;
   padding: 8px 24px 48px;
@@ -1008,8 +1009,35 @@ body.presenting #edge-handle {
 }
 
 .changelog-date,
-.changelog-note {
+.changelog-note,
+.about-version {
   color: var(--text-muted);
+}
+
+#about-body {
+  text-align: center;
+}
+
+/* Centred over the body: the left margin balances the close button on the right. */
+#about .overlay-head h1 {
+  flex: 1;
+  margin-left: 28px;
+  text-align: center;
+}
+
+.about-icon {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 16px auto 8px;
+}
+
+/* The app name reads like a What's New version heading. */
+#about-body > h2 {
+  margin-top: 0;
+  font-size: 1.75em;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 /* ---- toast (non-blocking notices) ---- */
