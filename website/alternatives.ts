@@ -171,7 +171,7 @@ const ALTS: Alt[] = [
       ["Export", "HTML and PDF", "Many formats"],
     ],
     familiar: [
-      ["Clean and calm", "A quiet window, careful typography and eleven built-in color themes that follow your light or dark appearance."],
+      ["Clean and calm", "A quiet window, careful typography and sixteen built-in color themes that follow your light or dark appearance."],
       ["Markdown that keeps up", "Lists continue on Enter, pasted URLs over text become links and pasted images are saved next to the note."],
       ["Find anything", "Jump to a note with <kbd>⌘</kbd><kbd>P</kbd> or search all of them with <kbd>⌘</kbd><kbd>⇧</kbd><kbd>F</kbd>."],
     ],
@@ -440,7 +440,7 @@ const ALTS: Alt[] = [
     different: [
       ["Minimal interface", "No toolbars or panels on screen while you write. Everything is in the <kbd>⌘</kbd><kbd>K</kbd> palette."],
       ["Writing tools", "Zen mode, spell check, smart Markdown editing, slides and HTML / PDF export."],
-      ["Modern themes", "Eleven built-in color themes for light and dark, plus your own."],
+      ["Modern themes", "Sixteen built-in color themes for light and dark, plus your own."],
       ["Open source", "Apache License 2.0."],
     ],
     better: [
