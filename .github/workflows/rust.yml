@@ -29,7 +29,7 @@ jobs:
   # Fails the build on any known vulnerability in npm or Cargo dependencies. cargo audit also
   # denies warnings (unmaintained / unsound / yanked crates); exceptions live in .cargo/audit.toml.
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v7
