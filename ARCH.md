@@ -79,7 +79,7 @@ kayet/
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
 │   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview
 │   ├── changelog.ts        What's New: release notes as Markdown, once after an update
-│   ├── about.ts            About: app icon, version and project links in a floating panel
+│   ├── about.ts            About: icon, version, What's New / update check, project links
 │   ├── dialog.ts           in-app dialogs (sheets): unsaved changes, recovery, Trash, updates
 │   ├── updates.ts          update dialogs for update://checked and update://failed
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)

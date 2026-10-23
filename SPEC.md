@@ -130,13 +130,15 @@ neither download carries the other's code.
 
 ### 4.6 About
 - `kayet → About kayet` (or the command palette) shows a floating panel centred over the dimmed
-  window (see 5.7): the app icon, name, version and a one-line description, with links to the
+  window (see 5.7): the app icon, name, version, `What's New` (opens the changelog, see 4.7) and
+  `Check for Updates…` (runs the same check as the menu item, see 4.5) actions, and a one-line
+  description, with links to the
   website ([getkayet.app](https://getkayet.app)), the source code on GitHub (`pwittchen/kayet`),
   the open-source contributors
   ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)) and the
   author, Piotr Wittchen ([wittchen.io](https://wittchen.io)).
 - It closes with `Esc`, its close button or a click outside and never touches the open document;
-  links open in the default browser.
+  links open in the default browser. Update check results appear as dialogs over the panel.
 
 ### 4.7 Changelog
 - `kayet → What's New…` (or the command palette) shows the changelog in the app: the published
@@ -557,7 +559,7 @@ kayet/
 │   ├── preview.ts           # preview pane
 │   ├── presentation.ts      # presentation mode (slides divided by ---)
 │   ├── changelog.ts         # What's New: release notes as Markdown (see 4.7)
-│   ├── about.ts             # About: icon, version and project links (see 4.6)
+│   ├── about.ts             # About: icon, version, update actions and project links (see 4.6)
 │   ├── dialog.ts            # in-app dialogs: unsaved changes, recovery, Trash (see 5.7)
 │   ├── updates.ts           # update dialogs (see 4.5)
 │   ├── export.ts            # HTML / PDF export

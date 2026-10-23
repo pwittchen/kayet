@@ -248,7 +248,11 @@ function showChangelog(focusVersion?: string): Promise<void> {
   return changelog.show(focusVersion);
 }
 
-const about = new About(els.about, els.aboutBody, { exit: closeAbout });
+const about = new About(els.about, els.aboutBody, {
+  exit: closeAbout,
+  changelog: () => void showChangelog(),
+  checkUpdates: () => void api.checkForUpdates().catch(showError),
+});
 
 els.aboutClose.addEventListener("click", closeAbout);
 

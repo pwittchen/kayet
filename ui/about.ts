@@ -1,4 +1,4 @@
-// About: the app icon, name, version and project links, in a floating panel.
+// About: the app icon, name, version, update actions and project links, in a floating panel.
 
 import { api } from "./api";
 import iconUrl from "../core/icons/128x128@2x.png";
@@ -6,7 +6,16 @@ import iconUrl from "../core/icons/128x128@2x.png";
 export interface AboutCallbacks {
   /** Esc was pressed or the close button used: hide the view. */
   exit: () => void;
+  /** "What's New" was clicked: show the changelog. */
+  changelog: () => void;
+  /** "Check for Updates" was clicked: run an update check (its result comes as a dialog). */
+  checkUpdates: () => void;
 }
+
+const ACTIONS: [text: string, action: keyof Omit<AboutCallbacks, "exit">][] = [
+  ["What's New", "changelog"],
+  ["Check for Updates…", "checkUpdates"],
+];
 
 const LINKS: [text: string, href: string][] = [
   ["Website", "https://getkayet.app"],
@@ -16,7 +25,7 @@ const LINKS: [text: string, href: string][] = [
 
 /**
  * The About panel, centred over the dimmed window; clicking outside closes it. It never
- * touches the open document; links open in the default browser.
+ * touches the open document; links open in the default browser, actions call back.
  */
 export class About {
   constructor(
@@ -60,6 +69,14 @@ export class About {
     name.textContent = "kayet";
     const ver = paragraph(version ? `version ${version}` : "");
     ver.className = "about-version";
+    const actions = paragraph();
+    actions.className = "about-links about-actions";
+    ACTIONS.forEach(([text, action], i) => {
+      if (i > 0) actions.append(separator());
+      const a = link(text, "#");
+      a.dataset.action = action;
+      actions.append(a);
+    });
     const tagline = paragraph("A minimalistic text editor for macOS.");
     tagline.className = "about-tagline";
     const links = paragraph();
@@ -70,7 +87,7 @@ export class About {
     });
     const author = paragraph("Made by Piotr Wittchen", separator(), link("wittchen.io", "https://wittchen.io"));
     author.className = "about-links";
-    return [icon, name, ver, tagline, links, author];
+    return [icon, name, ver, actions, tagline, links, author];
   }
 
   private onClick(e: MouseEvent): void {
@@ -78,7 +95,9 @@ export class About {
     if (!anchor) return;
     // An unhandled href would navigate the app webview itself, replacing the editor UI.
     e.preventDefault();
-    void api.openExternal(anchor.href);
+    const action = anchor.dataset.action as keyof AboutCallbacks | undefined;
+    if (action === "changelog" || action === "checkUpdates") this.cb[action]();
+    else void api.openExternal(anchor.href);
   }
 }
 

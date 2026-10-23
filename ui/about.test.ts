@@ -12,6 +12,8 @@ describe("About", () => {
   let root: HTMLElement;
   let body: HTMLElement;
   let view: About;
+  let changelog: ReturnType<typeof vi.fn<() => void>>;
+  let checkUpdates: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
     invoke.mockReset();
@@ -21,7 +23,9 @@ describe("About", () => {
     body = document.createElement("div");
     root.append(body);
     document.body.replaceChildren(root);
-    view = new About(root, body, { exit: () => view.hide() });
+    changelog = vi.fn<() => void>();
+    checkUpdates = vi.fn<() => void>();
+    view = new About(root, body, { exit: () => view.hide(), changelog, checkUpdates });
   });
 
   it("shows the name, version and links", () => {
@@ -36,11 +40,23 @@ describe("About", () => {
 
   it("opens links in the browser", () => {
     view.show("0.10.1");
-    const link = body.querySelector("a")!;
+    const link = body.querySelector(`a[href="https://getkayet.app"]`)!;
     const click = new MouseEvent("click", { bubbles: true, cancelable: true });
     link.dispatchEvent(click);
     expect(click.defaultPrevented).toBe(true);
     expect(invoke).toHaveBeenCalledWith("open_external", { url: "https://getkayet.app/" });
+  });
+
+  it("shows What's New and checks for updates without leaving the app", () => {
+    view.show("0.10.1");
+    const action = (name: string) => body.querySelector<HTMLAnchorElement>(`a[data-action="${name}"]`)!;
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    action("changelog").dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(true);
+    expect(changelog).toHaveBeenCalledOnce();
+    action("checkUpdates").dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(checkUpdates).toHaveBeenCalledOnce();
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it("closes with Esc", () => {
