@@ -1,0 +1,42 @@
+# White for kayet: White Night (dark) and White (light).
+# Source of truth for the colors: https://marketplace.visualstudio.com/items?itemName=arthurwhite.white
+# (White-color-theme.json and White-Night-color-theme.json, © Arthur White).
+# White is almost monochrome: keywords, headings and numbers have no color of their own
+# (upstream only makes keywords and headings bold, which kayet's tokens can't express),
+# so they use the text color. Strings are grey, comments are faint, and the only color
+# is the blue (light) / violet (dark) cursor, selection and accent.
+# Like upstream, the sidebar shares the editor background.
+# Ported to kayet by Terre6 (https://github.com/pwittchen/kayet/issues/15).
+# Bundled with kayet: set `theme = "white"` in ~/.kayet/config.toml or pick it from
+# `Switch Theme…`. A copy in ~/.kayet/themes/white.toml takes precedence.
+# See SPEC.md §9 for the format.
+
+[dark]  # White Night
+bg = "#000000"           # editor.background
+bg-sidebar = "#000000"   # sideBar.background
+text = "#ffffff"         # editor.foreground
+text-muted = "#a8a8b1"   # sideBar.foreground
+border = "#1e1d27"       # input.border, editorWidget.border
+accent = "#7d46fc"       # button.background, textLink.foreground
+selection = "#7d46fc7f"  # editor.selectionBackground
+caret = "#7d46fc"        # editorCursor.foreground
+hl-keyword = "#ffffff"   # keywords are bold editor.foreground upstream
+hl-string = "#a8a8b1"    # string
+hl-number = "#ffffff"    # no number color upstream: editor.foreground
+hl-title = "#ffffff"     # markup.heading is bold editor.foreground upstream
+hl-comment = "#2e2e37"   # comment
+
+[light]  # White
+bg = "#ffffff"           # editor.background
+bg-sidebar = "#ffffff"   # sideBar.background
+text = "#000000"         # editor.foreground
+text-muted = "#6b7a88"   # sideBar.foreground
+border = "#e7ecf2"       # input.border, editorWidget.border
+accent = "#004bff"       # button.background, textLink.foreground
+selection = "#0064ff4c"  # editor.selectionBackground
+caret = "#004bff"        # editorCursor.foreground
+hl-keyword = "#000000"   # keywords are bold editor.foreground upstream
+hl-string = "#6b7a88"    # string
+hl-number = "#000000"    # no number color upstream: editor.foreground
+hl-title = "#000000"     # markup.heading is bold editor.foreground upstream
+hl-comment = "#bec9d3"   # comment

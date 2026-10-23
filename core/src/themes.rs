@@ -51,6 +51,7 @@ const BUNDLED: &[(&str, &str)] = &[
     ("solarized", include_str!("../../themes/solarized.toml")),
     ("tokyo-night", include_str!("../../themes/tokyo-night.toml")),
     ("vitesse", include_str!("../../themes/vitesse.toml")),
+    ("white", include_str!("../../themes/white.toml")),
     ("zenwritten", include_str!("../../themes/zenwritten.toml")),
 ];
 
