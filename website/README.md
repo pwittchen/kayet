@@ -16,4 +16,4 @@ pages to its list there.
 
 The "<app> alternative" landing pages (`/alternatives/*.html`) are generated from the data in
 `alternatives.ts` by `dev` and `build`; `alternatives/` is not checked in. Their links in the
-second footer line of `index.html` and `privacy.html` are a copy, so keep them in sync.
+footer's "Alternative to" column of `index.html` and `privacy.html` are a copy, so keep them in sync.

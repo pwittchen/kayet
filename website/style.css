@@ -588,18 +588,52 @@ kbd {
 
 /* ---- footer ---- */
 .footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 28px 24px 40px;
+  padding: 56px max(24px, calc((100% - 1040px) / 2)) 32px;
+  border-top: 1px solid var(--border);
   background: var(--bg-soft);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
 }
-.footer a { color: var(--text-muted); }
-.footer a:hover { color: var(--text); }
-.footer-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.footer a { color: var(--text-muted); transition: color 0.2s; }
+.footer a:hover { color: var(--text); text-decoration: none; }
+.footer-cols {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.8fr 1fr;
+  gap: 40px 32px;
+}
+.footer-brand .nav-brand { color: var(--text); }
+.footer-brand p { max-width: 22em; margin: 14px 0 0; line-height: 1.6; }
+.footer-title {
+  margin: 0 0 14px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+.footer-col ul { margin: 0; padding: 0; list-style: none; }
+.footer-col li { margin-bottom: 10px; line-height: 1.4; break-inside: avoid; }
+/* Twelve alternatives read better as two short columns than one long one. */
+.footer-col-wide ul { columns: 2; column-gap: 24px; }
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+@media (max-width: 920px) {
+  .footer-cols { grid-template-columns: repeat(3, 1fr); }
+  .footer-brand { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .footer { padding-top: 44px; }
+  .footer-cols { grid-template-columns: 1fr 1fr; gap: 32px 24px; }
+  /* Product and Resources side by side, the alternatives full width below. */
+  .footer-col:last-child { grid-area: 2 / 2; }
+  .footer-col-wide { grid-column: 1 / -1; }
+}
 
 /* ---- motion ---- */
 .js .reveal {

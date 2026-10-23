@@ -491,10 +491,9 @@ const ALTS: Alt[] = [
   },
 ];
 
-// The second footer line; index.html and privacy.html carry a copy, keep them in sync.
+// The footer's "Alternative to" column; index.html and privacy.html carry a copy, keep them in sync.
 const footerAlternatives = (indent: string) =>
-  `${indent}<span>Alternative to</span>\n` +
-  ALTS.map((o) => `${indent}<a href="/alternatives/${o.slug}.html">${o.name}</a>`).join(`\n${indent}<span class="dot">·</span>\n`);
+  ALTS.map((o) => `${indent}<li><a href="/alternatives/${o.slug}.html">${o.name}</a></li>`).join("\n");
 
 const esc = (s: string) => s.replace(/&(?![a-z#0-9]+;)/g, "&amp;");
 const strip = (s: string) => s.replace(/<[^>]+>/g, "");
@@ -658,21 +657,39 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
   </main>
 
   <footer class="footer">
-    <div class="footer-row">
-      <a href="/">kayet</a>
-      <span class="dot">·</span>
-      <a href="https://github.com/pwittchen/kayet">GitHub</a>
-      <span class="dot">·</span>
-      <a href="https://github.com/pwittchen/kayet/blob/master/LICENSE">License</a>
-      <span class="dot">·</span>
-      <a href="https://github.com/pwittchen/kayet/releases">Changelog</a>
-      <span class="dot">·</span>
-      <a href="/privacy.html">Privacy</a>
+    <div class="footer-cols">
+      <div class="footer-brand">
+        <a class="nav-brand" href="/"><img src="../icon.png" alt="" width="22" height="22"><span>kayet</span></a>
+        <p>A quiet, distraction-free text editor for Mac. Free and open source.</p>
+      </div>
+      <div class="footer-col">
+        <p class="footer-title">Product</p>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/#download">Download</a></li>
+          <li><a href="https://github.com/pwittchen/kayet/releases">Changelog</a></li>
+          <li><a href="https://github.com/pwittchen/kayet">GitHub</a></li>
+          <li><a href="/#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-col-wide">
+        <p class="footer-title">Alternative to</p>
+        <ul>
+${footerAlternatives("          ")}
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p class="footer-title">Resources</p>
+        <ul>
+          <li><a href="/privacy.html">Privacy policy</a></li>
+          <li><a href="https://github.com/pwittchen/kayet/blob/master/LICENSE">License</a></li>
+          <li><a href="/llms.txt">llms.txt</a></li>
+          <li><a href="/llms-full.txt">llms-full.txt</a></li>
+        </ul>
+      </div>
     </div>
-    <div class="footer-row">
-${footerAlternatives("      ")}
-    </div>
-    <div class="footer-row">
+    <div class="footer-bottom">
+      <span>© 2026 <a href="https://wittchen.io" target="_blank" rel="noopener">Piotr Wittchen</a> · <a href="https://vcu.sh/" target="_blank" rel="noopener">VCU</a></span>
       <span>made in Poland, Europe 🇵🇱 🇪🇺</span>
     </div>
   </footer>
