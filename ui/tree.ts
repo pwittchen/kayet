@@ -1,6 +1,7 @@
 // File tree: lazy directory loading, keyboard navigation, inline create/rename (incl. double-click), context menu.
 
 import { api, basename, dirname, Entry, isWithin, join } from "./api";
+import { confirmTrash } from "./dialog";
 import { icons } from "./icons";
 
 export interface TreeCallbacks {
@@ -300,7 +301,7 @@ export class FileTree {
   }
 
   private async confirmAndTrash(entry: Entry): Promise<void> {
-    if (await api.confirmTrash(entry.name)) await this.trash(entry);
+    if (await confirmTrash(entry.name)) await this.trash(entry);
   }
 
   // ---- context menu ----

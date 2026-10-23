@@ -118,6 +118,8 @@ export const api = {
   makeDefaultEditor: () => invoke<void>("make_default_editor"),
   /** Checks for a new kayet release and offers to install it (native dialogs). */
   checkForUpdates: () => invoke<void>("check_for_updates"),
+  /** Answers the update offered by `update://checked`; resolves once an update is installed. */
+  answerUpdate: (answer: "update" | "skip" | "later") => invoke<void>("answer_update", { answer }),
   /** Recent published release notes for What's New, newest first. */
   getChangelog: () => invoke<ChangelogEntry[]>("get_changelog"),
   /** Records that the changelog was shown for `version`. */
@@ -188,13 +190,6 @@ export const api = {
   openFileDialog: () => invoke<string | null>("open_file_dialog"),
   saveFileDialog: (directory: string | null, fileName: string) =>
     invoke<string | null>("save_file_dialog", { directory, fileName }),
-  confirmUnsaved: (name: string) =>
-    invoke<"save" | "discard" | "cancel">("confirm_unsaved", { name }),
-  confirmSave: (name: string) => invoke<boolean>("confirm_save", { name }),
-  /** Asks whether to restore the unsaved changes to `name` and `others` more documents. */
-  confirmRestore: (name: string, others: number) =>
-    invoke<boolean>("confirm_restore", { name, others }),
-  confirmTrash: (name: string) => invoke<boolean>("confirm_trash", { name }),
   showContextMenu: (items: MenuItemSpec[]) =>
     invoke<void>("show_context_menu", { items }),
   benchDir: () => invoke<string | null>("bench_dir"),

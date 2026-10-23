@@ -15,9 +15,7 @@ use serde::{Deserialize, Serialize};
 use tauri::ipc::{InvokeBody, Request};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
-use tauri_plugin_dialog::{
-    DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult,
-};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::config::{self, Config};
 use crate::fs_ops::{self, canonical};
@@ -348,10 +346,19 @@ pub fn make_default_editor(app: AppHandle) -> CmdResult<()> {
     crate::default_app::make_default(&app.config().identifier)
 }
 
-/// Checks for a new kayet release and offers to install it (`kayet → Check for Updates…`).
+/// Checks for a new kayet release (`kayet → Check for Updates…`); the result arrives as
+/// `update://checked`.
 #[tauri::command]
 pub async fn check_for_updates(app: AppHandle) -> CmdResult<()> {
     tauri::async_runtime::spawn_blocking(move || crate::update::check(&app, true))
+        .await
+        .map_err(err)
+}
+
+/// Answers the offered update: `"update"`, `"skip"` or `"later"`. Installing blocks until done.
+#[tauri::command]
+pub async fn answer_update(app: AppHandle, answer: String) -> CmdResult<()> {
+    tauri::async_runtime::spawn_blocking(move || crate::update::answer(&app, &answer))
         .await
         .map_err(err)
 }
@@ -703,96 +710,6 @@ pub async fn pick_workspace(
         return Ok(None);
     };
     Ok(Some(state.switch_workspace(&app, &path)))
-}
-
-/// Native "unsaved changes" prompt. Returns `"save"`, `"discard"` or `"cancel"`.
-#[tauri::command]
-pub async fn confirm_unsaved(app: AppHandle, name: String) -> String {
-    let result = app
-        .dialog()
-        .message("Your changes will be lost if you don't save them.")
-        .title(format!("Do you want to save the changes made to “{name}”?"))
-        .kind(MessageDialogKind::Warning)
-        .buttons(MessageDialogButtons::YesNoCancelCustom(
-            "Save".into(),
-            "Don't Save".into(),
-            "Cancel".into(),
-        ))
-        .blocking_show_with_result();
-    match result {
-        MessageDialogResult::Yes => "save",
-        MessageDialogResult::No => "discard",
-        MessageDialogResult::Custom(label) if label == "Save" => "save",
-        MessageDialogResult::Custom(label) if label == "Don't Save" => "discard",
-        _ => "cancel",
-    }
-    .into()
-}
-
-/// Native "save changes?" prompt. Returns true if the user confirmed.
-#[tauri::command]
-pub async fn confirm_save(app: AppHandle, name: String) -> bool {
-    let result = app
-        .dialog()
-        .message("Your changes will be written to disk.")
-        .title(format!("Do you want to save the changes made to “{name}”?"))
-        .kind(MessageDialogKind::Info)
-        .buttons(MessageDialogButtons::OkCancelCustom(
-            "Save".into(),
-            "Cancel".into(),
-        ))
-        .blocking_show_with_result();
-    match result {
-        MessageDialogResult::Ok => true,
-        MessageDialogResult::Custom(label) => label == "Save",
-        _ => false,
-    }
-}
-
-/// Native "restore unsaved changes?" prompt shown at launch after an unclean exit, naming
-/// the first document and counting the `others`. Returns true if the user chose to restore them.
-#[tauri::command]
-pub async fn confirm_restore(app: AppHandle, name: String, others: usize) -> bool {
-    let documents = match others {
-        0 => format!("“{name}”"),
-        1 => format!("“{name}” and 1 other document"),
-        n => format!("“{name}” and {n} other documents"),
-    };
-    let result = app
-        .dialog()
-        .message("kayet didn't quit normally. If you don't restore them, the changes will be lost.")
-        .title(format!("Restore unsaved changes to {documents}?"))
-        .kind(MessageDialogKind::Warning)
-        .buttons(MessageDialogButtons::OkCancelCustom(
-            "Restore".into(),
-            "Discard".into(),
-        ))
-        .blocking_show_with_result();
-    match result {
-        MessageDialogResult::Ok => true,
-        MessageDialogResult::Custom(label) => label == "Restore",
-        _ => false,
-    }
-}
-
-/// Native "move to Trash?" prompt. Returns true if the user confirmed.
-#[tauri::command]
-pub async fn confirm_trash(app: AppHandle, name: String) -> bool {
-    let result = app
-        .dialog()
-        .message("You can restore it from the Trash later.")
-        .title(format!("Move “{name}” to the Trash?"))
-        .kind(MessageDialogKind::Warning)
-        .buttons(MessageDialogButtons::OkCancelCustom(
-            "Move to Trash".into(),
-            "Cancel".into(),
-        ))
-        .blocking_show_with_result();
-    match result {
-        MessageDialogResult::Ok => true,
-        MessageDialogResult::Custom(label) => label == "Move to Trash",
-        _ => false,
-    }
 }
 
 #[derive(Deserialize)]

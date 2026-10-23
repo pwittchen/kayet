@@ -117,7 +117,7 @@ neither download carries the other's code.
   `[updates] check_automatically = false`. Development builds never check on their own.
 - `kayet → Check for Updates…` (or the command palette) checks right away and also reports when
   kayet is up to date or the check failed.
-- When a newer version is found, a native dialog offers **Update**, **Skip This Version** (automatic
+- When a newer version is found, a dialog (see 5.7) offers **Update**, **Skip This Version** (automatic
   checks don't offer that version again; a manual check still does) or **Later**.
 - **Update** downloads the release's `.dmg` for the Mac's architecture, verifies that the app inside has a valid signature
   from the same Developer ID team as the running app and replaces the running `kayet.app` with it
@@ -129,12 +129,13 @@ neither download carries the other's code.
 - No HTTP client is bundled: the system's `curl`, `hdiutil`, `codesign` and `ditto` do the work.
 
 ### 4.6 About
-- `kayet → About kayet` (or the command palette) shows About in the app, styled like What's New
-  (see 4.7): the app icon, name and version, with links to the website
-  ([getkayet.app](https://getkayet.app)), the source code on GitHub (`pwittchen/kayet`), the
-  author, Piotr Wittchen ([wittchen.io](https://wittchen.io)), and the open-source contributors
-  ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)).
-- Like What's New, it covers the window, closes with `Esc` and never touches the open document;
+- `kayet → About kayet` (or the command palette) shows a floating panel centred over the dimmed
+  window (see 5.7): the app icon, name, version and a one-line description, with links to the
+  website ([getkayet.app](https://getkayet.app)), the source code on GitHub (`pwittchen/kayet`),
+  the open-source contributors
+  ([GitHub contributors page](https://github.com/pwittchen/kayet/graphs/contributors)) and the
+  author, Piotr Wittchen ([wittchen.io](https://wittchen.io)).
+- It closes with `Esc`, its close button or a click outside and never touches the open document;
   links open in the default browser.
 
 ### 4.7 Changelog
@@ -255,6 +256,19 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   first), selects the match with the line centered and makes the query the find query, so `⌘G`
   continues to the next occurrence. `Esc`, `⌘⇧F` again or a click outside closes it.
 
+### 5.7 Dialogs
+- Questions are asked in the app, not in native alerts: saving unsaved changes (**Don't Save** /
+  **Cancel** / **Save**), saving before an action (**Cancel** / **Save**), crash recovery
+  (**Discard** / **Restore**), Move to Trash and app updates (see 4.5).
+- A dialog is a sheet that drops in just below the title bar over the dimmed window: a bold title,
+  a muted message and the buttons right-aligned, the default one filled with the accent color
+  and focused (`Enter`). A button that discards (**Don't Save**, **Skip This Version**) stands
+  apart on the left. `Esc` answers like Cancel; `Tab` cycles the buttons; clicking outside does
+  nothing. While it is open, keys don't reach the document; dialogs asked meanwhile wait their turn.
+- Panels (About) share the look: the theme's background, a hairline border, 12px corners, the
+  palette's shadow and a 40px header with a centred title and a close button.
+- File pickers (open, save, export, workspace) stay native.
+
 ## 6. File Tree
 
 - Hidden by default; can be shown and hidden at any time (`⌘\` or the sidebar control).
@@ -318,12 +332,12 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   matches. `⌘R` shows the same bar with a replace field after the options (`↩` replace, `⌘↩` / All
   replace all); `⌘F` hides it again. A selected single-line text becomes the query.
 - Autosave: off by default; optional setting to autosave after 1s of inactivity.
-- Unsaved changes prompt on close / switching file (native dialog).
+- Unsaved changes prompt on close / switching file (a dialog, see 5.7).
 - Crash recovery: while any document (a file or untitled, in any tab) has unsaved changes, a backup
   of those documents is kept in `~/.kayet/recovery/` (written at most ~1s after an edit; when
   they add up to over ~10MB, once typing pauses for 2s, but at most 30s after an edit). It is
   removed once all changes are saved or discarded and when the window closes normally, so a backup
-  found at launch means kayet did not exit cleanly: a native dialog offers to **Restore** the changes
+  found at launch means kayet did not exit cleanly: a dialog (see 5.7) offers to **Restore** the changes
   (each reopens in a tab as unsaved edits to its file, or as an untitled document, in place of the
   start documents) or **Discard** them.
 - Large files (over ~10MB of text) open in **large file mode**: no Markdown preview (its icon and
@@ -544,6 +558,8 @@ kayet/
 │   ├── presentation.ts      # presentation mode (slides divided by ---)
 │   ├── changelog.ts         # What's New: release notes as Markdown (see 4.7)
 │   ├── about.ts             # About: icon, version and project links (see 4.6)
+│   ├── dialog.ts            # in-app dialogs: unsaved changes, recovery, Trash (see 5.7)
+│   ├── updates.ts           # update dialogs (see 4.5)
 │   ├── export.ts            # HTML / PDF export
 │   ├── images.ts            # web images shown from their downloaded copies
 │   ├── markdown-body.css    # rendered Markdown typography (preview and exports)
@@ -588,7 +604,8 @@ kayet/
 | `recent_files() -> Vec<String>` / `allow_recent(path)` | Recent files for the command palette / allow opening one |
 | `install_cli()`                | Install the `kayet` shell command             |
 | `make_default_editor()`        | Make kayet the default app for `.md` / `.markdown` / `.txt` |
-| `check_for_updates()`          | Look for a new release and offer to install it |
+| `check_for_updates()`          | Look for a new release; the result arrives as `update://checked` |
+| `answer_update(answer)`        | Install (`update`), skip (`skip`) or put off (`later`) the offered release |
 | `get_changelog() -> Vec<Entry>` | Published release notes (version, body, page, date), newest first, for What's New |
 | `mark_changelog_seen(version)` | Record that the changelog was shown for a version (see 4.7) |
 | `restart_app()`                | Restart into the update just installed        |
@@ -598,6 +615,9 @@ kayet/
 - `theme://changed` — system appearance changed.
 - `open://requested` — a file / folder was opened from Finder, the `kayet` command or File → Open Recent.
 - `notice` — a non-blocking message to show (e.g. a recent file no longer exists).
+- `update://checked` — what an update check found (`available`, or for a manual check also
+  `up-to-date` / `failed`); the frontend asks or reports in a dialog.
+- `update://failed` — installing an update failed; the frontend offers the release page.
 - `update://installed` — a new kayet version was installed; the frontend restarts into it.
 
 ### Security

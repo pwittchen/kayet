@@ -79,7 +79,9 @@ kayet/
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
 │   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview
 │   ├── changelog.ts        What's New: release notes as Markdown, once after an update
-│   ├── about.ts            About: app icon, version and project links, styled like What's New
+│   ├── about.ts            About: app icon, version and project links in a floating panel
+│   ├── dialog.ts           in-app dialogs (sheets): unsaved changes, recovery, Trash, updates
+│   ├── updates.ts          update dialogs for update://checked and update://failed
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)
 │   ├── export.ts           HTML / PDF export
 │   ├── images.ts           web images → their downloaded copies (preview and export)
@@ -152,7 +154,7 @@ There are exactly two channels:
   api.markChangelogSeen ───── invoke("mark_changelog_seen")▶  AppState session marker
   api.writeRecovery ───────── invoke("write_recovery",       recovery::write
                                bytes, kayet-backups) ─────▶
-  api.confirm* / *Dialog ──── invoke(...) ─────────────────▶  tauri-plugin-dialog (native)
+  api.*Dialog ─────────────── invoke(...) ─────────────────▶  tauri-plugin-dialog (native pickers)
   api.exportPdf ───────────── invoke("export_pdf") ────────▶  export::pdf (NSPrintOperation)
             …                                                   …
 
@@ -161,6 +163,8 @@ There are exactly two channels:
   listen("theme://changed")   ◀──── "dark" | "light" ───────  WindowEvent::ThemeChanged
   listen("file://dropped")    ◀──── { path } ───────────────  WindowEvent::DragDrop
   listen("open://requested")  ◀──── { file, folder } ───────  RunEvent::Opened (Finder / CLI)
+  listen("update://checked")  ◀──── found / up to date ─────  update.rs
+  listen("update://failed")   ◀──── { error, page } ────────  update.rs
   listen("update://installed")◀──── version ────────────────  update.rs
   listen("notice")            ◀──── message ────────────────  commands.rs, update.rs
 ```
@@ -303,7 +307,8 @@ self-contained components that know nothing about each other.
      ├─▶ languages.ts  (code grammars, loaded lazily)
      ├─▶ find.ts       (find / replace bar)
      ├─▶ Changelog     changelog.ts (What's New overlay)
-     └─▶ About         about.ts (About overlay)
+     ├─▶ About         about.ts (About panel)
+     └─▶ dialog.ts     in-app dialogs (updates.ts asks through it too)
 
                   all of them call the backend only through api.ts
 ```
@@ -322,7 +327,8 @@ The page is a fixed skeleton from `ui/index.html`; components render into it:
 │              │ │   Editor                         │ │   Preview               │
 ├──────────────┴─┴──────────────────────────────────┴─┴─────────────────────────┤
 │ #presentation (presentation mode, over everything but the title bar)          │
-│ #changelog, #about (What's New / About overlays, over everything)             │
+│ #changelog (What's New overlay, over everything)                              │
+│ #about (About panel) · .sheet-scrim (dialogs, added while open)               │
 │ #edge-handle · #toast · #print (PDF export only)                              │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -342,11 +348,12 @@ smart Markdown editing or word count, and crash recovery backups wait for a paus
   init()
     ├─ getConfig · getWorkspace · configFile       apply theme, editor settings, modes
     ├─ listen(menu, fs://changed, theme://changed, notice,
-    │         file://dropped, open://requested, update://installed)
+    │         file://dropped, open://requested, update://checked,
+    │         update://failed, update://installed)
     ├─ onCloseRequested → confirm unsaved changes → clear recovery backup
     ├─ takeOpened()                                Finder / CLI folder → workspace
     ├─ tree.setRoot(workspace)
-    ├─ loadRecovery()  ── backups? ──▶ offer restore (confirm_restore)
+    ├─ loadRecovery()  ── backups? ──▶ offer restore (dialog.ts confirmRestore)
     │        └─ none / declined ──▶ openSession() (open files from config.session)
     │                               then the file from Finder / CLI, if any
     ├─ takeNotice()                                one-time toast
@@ -472,14 +479,15 @@ restoring before the session is opened.
   curl api.github.com/…/releases/latest ── newer than running version? ── no ──▶ done
      │ yes
      ▼
-  native dialog: Install / Skip This Version / Later
-     │ Install
+  emit("update://checked") → frontend dialog: Update / Skip This Version / Later
+     │ Update → invoke("answer_update")
      ▼
   curl kayet-macos-<arch>.dmg → hdiutil attach → codesign: same Developer ID team?
      → ditto into place, swap the app bundle
      │
      ▼
   emit("update://installed") → frontend asks about unsaved changes → restart_app
+  (install failed → emit("update://failed") → frontend offers the release page)
 ```
 
 No HTTP client is compiled in; network and disk work goes through the system's `curl`,

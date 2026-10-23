@@ -19,6 +19,10 @@
   --bar-bg: color-mix(in srgb, var(--bg) 78%, transparent);
   --sidebar-bg: color-mix(in srgb, var(--bg-sidebar) 82%, transparent);
   --shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 16px rgb(0 0 0 / 8%);
+  /* Floating boxes: the command palette, dialogs and panels. */
+  --shadow-float: var(--shadow), 0 16px 48px rgb(0 0 0 / 12%);
+  --scrim: rgb(0 0 0 / 20%);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --hl-keyword: #a0469e;
   --hl-string: #3e7d4f;
@@ -47,6 +51,7 @@
   --caret: #22d3ee;
 
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 35%);
+  --scrim: rgb(0 0 0 / 40%);
   --hl-keyword: #c792ea;
   --hl-string: #9ccc8c;
   --hl-number: #e3a26f;
@@ -1009,35 +1014,223 @@ body.presenting #edge-handle {
 }
 
 .changelog-date,
-.changelog-note,
-.about-version {
+.changelog-note {
   color: var(--text-muted);
 }
 
-#about-body {
+/* ---- dialogs (dialog.ts) and panels (About) ---- */
+
+/* Over everything, the palette included; the window underneath is dimmed. */
+.sheet-scrim,
+.panel-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 16px;
+  background: var(--scrim);
+  outline: none;
+  animation: scrim-in 180ms var(--ease-out);
+}
+
+.panel-scrim {
+  z-index: 45;
+  align-items: center;
+}
+
+.panel-scrim[hidden] {
+  display: none;
+}
+
+.sheet,
+.panel {
+  font: 13px var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-float);
+}
+
+/* Drops in just below the title bar, like a macOS sheet. */
+.sheet {
+  width: min(380px, 100%);
+  margin-top: calc(var(--titlebar-height) + 4px);
+  padding: 20px;
+  outline: none;
+  animation: sheet-in 180ms var(--ease-out);
+}
+
+.sheet h2 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sheet p {
+  margin: 0 0 16px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sheet-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sheet-button {
+  height: 28px;
+  padding: 0 12px;
+  font: 500 13px var(--font-ui);
+  color: var(--text);
+  white-space: nowrap;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background-color var(--fade);
+}
+
+.sheet-button:hover {
+  background: var(--hover);
+}
+
+.sheet-button.leading {
+  margin-right: auto;
+}
+
+.sheet-button.primary {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sheet-button.primary:hover {
+  background: color-mix(in srgb, var(--accent) 88%, var(--text));
+}
+
+.sheet-button:focus-visible {
+  outline-offset: 1px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(360px, 100%);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
+  animation: panel-in 180ms var(--ease-out);
+}
+
+/* The title is centred: the left padding balances the close button on the right. */
+.panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 6px 0 34px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
   text-align: center;
 }
 
-/* Centred over the body: the left margin balances the close button on the right. */
-#about .overlay-head h1 {
-  flex: 1;
-  margin-left: 28px;
+.panel-body {
+  overflow-y: auto;
+}
+
+#about-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 32px 28px;
   text-align: center;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .about-icon {
-  display: block;
   width: 96px;
   height: 96px;
-  margin: 16px auto 8px;
+  margin-bottom: 12px;
 }
 
-/* The app name reads like a What's New version heading. */
-#about-body > h2 {
-  margin-top: 0;
-  font-size: 1.75em;
-  padding-bottom: 0;
-  border-bottom: none;
+.about-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.about-version {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.about-tagline {
+  margin: 12px 0 0;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.about-links + .about-links {
+  margin-top: 4px;
+}
+
+.about-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.about-links a:hover {
+  text-decoration: underline;
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-scrim,
+  .panel-scrim,
+  .sheet,
+  .panel {
+    animation: none;
+  }
 }
 
 /* ---- toast (non-blocking notices) ---- */
@@ -1089,7 +1282,7 @@ body.presenting #edge-handle {
   backdrop-filter: saturate(180%) blur(20px);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: var(--shadow), 0 16px 48px rgb(0 0 0 / 12%);
+  box-shadow: var(--shadow-float);
   overflow: hidden;
 }
 

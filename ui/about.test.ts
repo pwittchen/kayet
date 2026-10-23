@@ -27,7 +27,7 @@ describe("About", () => {
   it("shows the name, version and links", () => {
     view.show("0.10.1");
     expect(view.open).toBe(true);
-    expect(body.querySelector("h2")?.textContent).toBe("kayet");
+    expect(body.querySelector(".about-name")?.textContent).toBe("kayet");
     expect(body.querySelector(".about-version")?.textContent).toBe("version 0.10.1");
     const hrefs = [...body.querySelectorAll("a")].map((a) => a.getAttribute("href"));
     expect(hrefs).toContain("https://getkayet.app");

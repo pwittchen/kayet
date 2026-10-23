@@ -1,4 +1,4 @@
-// About: the app icon, name, version and project links, shown like What's New.
+// About: the app icon, name, version and project links, in a floating panel.
 
 import { api } from "./api";
 import iconUrl from "../core/icons/128x128@2x.png";
@@ -9,11 +9,15 @@ export interface AboutCallbacks {
 }
 
 const LINKS: [text: string, href: string][] = [
-  ["getkayet.app", "https://getkayet.app"],
-  ["Source code on GitHub", "https://github.com/pwittchen/kayet"],
+  ["Website", "https://getkayet.app"],
+  ["Source code", "https://github.com/pwittchen/kayet"],
+  ["Contributors", "https://github.com/pwittchen/kayet/graphs/contributors"],
 ];
 
-/** The About overlay. It never touches the open document; links open in the default browser. */
+/**
+ * The About panel, centred over the dimmed window; clicking outside closes it. It never
+ * touches the open document; links open in the default browser.
+ */
 export class About {
   constructor(
     private readonly root: HTMLElement,
@@ -21,6 +25,9 @@ export class About {
     private readonly cb: AboutCallbacks,
   ) {
     body.addEventListener("click", (e) => this.onClick(e));
+    root.addEventListener("click", (e) => {
+      if (e.target === root) this.cb.exit();
+    });
     document.addEventListener("keydown", (e) => {
       if (this.open && e.key === "Escape" && !e.defaultPrevented) {
         e.preventDefault();
@@ -48,18 +55,22 @@ export class About {
     icon.className = "about-icon";
     icon.src = iconUrl;
     icon.alt = "";
-    const name = document.createElement("h2");
+    const name = document.createElement("h3");
+    name.className = "about-name";
     name.textContent = "kayet";
-    const ver = document.createElement("p");
+    const ver = paragraph(version ? `version ${version}` : "");
     ver.className = "about-version";
-    ver.textContent = version ? `version ${version}` : "";
-    const links = LINKS.map(([text, href]) => paragraph(link(text, href)));
-    const author = paragraph("Made by Piotr Wittchen (", link("wittchen.io", "https://wittchen.io"), ")");
-    const contributors = paragraph(
-      "and ",
-      link("open-source contributors", "https://github.com/pwittchen/kayet/graphs/contributors"),
-    );
-    return [icon, name, ver, ...links, author, contributors];
+    const tagline = paragraph("A minimalistic text editor for macOS.");
+    tagline.className = "about-tagline";
+    const links = paragraph();
+    links.className = "about-links";
+    LINKS.forEach(([text, href], i) => {
+      if (i > 0) links.append(separator());
+      links.append(link(text, href));
+    });
+    const author = paragraph("Made by Piotr Wittchen", separator(), link("wittchen.io", "https://wittchen.io"));
+    author.className = "about-links";
+    return [icon, name, ver, tagline, links, author];
   }
 
   private onClick(e: MouseEvent): void {
@@ -76,6 +87,13 @@ function link(text: string, href: string): HTMLAnchorElement {
   a.href = href;
   a.textContent = text;
   return a;
+}
+
+function separator(): HTMLSpanElement {
+  const span = document.createElement("span");
+  span.setAttribute("aria-hidden", "true");
+  span.textContent = "·";
+  return span;
 }
 
 function paragraph(...parts: (string | Node)[]): HTMLParagraphElement {

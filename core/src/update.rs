@@ -1,5 +1,5 @@
 //! App updates: looks up the latest kayet release on GitHub and, when it is newer than the
-//! running app, offers to install it. Installing downloads the release's `.dmg`, checks that
+//! running app, offers to install it (the frontend asks, see `ui/updates.ts`). Installing downloads the release's `.dmg`, checks that
 //! the app inside is signed by the same Developer ID team as the running one, swaps the app
 //! bundle in place and lets the frontend restart kayet (after asking about unsaved changes).
 //!
@@ -8,14 +8,12 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
-use tauri_plugin_dialog::{
-    DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult,
-};
 
 use crate::commands::AppState;
 
@@ -33,8 +31,37 @@ const FIRST_CHECK_DELAY: Duration = Duration::from_secs(10);
 /// How often a long-running kayet checks again.
 const CHECK_INTERVAL: Duration = Duration::from_hours(24);
 
-/// Set while a check (and a possible install) is in progress, so dialogs never pile up.
+/// Set while a check or an install is in progress, so they never overlap.
 static BUSY: AtomicBool = AtomicBool::new(false);
+
+/// The newer release last offered to the frontend, until it answers (see `answer`).
+static OFFERED: Mutex<Option<Release>> = Mutex::new(None);
+
+/// What a check found, emitted as `update://checked` for the frontend to show. Automatic
+/// checks only report `Available`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum Checked {
+    /// A newer release: the frontend offers Update, Skip This Version or Later.
+    Available {
+        version: String,
+        current: String,
+    },
+    UpToDate {
+        current: String,
+    },
+    Failed {
+        error: String,
+    },
+}
+
+/// Emitted as `update://failed` when installing fails; the frontend offers the download page.
+#[derive(Debug, Clone, Serialize)]
+pub struct InstallFailed {
+    pub error: String,
+    pub version: String,
+    pub page: String,
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Release {
@@ -104,92 +131,71 @@ pub fn start_background_checks(app: &AppHandle) {
     });
 }
 
-/// Looks for a newer release and offers to install it. A `manual` check (Check for Updates…)
-/// also reports that kayet is up to date or that the check failed, and ignores a skipped
-/// version. Blocks until the user has answered, so call it off the main thread.
+/// Looks for a newer release and emits what it found as `update://checked`. A `manual` check
+/// (Check for Updates…) also reports that kayet is up to date or that the check failed, and
+/// ignores a skipped version. Blocks on the network, so call it off the main thread.
 pub fn check(app: &AppHandle, manual: bool) {
     if BUSY.swap(true, Ordering::SeqCst) {
         return;
     }
-    run_check(app, manual);
+    let checked = run_check(app, manual);
     BUSY.store(false, Ordering::SeqCst);
+    if let Some(checked) = checked {
+        let _ = app.emit("update://checked", checked);
+    }
 }
 
-fn run_check(app: &AppHandle, manual: bool) {
+fn run_check(app: &AppHandle, manual: bool) -> Option<Checked> {
     let current = app.package_info().version.to_string();
     let release = match latest_release() {
         Ok(release) => release,
         Err(e) => {
             eprintln!("kayet: update check failed: {e}");
-            if manual {
-                message(
-                    app,
-                    "Couldn't check for updates",
-                    &e,
-                    MessageDialogKind::Warning,
-                );
-            }
-            return;
+            return manual.then_some(Checked::Failed { error: e });
         }
     };
     if !is_newer(&release.version, &current) {
-        if manual {
-            message(
-                app,
-                "kayet is up to date",
-                &format!("kayet {current} is the latest version."),
-                MessageDialogKind::Info,
-            );
-        }
-        return;
+        return manual.then_some(Checked::UpToDate { current });
     }
-    let state = app.state::<AppState>();
-    let skipped = state
+    let skipped = app
+        .state::<AppState>()
         .config
         .lock()
         .ok()
         .and_then(|c| c.session.skipped_version.clone());
     if !manual && skipped.as_deref() == Some(release.version.as_str()) {
-        return;
+        return None;
     }
-    match ask_to_update(app, &release.version, &current) {
-        Answer::Update => update(app, &release),
-        Answer::Skip => {
+    let version = release.version.clone();
+    if let Ok(mut offered) = OFFERED.lock() {
+        *offered = Some(release);
+    }
+    Some(Checked::Available { version, current })
+}
+
+/// The user's answer to the offered release: `"update"` installs it (blocking, so call it
+/// off the main thread), `"skip"` stops automatic checks from offering it again, anything
+/// else (Later) does nothing.
+pub fn answer(app: &AppHandle, answer: &str) {
+    let Some(release) = OFFERED.lock().ok().and_then(|mut o| o.take()) else {
+        return;
+    };
+    match answer {
+        "update" => {
+            if BUSY.swap(true, Ordering::SeqCst) {
+                return;
+            }
+            update(app, &release);
+            BUSY.store(false, Ordering::SeqCst);
+        }
+        "skip" => {
+            let state = app.state::<AppState>();
             if let Ok(mut cfg) = state.config.lock() {
-                cfg.session.skipped_version = Some(release.version.clone());
+                cfg.session.skipped_version = Some(release.version);
             }
             state.save_config();
         }
-        Answer::Later => {}
-    }
-}
-
-enum Answer {
-    Update,
-    Skip,
-    Later,
-}
-
-fn ask_to_update(app: &AppHandle, version: &str, current: &str) -> Answer {
-    let result = app
-        .dialog()
-        .message(format!(
-            "kayet {version} is available — you have {current}. kayet restarts to finish updating."
-        ))
-        .title("A new version of kayet is available")
-        .kind(MessageDialogKind::Info)
-        .buttons(MessageDialogButtons::YesNoCancelCustom(
-            "Update".into(),
-            "Skip This Version".into(),
-            "Later".into(),
-        ))
-        .blocking_show_with_result();
-    match result {
-        MessageDialogResult::Yes => Answer::Update,
-        MessageDialogResult::No => Answer::Skip,
-        MessageDialogResult::Custom(label) if label == "Update" => Answer::Update,
-        MessageDialogResult::Custom(label) if label == "Skip This Version" => Answer::Skip,
-        _ => Answer::Later,
+        _ => {}
     }
 }
 
@@ -212,39 +218,18 @@ fn update(app: &AppHandle, release: &Release) {
             let _ = app.emit("update://installed", &release.version);
         }
         Ok(false) => {} // the administrator password prompt was cancelled
-        Err(e) => {
-            eprintln!("kayet: update failed: {e}");
-            let result = app
-                .dialog()
-                .message(format!(
-                    "{e}\n\nYou can download kayet {} instead.",
-                    release.version
-                ))
-                .title("Couldn't install the update")
-                .kind(MessageDialogKind::Warning)
-                .buttons(MessageDialogButtons::OkCancelCustom(
-                    "Download".into(),
-                    "Cancel".into(),
-                ))
-                .blocking_show_with_result();
-            let download = match result {
-                MessageDialogResult::Ok => true,
-                MessageDialogResult::Custom(label) => label == "Download",
-                _ => false,
-            };
-            if download {
-                open_page(&release.page);
-            }
+        Err(error) => {
+            eprintln!("kayet: update failed: {error}");
+            let _ = app.emit(
+                "update://failed",
+                InstallFailed {
+                    error,
+                    version: release.version.clone(),
+                    page: release.page.clone(),
+                },
+            );
         }
     }
-}
-
-fn message(app: &AppHandle, title: &str, text: &str, kind: MessageDialogKind) {
-    app.dialog()
-        .message(text)
-        .title(title)
-        .kind(kind)
-        .blocking_show();
 }
 
 fn open_page(url: &str) {
@@ -490,6 +475,24 @@ impl Drop for DetachOnDrop {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn check_results_serialize_for_the_frontend() {
+        let json = |c: &Checked| serde_json::to_string(c).unwrap();
+        assert_eq!(
+            json(&Checked::Available {
+                version: "0.2.0".into(),
+                current: "0.1.0".into()
+            }),
+            r#"{"kind":"available","version":"0.2.0","current":"0.1.0"}"#
+        );
+        assert_eq!(
+            json(&Checked::UpToDate {
+                current: "0.1.0".into()
+            }),
+            r#"{"kind":"up-to-date","current":"0.1.0"}"#
+        );
+    }
 
     #[test]
     fn versions_are_compared_numerically() {

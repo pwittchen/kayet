@@ -52,13 +52,13 @@
       </div>
     </section>
 
-    <section id="about" class="overlay" tabindex="-1" aria-label="About kayet" data-tauri-drag-region hidden>
-      <div class="overlay-head" data-tauri-drag-region>
-        <h1 data-tauri-drag-region>About</h1>
-        <button id="about-close" class="overlay-close" type="button" title="Close (Esc)" aria-label="Close About"></button>
-      </div>
-      <div class="overlay-scroller">
-        <div id="about-body" class="overlay-body markdown-body"></div>
+    <section id="about" class="panel-scrim" tabindex="-1" hidden>
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="about-title">
+        <header class="panel-head" data-tauri-drag-region>
+          <h2 id="about-title" data-tauri-drag-region>About</h2>
+          <button id="about-close" class="overlay-close" type="button" title="Close (Esc)" aria-label="Close About"></button>
+        </header>
+        <div id="about-body" class="panel-body"></div>
       </div>
     </section>
 

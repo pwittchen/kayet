@@ -25,6 +25,7 @@ import { About } from "./about";
 import { afterPaint, runBench } from "./bench";
 import { Changelog, changelogStartupAction } from "./changelog";
 import { Chrome } from "./chrome";
+import { confirmRestore, confirmSave, confirmUnsaved } from "./dialog";
 import { Editor, EditorSettings, EditorSnapshot } from "./editor";
 import { exportHtml, exportPdf } from "./export";
 import { imageExtension, looksLikeMarkdown } from "./markdown";
@@ -46,6 +47,7 @@ import {
   themeItems,
 } from "./theme";
 import { FileTree } from "./tree";
+import { showUpdateChecked, showUpdateFailed, UpdateChecked, UpdateFailed } from "./updates";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -665,7 +667,7 @@ function updateStatus(dirty: boolean): void {
 
 /** Asks whether to save the unsaved changes, then saves them. */
 async function promptSave(): Promise<void> {
-  if (isDirty() && (await chrome.hold(api.confirmSave(docName())))) await save();
+  if (isDirty() && (await confirmSave(docName()))) await save();
   editor.focus();
 }
 
@@ -946,7 +948,7 @@ function setDocPath(path: string): void {
 /** Asks to save unsaved changes. Returns false if the user cancelled. */
 async function confirmDiscard(): Promise<boolean> {
   if (!isDirty()) return true;
-  const choice = await chrome.hold(api.confirmUnsaved(docName()));
+  const choice = await confirmUnsaved(docName());
   if (choice === "save") return save();
   return choice === "discard";
 }
@@ -1204,7 +1206,7 @@ function clearBackup(): Promise<void> {
  */
 async function restoreBackups(backups: Backup[]): Promise<boolean> {
   const name = backups[0].path ? basename(backups[0].path) : "Untitled";
-  if (!(await chrome.hold(api.confirmRestore(name, backups.length - 1)))) {
+  if (!(await confirmRestore(name, backups.length - 1))) {
     await clearBackup();
     return false;
   }
@@ -1745,6 +1747,8 @@ async function init(): Promise<void> {
     listen<string>("notice", (e) => notify(e.payload)),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
+    listen<UpdateChecked>("update://checked", (e) => void showUpdateChecked(e.payload).catch(showError)),
+    listen<UpdateFailed>("update://failed", (e) => void showUpdateFailed(e.payload).catch(showError)),
     listen<string>("update://installed", (e) => void restartToUpdate(e.payload).catch(showError)),
     appWindow.onCloseRequested(async (event) => {
       if (!(await confirmDiscardAll())) return event.preventDefault();
