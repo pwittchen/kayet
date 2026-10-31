@@ -49,6 +49,8 @@ jobs:
       run: cargo audit --deny warnings
 
   build:
+    # Audits gate the build: a failed audit fails the workflow without building or testing.
+    needs: audit
 
     # Apple Silicon and Intel (SPEC.md §3): checks run natively on the Apple Silicon runner,
     # the Intel app is cross-compiled there too.
