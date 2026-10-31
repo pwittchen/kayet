@@ -401,11 +401,18 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   document as currently edited (unsaved changes included).
 - One slide fills the window (over the editor, file tree and preview), vertically centered when
   it fits and scrollable when it doesn't, rendered like the preview in larger type that scales
-  with the window. Previous / next buttons sit on the left and right edges (disabled on the first /
-  last slide), the slide number and count (`2 / 10`) in the lower right corner. On the last slide
+  with the window. Previous / next buttons sit on the left and right edges (disabled at the very
+  start / end), the slide number and count (`2 / 10`) in the lower right corner. On the last slide
   a button to the left of the count goes back to the first slide.
-- `←` / `→`, `Page Up` / `Page Down`, `Space` / `⇧Space` move between slides, `Home` / `End` go to
-  the first / last one.
+- By default (`[ui] presentation_steps = true`) a slide is revealed step by step: it opens with
+  its first step, and moving forward reveals the next one, then goes to the next slide. A step is a block (paragraph, heading, code block, table,
+  quote, image…) or a list item, nested items included; consecutive headings are one step. Blocks
+  not revealed yet keep their place, so the slide doesn't shift. Moving back hides the last
+  revealed step, then goes to the previous slide, revealed in full. With `presentation_steps =
+  false` slides are shown whole and moving goes straight between them.
+- `←` / `→`, `Page Up` / `Page Down`, `Space` / `⇧Space` and the previous / next buttons move
+  through steps and slides. `Home` goes to the start of the first slide, `End` to the last slide,
+  revealed in full.
 - The title bar stays hover-revealed; its presentation icon turns into an exit icon. Clicking it,
   `Esc` or `Exit Presentation` in the palette returns to the editor. Opening another document or
   switching tabs ends the presentation too. Changes to the document meanwhile (e.g. reloaded from
@@ -491,6 +498,7 @@ code_mode = false         # code editor mode: line numbers, no paddings / wrappi
 sidebar_width = 240
 preview_split = 0.5
 open_in_new_tab = false   # open files (and ⌘N) in a new tab instead of in place of the open one
+presentation_steps = true # reveal presentation slides step by step instead of whole (see 8.2)
 
 [editor]
 font_family = "mono"      # "mono" | "system" | font names, e.g. "Iosevka, Sarasa Mono J"

@@ -859,6 +859,11 @@ body.presenting #edge-handle {
   font-size: 1.6em;
 }
 
+/* Not revealed yet: keeps its place, so the slide doesn't shift as its steps appear. */
+#slide .slide-pending {
+  visibility: hidden;
+}
+
 .slide-nav {
   position: absolute;
   top: 50%;

@@ -66,6 +66,8 @@ pub struct UiConfig {
     pub preview_split: f64,
     /// Open files in a new tab instead of in place of the current document.
     pub open_in_new_tab: bool,
+    /// Reveal presentation slides step by step instead of showing each one whole.
+    pub presentation_steps: bool,
 }
 
 impl Default for UiConfig {
@@ -80,6 +82,7 @@ impl Default for UiConfig {
             sidebar_width: 240,
             preview_split: 0.5,
             open_in_new_tab: false,
+            presentation_steps: true,
         }
     }
 }
@@ -352,6 +355,18 @@ mod tests {
         assert!(written.contains("theme = \"gruvbox\""));
         assert!(written.contains("mode = \"dark\""));
         assert_eq!(parse(&written).unwrap(), cfg);
+    }
+
+    #[test]
+    fn presentation_steps_are_on_unless_turned_off() {
+        assert!(
+            parse("[ui]\nzen_mode = true\n")
+                .unwrap()
+                .ui
+                .presentation_steps
+        );
+        let cfg = parse("[ui]\npresentation_steps = false\n").unwrap();
+        assert!(!cfg.ui.presentation_steps);
     }
 
     #[test]

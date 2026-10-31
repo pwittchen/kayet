@@ -227,6 +227,7 @@ const presentation = new Presentation(
   {
     openFile: (path) => void openFile(path),
     exit: () => togglePresentation(),
+    stepByStep: () => cfg.ui.presentation_steps,
   },
 );
 

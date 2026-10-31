@@ -16,6 +16,7 @@ export interface Config {
     sidebar_width: number;
     preview_split: number;
     open_in_new_tab: boolean;
+    presentation_steps: boolean;
   };
   editor: {
     /** "mono", "system", or font family names separated by commas. */

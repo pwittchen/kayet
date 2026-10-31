@@ -77,7 +77,8 @@ kayet/
 │   ├── languages.ts        code highlighting by file extension (lazy legacy modes)
 │   ├── find.ts             in-document find / replace bar
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
-│   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview
+│   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview,
+│   │                       revealed block by block / list item by list item
 │   ├── changelog.ts        What's New: release notes as Markdown, once after an update
 │   ├── about.ts            About: icon, version, What's New / update check, project links
 │   ├── dialog.ts           in-app dialogs (sheets): unsaved changes, recovery, Trash, updates
