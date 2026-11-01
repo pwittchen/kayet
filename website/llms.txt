@@ -15,6 +15,7 @@ kayet edits plain text, Markdown and source code. It offers a live Markdown prev
 
 - [kayet for Mac, Apple Silicon (.dmg)](https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-aarch64.dmg): latest release, signed and notarized, for Macs with Apple Silicon (M-series)
 - [kayet for Mac, Intel (.dmg)](https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-x86_64.dmg): the same release built for Intel Macs
+- Homebrew: `brew install --cask pwittchen/tap/kayet`
 - [Releases](https://github.com/pwittchen/kayet/releases): release notes and previous versions
 
 ## Optional

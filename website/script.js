@@ -26,6 +26,22 @@ toggle.addEventListener("click", () => {
   applyMode(next);
 });
 
+// Install command: a click copies it (DataFast counts the click through data-fast-goal).
+document.querySelectorAll(".install-cmd").forEach((button) => {
+  const label = button.ariaLabel;
+  let timer;
+  button.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(button.querySelector("code").textContent);
+    button.classList.add("copied");
+    button.ariaLabel = "Copied";
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      button.classList.remove("copied");
+      button.ariaLabel = label;
+    }, 1500);
+  });
+});
+
 // Scroll reveal, staggered within each section.
 document.querySelectorAll("section").forEach((section) => {
   section.querySelectorAll(".reveal").forEach((el, i) => {

@@ -6,6 +6,7 @@
 - Source code: https://github.com/pwittchen/kayet
 - Download for Apple Silicon: https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-aarch64.dmg (signed and notarized)
 - Download for Intel: https://github.com/pwittchen/kayet/releases/latest/download/kayet-macos-x86_64.dmg (signed and notarized)
+- Homebrew: `brew install --cask pwittchen/tap/kayet`
 - Specification: https://raw.githubusercontent.com/pwittchen/kayet/master/SPEC.md
 
 ## Features

@@ -499,6 +499,11 @@ const esc = (s: string) => s.replace(/&(?![a-z#0-9]+;)/g, "&amp;");
 const strip = (s: string) => s.replace(/<[^>]+>/g, "");
 
 const APPLE = `<svg class="apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>`;
+
+const COPY_ICONS = `<svg class="icon-copy" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5"/></svg><svg class="icon-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8.5 3.5 3.5L13 4.5"/></svg>`;
+
+const installCommand = (location: string, classes = "") =>
+  `<button class="install-cmd${classes}" type="button" aria-label="Copy the Homebrew install command" data-fast-goal="copy_brew_command" data-fast-goal-location="${location}"><code>brew install --cask pwittchen/tap/kayet</code>${COPY_ICONS}</button>`;
 const GITHUB = `<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`;
 
 function page(a: Alt): string {
@@ -596,6 +601,7 @@ function page(a: Alt): string {
         <a class="btn btn-primary" href="${DMG}" data-fast-goal="download" data-fast-goal-location="${a.slug}-hero">${APPLE}Download kayet</a>
         <a class="btn btn-link" href="/">See all features <span aria-hidden="true">›</span></a>
       </div>
+      ${installCommand(`${a.slug}-hero`, " reveal")}
     </section>
 
     <section class="alt-section">
@@ -645,6 +651,7 @@ ${a.faq.map(([q, ans]) => `        <div class="reveal"><h3>${q}</h3><p>${esc(ans
       <p class="reveal">Free and open source. For Macs with Apple Silicon or Intel.</p>
       <div class="reveal">
         <a class="btn btn-primary" href="${DMG}" data-fast-goal="download" data-fast-goal-location="${a.slug}-footer">${APPLE}Download for Mac</a>
+        ${installCommand(`${a.slug}-footer`)}
         <p class="note">Signed and notarized. On an Intel Mac? <a href="${DMG_INTEL}" data-fast-goal="download_intel" data-fast-goal-location="${a.slug}-footer-intel">Download for Intel</a>. <a href="https://github.com/pwittchen/kayet/releases">Release notes &amp; previous versions</a>.</p>
       </div>
     </section>
