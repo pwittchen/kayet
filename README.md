@@ -16,6 +16,18 @@ the minimalistic text editor for macOS
   <img src="screenshot.png" alt="kayet screenshot">
 </p>
 
+## Installation
+
+Download the `.dmg` from [getkayet.app](https://getkayet.app) or install it with
+[Homebrew](https://brew.sh), which also adds the `kayet` command:
+
+```sh
+brew install --cask pwittchen/tap/kayet
+```
+
+If kayet is already in `/Applications`, add `--force` to let Homebrew take it over. kayet updates
+itself either way; `brew upgrade` leaves it alone unless `--greedy` is given.
+
 ## Opening files from the terminal
 
 Run **kayet → Install ‘kayet’ Command** once (also in the command palette, `⌘K`), then:

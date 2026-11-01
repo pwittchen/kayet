@@ -106,7 +106,8 @@ neither download carries the other's code.
   makes a folder the workspace, in the running instance or by launching kayet.
   - Installed via `kayet → Install ‘kayet’ Command` (or the command palette), which
     symlinks the launcher script bundled in `kayet.app/Contents/Resources/kayet` to
-    `/usr/local/bin/kayet`, asking for an administrator password if needed.
+    `/usr/local/bin/kayet`, asking for an administrator password if needed. The Homebrew cask
+    (`brew install --cask pwittchen/tap/kayet`) links the same script into Homebrew's `bin` itself.
 - A file opened this way is opened like any other (in place of the current document or in a new
   tab, see 4.4) and, at launch, is shown instead of the restored active document. When several
   files are given only the first one is opened.
