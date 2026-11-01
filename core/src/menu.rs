@@ -121,8 +121,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &PredefinedMenuItem::minimize(app, None)?,
             &PredefinedMenuItem::maximize(app, Some("Zoom"))?,
             &sep()?,
-            &item("prev-tab", "Show Previous Tab", Some("CmdOrCtrl+Shift+["))?,
-            &item("next-tab", "Show Next Tab", Some("CmdOrCtrl+Shift+]"))?,
+            &item("prev-tab", "Show Previous Tab", None)?,
+            &item("next-tab", "Show Next Tab", None)?,
+            &item("show-tabs", "Show All Tabs…", None)?,
         ],
     )?;
 

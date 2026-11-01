@@ -36,7 +36,7 @@
 | Command palette | `⌘K` |
 | New file | `⌘N` |
 | New tab | `⌘T` |
-| Next / previous tab | `⇧⌘]` / `⇧⌘[` |
+| Next / previous tab | `⇧⇥` / `⌥⇧⇥` |
 | Open file | `⌘O` |
 | Go to file | `⌘P` |
 | Open workspace | `⌘⇧O` |

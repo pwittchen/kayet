@@ -1,5 +1,5 @@
 // Spotlight-like palette: type to filter, ↑/↓ to move, Enter to pick, Esc to close.
-// Lists commands (⌘K), workspace files (⌘P, the file finder) or search results (⌘⇧F).
+// Lists commands (⌘K), workspace files (⌘P, the file finder), search results (⌘⇧F) or open tabs.
 
 export interface PaletteItem {
   id: string;

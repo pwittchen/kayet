@@ -1400,6 +1400,7 @@ const commands: Record<string, () => unknown> = {
   "close-file": () => closeTab(),
   "next-tab": () => cycleTab(1),
   "prev-tab": () => cycleTab(-1),
+  "show-tabs": toggleTabs,
   close: () => appWindow.close(),
   quit: () => appWindow.close(),
   undo: () => (inTextField() ? document.execCommand("undo") : editor.undo()),
@@ -1459,8 +1460,9 @@ function paletteCommands(): PaletteItem[] {
     md && { id: "export-html", label: "Export as HTML…" },
     md && { id: "export-pdf", label: "Export as PDF…" },
     (!!doc.path || tabs.length > 1) && { id: "close-file", label: "Close File", shortcut: "⌘W" },
-    tabs.length > 1 && { id: "next-tab", label: "Show Next Tab", shortcut: "⌃⇥" },
-    tabs.length > 1 && { id: "prev-tab", label: "Show Previous Tab", shortcut: "⌃⇧⇥" },
+    tabs.length > 1 && { id: "next-tab", label: "Show Next Tab", shortcut: "⇧⇥" },
+    tabs.length > 1 && { id: "prev-tab", label: "Show Previous Tab", shortcut: "⌥⇧⇥" },
+    { id: "show-tabs", label: "Show All Tabs…" },
     { id: "undo", label: "Undo", shortcut: "⌘Z" },
     { id: "redo", label: "Redo", shortcut: "⌘⇧Z" },
     { id: "find", label: "Find…", shortcut: "⌘F" },
@@ -1565,6 +1567,28 @@ async function toggleRecent(): Promise<void> {
     placeholder: "Open recent…",
     empty: files.length ? "No matching files" : "No recent files",
     pick: (path) => void api.allowRecent(path).then(openFile).catch(showError),
+  });
+}
+
+/** Every open tab in strip order, the shown one marked and preselected; picking shows that tab. */
+function toggleTabs(): Promise<void> {
+  const listed = [...tabs];
+  const items = listed.map((tab, i) => {
+    const dir = tab.path && dirname(tab.path);
+    const state = [tab === doc && "current", isTabDirty(tab) && "unsaved"].filter(Boolean);
+    return {
+      id: String(i),
+      label: tabName(tab),
+      detail: dir ? (relativeTo(workspace, dir) ?? dir) : undefined,
+      aside: state.join(" · ") || undefined,
+    };
+  });
+  return showPalette(items, {
+    kind: "tabs",
+    placeholder: "Show tab…",
+    empty: "No matching tabs",
+    selected: Math.max(0, listed.indexOf(doc)),
+    pick: (i) => void activate(listed[Number(i)]).catch(showError),
   });
 }
 
@@ -1692,14 +1716,17 @@ els.aboutClose.innerHTML = icons.closeFile;
 els.btnCloseFile.innerHTML = icons.closeFile;
 els.btnNewTab.innerHTML = icons.newTab;
 
-// ⌃⇥ / ⌃⇧⇥ switch tabs, like ⇧⌘] / ⇧⌘[ (Window menu).
+// ⇧⇥ shows the next tab, ahead of the editor's outdent (⌘[ does that), and ⌥⇧⇥ the previous one.
+// They keep their usual meaning in text fields and the find bar; an open dialog takes the key
+// before it gets here. Handled here, not as menu shortcuts, since those would take it from them too.
 document.addEventListener(
   "keydown",
   (e) => {
-    if (e.key !== "Tab" || !e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key !== "Tab" || !e.shiftKey || e.ctrlKey || e.metaKey) return;
+    if (document.activeElement?.closest("input, .find-bar")) return;
     e.preventDefault();
     e.stopPropagation();
-    run(e.shiftKey ? "prev-tab" : "next-tab");
+    run(e.altKey ? "prev-tab" : "next-tab");
   },
   true,
 );

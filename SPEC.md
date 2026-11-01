@@ -90,8 +90,16 @@ neither download carries the other's code.
   open in a new tab next to the current one instead; an untouched empty untitled document is
   replaced either way.
 - With more than one tab open, the title bar shows a tab strip in place of the document name
-  (see 5.3). A click shows a tab; its × (or a middle click) closes it. `⇧⌘]` / `⇧⌘[`
-  (`Window → Show Next / Previous Tab`) and `⌃⇥` / `⌃⇧⇥` switch tabs, wrapping around.
+  (see 5.3). A click shows a tab; its × (or a middle click) closes it.
+- `⇧⇥` (`Shift+Tab`) shows the next tab and `⌥⇧⇥` the previous one, wrapping around. `⇧⇥` takes
+  the key from the editor, where `⌘[` outdents; in text fields, the find bar and dialogs both keep
+  their usual meaning.
+  `Window → Show Next / Previous Tab` and the command palette switch tabs too (only the palette
+  shows them with more than one tab open).
+- `Window → Show All Tabs…` or the command palette opens the same floating panel as the file finder
+  (see 5.5), listing every open tab in order, even if there is only one: its name with its folder
+  muted beside it, and on the right whether it is the current one and has unsaved changes. The
+  current tab is preselected; typing filters, `Enter` or a click shows the tab.
 - Each tab keeps its own undo history, selection and scroll position; the file tree, preview and
   settings are shared. Autosave saves a document before switching away from it.
 - Closing the window asks about the unsaved changes of every tab, one by one.
@@ -235,7 +243,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Typing filters the list (substring and in-order fuzzy match); `↑` / `↓` move the selection,
   `Enter` or a click runs the command, `Esc`, `⌘K` again or a click outside closes it.
 - A muted footer along the bottom of the panel (shared by the file finder, workspace search and
-  the theme pickers) hints at the keys: `↑` `↓` navigate, `↵` select, `esc` close.
+  the tab list and the theme pickers) hints at the keys: `↑` `↓` navigate, `↵` select, `esc` close.
 
 ### 5.5 File finder
 - `⌘P` (`File → Go to File…` or the command palette) opens the same floating panel listing every
@@ -644,7 +652,7 @@ kayet/
 |------------------------|-----------|
 | New file               | `⌘N`      |
 | New tab                | `⌘T`      |
-| Next / previous tab    | `⇧⌘]` / `⇧⌘[`, `⌃⇥` / `⌃⇧⇥` |
+| Next / previous tab    | `⇧⇥` / `⌥⇧⇥` |
 | Open file              | `⌘O`      |
 | Go to file (finder)    | `⌘P`      |
 | Open workspace         | `⌘⇧O`     |
