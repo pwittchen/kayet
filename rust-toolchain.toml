@@ -1,5 +1,5 @@
 [toolchain]
 channel = "1.98.1"
-components = ["rustfmt", "clippy"]
+components = ["rustfmt", "clippy", "llvm-tools"]
 targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
 profile = "minimal"

@@ -28,6 +28,7 @@ target
 # Frontend
 node_modules
 /dist
+/coverage
 
 # Tauri
 /core/gen

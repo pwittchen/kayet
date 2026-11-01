@@ -84,9 +84,9 @@ jobs:
     - name: Build frontend
       run: npm run build
 
-    - name: Run frontend tests
+    - name: Run frontend tests with coverage
       if: matrix.arch == 'aarch64'
-      run: npm test
+      run: npm run test:coverage
 
     - name: Check formatting
       if: matrix.arch == 'aarch64'
@@ -100,9 +100,28 @@ jobs:
       if: matrix.arch == 'aarch64'
       run: cargo build --locked
 
-    - name: Run tests
+    - uses: taiki-e/install-action@v2
       if: matrix.arch == 'aarch64'
-      run: cargo test --locked
+      with:
+        tool: cargo-llvm-cov
+
+    - name: Run tests with coverage
+      if: matrix.arch == 'aarch64'
+      run: |
+        scripts/coverage-rust.sh
+        {
+          echo '### Rust coverage'
+          echo '```'
+          cat coverage/rust/summary.txt
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - uses: actions/upload-artifact@v7
+      if: matrix.arch == 'aarch64'
+      with:
+        name: coverage
+        path: coverage
+        if-no-files-found: error
 
     - name: Bundle app
       run: npx tauri build --target "$TARGET" --bundles app

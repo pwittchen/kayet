@@ -20,5 +20,13 @@ export default defineConfig({
   },
   test: {
     environment: "happy-dom",
+    coverage: {
+      provider: "v8",
+      // Relative to `root`; includes files no test imports, so they count as uncovered.
+      include: ["**/*.ts"],
+      exclude: ["**/*.test.ts"],
+      reporter: ["text-summary", "html", "lcov"],
+      reportsDirectory: "../coverage/ui",
+    },
   },
 });
