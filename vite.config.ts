@@ -25,7 +25,8 @@ export default defineConfig({
       // Relative to `root`; includes files no test imports, so they count as uncovered.
       include: ["**/*.ts"],
       exclude: ["**/*.test.ts"],
-      reporter: ["text-summary", "html", "lcov"],
+      // text-summary twice: once for the console, once for the CI job summary.
+      reporter: ["text-summary", ["text-summary", { file: "summary.txt" }], "html", "lcov"],
       reportsDirectory: "../coverage/ui",
     },
   },

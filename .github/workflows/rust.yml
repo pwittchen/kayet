@@ -86,7 +86,14 @@ jobs:
 
     - name: Run frontend tests with coverage
       if: matrix.arch == 'aarch64'
-      run: npm run test:coverage
+      run: |
+        npm run test:coverage
+        {
+          echo '### Frontend coverage'
+          echo '```'
+          cat coverage/ui/summary.txt
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Check formatting
       if: matrix.arch == 'aarch64'
