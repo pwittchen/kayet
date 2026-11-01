@@ -519,6 +519,7 @@ preserves like `skipped_version`.
 │                        — settings, window geometry, open / recent files, skipped version,
 │                          last version the changelog was shown for;
 │                          edited as a normal document from Settings (⌘,), reloaded on save
+│                          and, after edits made elsewhere, on window focus
 ├── themes/              themes (<name>.toml), selected via [ui] theme
 ├── workspace/           default workspace (used when none is configured or it is gone)
 ├── cache/

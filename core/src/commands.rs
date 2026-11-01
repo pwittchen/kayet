@@ -229,21 +229,38 @@ pub fn config_file(app: AppHandle, state: State<'_, AppState>) -> String {
     path_string(&state.allow(&app, &path))
 }
 
-/// Re-reads the config file after the user edited it. Window geometry, the workspace path
-/// and the session are owned by the running app and are kept as they are.
+/// Whether the config file differs from the running configuration, i.e. it was edited outside
+/// kayet. A file that doesn't parse counts as unchanged.
 #[tauri::command]
-pub fn reload_config(state: State<'_, AppState>) -> CmdResult<Config> {
+pub fn config_changed(state: State<'_, AppState>) -> bool {
+    let Ok(text) = std::fs::read_to_string(config::config_path()) else {
+        return false;
+    };
+    let current = lock(&state.config);
+    config::parse_edited(&text, &current).is_ok_and(|cfg| cfg != *current)
+}
+
+/// Re-reads the config file after the user edited it and moves to the workspace it names.
+/// Window geometry and the session are owned by the running app and are kept as they are.
+/// A workspace that isn't a folder leaves the current one in place, with a notice.
+#[tauri::command]
+pub fn reload_config(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Config> {
     let text = std::fs::read_to_string(config::config_path()).map_err(err)?;
-    let cfg = config::parse(&text).map_err(|e| format!("Invalid config: {}", e.message()))?;
-    let mut current = lock(&state.config);
-    let window = current.window.clone();
-    let path = current.workspace.path.clone();
-    let session = current.session.clone();
-    *current = cfg;
-    current.window = window;
-    current.workspace.path = path;
-    current.session = session;
-    Ok(current.clone())
+    let current = lock(&state.config).clone();
+    let cfg = config::parse_edited(&text, &current)
+        .map_err(|e| format!("Invalid config: {}", e.message()))?;
+    let target = canonical(&config::expand_tilde(&cfg.workspace.path));
+    lock(&state.config).clone_from(&cfg);
+    if target != *lock(&state.workspace) {
+        if target.is_dir() {
+            lock(&state.workspace).clone_from(&target);
+            state.start_watcher(&app);
+        } else {
+            let path = &cfg.workspace.path;
+            let _ = app.emit("notice", format!("Workspace {path} is not a folder."));
+        }
+    }
+    Ok(cfg)
 }
 
 /// Loads a theme from `~/.kayet/themes/<name>.toml` or a bundled one.

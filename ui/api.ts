@@ -101,6 +101,7 @@ export const api = {
   setConfig: (cfg: Config) => invoke<void>("set_config", { cfg }),
   configFile: () => invoke<string>("config_file"),
   reloadConfig: () => invoke<Config>("reload_config"),
+  configChanged: () => invoke<boolean>("config_changed"),
   getTheme: (name: string) => invoke<ThemeFile>("get_theme", { name }),
   listThemes: () => invoke<string[]>("list_themes"),
   systemAppearance: () => invoke<"light" | "dark">("system_appearance"),

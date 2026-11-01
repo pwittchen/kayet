@@ -527,8 +527,10 @@ check_automatically = true  # look for a new kayet release at launch and once a 
   family name or a comma-separated list of them (fallbacks, e.g. for CJK scripts), always followed
   by the default monospace stack, so a font that isn't installed falls back to SF Mono.
 - The file can be edited in kayet itself (`kayet → Settings…`, `⌘,`, or the title bar sliders icon);
-  saving it applies the changes immediately. Window geometry, the workspace path and the session
-  are owned by the running app and are not reloaded.
+  saving it applies the changes immediately. Edits made in another editor apply when the kayet
+  window is focused again. Changing `workspace.path` moves to that workspace; if it isn't a folder,
+  the current workspace stays and a notice says so. Window geometry and the session are owned by
+  the running app and are not reloaded.
 - The files open in tabs and the active one are restored on launch (those that still exist). They
   and the recent files are kept in a `[session]` table (`open_files`, `last_file`, `recent_files`),
   together with a release the user chose to skip (`skipped_version`) and the version the changelog

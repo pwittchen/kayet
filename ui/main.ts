@@ -356,6 +356,13 @@ async function reloadConfig(): Promise<void> {
   updateStats();
   await applySyntax();
   if (hiddenChanged) await tree.refresh();
+  const path = await api.getWorkspace();
+  if (path !== workspace) await applyWorkspace(path);
+}
+
+/** Applies edits made to the config file outside kayet. */
+async function syncConfig(): Promise<void> {
+  if (await api.configChanged()) await reloadConfig();
 }
 
 /** Records an opened file for File → Open Recent (the settings file is left out). */
@@ -1292,6 +1299,7 @@ async function applyWorkspace(path: string | null): Promise<void> {
   await tree.setRoot(workspace);
   tree.setActive(doc.path);
   updateTitle();
+  void checkDiskChange(); // also watches the document again: the new watcher starts without it
 }
 
 async function changeWorkspace(): Promise<void> {
@@ -1756,6 +1764,9 @@ async function init(): Promise<void> {
     listen<UpdateChecked>("update://checked", (e) => void showUpdateChecked(e.payload).catch(showError)),
     listen<UpdateFailed>("update://failed", (e) => void showUpdateFailed(e.payload).catch(showError)),
     listen<string>("update://installed", (e) => void restartToUpdate(e.payload).catch(showError)),
+    appWindow.onFocusChanged((e) => {
+      if (e.payload) void syncConfig().catch(showError);
+    }),
     appWindow.onCloseRequested(async (event) => {
       if (!(await confirmDiscardAll())) return event.preventDefault();
       await clearBackup();

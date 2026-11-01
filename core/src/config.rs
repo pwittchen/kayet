@@ -252,6 +252,15 @@ pub fn parse(text: &str) -> Result<Config, toml::de::Error> {
     toml::from_str(text)
 }
 
+/// Parses config text the user edited while kayet is running. Window geometry and the session
+/// are owned by the running app, so those of `current` are kept.
+pub fn parse_edited(text: &str, current: &Config) -> Result<Config, toml::de::Error> {
+    let mut cfg = parse(text)?;
+    cfg.window = current.window.clone();
+    cfg.session = current.session.clone();
+    Ok(cfg)
+}
+
 /// Loads the config from `path`. Missing files or keys fall back to defaults, which are
 /// written back. A file that fails to parse is left untouched and defaults are used.
 pub fn load_from(path: &Path) -> Config {
@@ -344,6 +353,19 @@ mod tests {
         fs::write(&path, "[ui]\ntheme = 123\n").unwrap();
         assert_eq!(load_from(&path), Config::default());
         assert_eq!(fs::read_to_string(&path).unwrap(), "[ui]\ntheme = 123\n");
+    }
+
+    #[test]
+    fn edited_config_keeps_window_and_session_but_takes_workspace() {
+        let mut current = Config::default();
+        current.window.width = 1234;
+        current.session.last_file = Some("/a.md".into());
+        let text = "[workspace]\npath = \"~/notes\"\n[window]\nwidth = 1\n";
+        let cfg = parse_edited(text, &current).unwrap();
+        assert_eq!(cfg.workspace.path, "~/notes");
+        assert_eq!(cfg.window, current.window);
+        assert_eq!(cfg.session, current.session);
+        assert!(parse_edited("[workspace\n", &current).is_err());
     }
 
     #[test]

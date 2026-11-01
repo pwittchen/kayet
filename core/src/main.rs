@@ -118,6 +118,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::set_workspace,
         commands::reset_workspace,
         commands::take_notice,
+        commands::config_changed,
         commands::take_opened,
         commands::add_recent,
         commands::recent_files,
