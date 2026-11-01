@@ -690,6 +690,9 @@ ${footerAlternatives("          ")}
         <ul>
           <li><a href="/privacy.html">Privacy policy</a></li>
           <li><a href="https://github.com/pwittchen/kayet/blob/master/LICENSE">License</a></li>
+        </ul>
+        <p class="footer-title">For AI Agents</p>
+        <ul>
           <li><a href="/llms.txt">llms.txt</a></li>
           <li><a href="/llms-full.txt">llms-full.txt</a></li>
         </ul>
