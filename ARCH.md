@@ -96,7 +96,7 @@ kayet/
 │   └── theme.css, markdown-body.css
 ├── scripts/                dev.mjs (Vite launcher), bench.mjs (SPEC §13 checks)
 ├── website/                getkayet.app
-└── .github/workflows/      rust.yml (CI), release.yml (sign + notarize + publish)
+└── .github/workflows/      rust.yml (CI), release.yml (sign + notarize + publish + update Homebrew cask)
 ```
 
 ## Build pipeline
@@ -123,6 +123,10 @@ shipped app is one executable with no external web assets.
                                          │  aarch64 + x86_64: codesign → notarize → staple
                                          ▼
                                   GitHub Releases
+                                         │
+                                         │  starts Update formulae in pwittchen/homebrew-tap
+                                         ▼
+                                  Casks/kayet.rb bumped
 ```
 
 In dev mode (`npx tauri dev`) the web view loads from the Vite dev server on

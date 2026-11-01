@@ -155,10 +155,12 @@ builds `kayet.app` for Apple Silicon and Intel (cross-compiled on the Apple Sili
 and signs each with the Developer ID (hardened runtime, `core/entitlements.plist`). Each app is
 notarized with `notarytool` and stapled, packaged into `kayet-macos-aarch64.dmg` /
 `kayet-macos-x86_64.dmg` (signed too), and published
-to GitHub Releases with a changelog of the commits since the previous tag. Regular CI
-builds (`rust.yml`) stay unsigned.
+to GitHub Releases with a changelog of the commits since the previous tag. Finally it starts
+the **Update formulae** workflow in `pwittchen/homebrew-tap`, which bumps the Homebrew cask to
+the new version. Regular CI builds (`rust.yml`) stay unsigned.
 
 The workflow needs these repository secrets: `MACOS_CERTIFICATE` (base64-encoded Developer ID
 Application `.p12`), `MACOS_CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD` (any random string),
 `APPLE_SIGNING_IDENTITY` (e.g. `Developer ID Application: Name (TEAMID)`), `APPLE_ID`,
-`APPLE_PASSWORD` (an app-specific password) and `APPLE_TEAM_ID`.
+`APPLE_PASSWORD` (an app-specific password), `APPLE_TEAM_ID` and `HOMEBREW_TAP_TOKEN` (a
+fine-grained token for `pwittchen/homebrew-tap` with the Actions: read and write permission).

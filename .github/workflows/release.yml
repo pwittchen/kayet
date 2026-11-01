@@ -2,7 +2,8 @@ name: Release
 
 # Pushing a `vX.Y.Z` tag builds kayet for Apple Silicon and Intel, signs both with the Developer
 # ID, notarizes them with notarytool and publishes a .dmg per architecture to GitHub Releases,
-# then redeploys the website so its version pill matches. Regular pushes (rust.yml) stay unsigned.
+# then redeploys the website so its version pill matches and updates the Homebrew cask.
+# Regular pushes (rust.yml) stay unsigned.
 on:
   push:
     tags:
@@ -233,3 +234,16 @@ jobs:
     needs: release
     uses: ./.github/workflows/deploy-website.yml
     secrets: inherit
+
+  update-homebrew-cask:
+    # Runs after both .dmg assets are published: the tap takes the cask's checksums from them.
+    # GITHUB_TOKEN can't start a workflow in another repository, hence the personal token.
+    needs: release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Start the tap's Update formulae workflow
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          gh workflow run update-formulae.yml -R pwittchen/homebrew-tap \
+            -f formula=kayet -f version="${GITHUB_REF_NAME#v}"
