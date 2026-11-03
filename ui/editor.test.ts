@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import { Editor, cssFontFamily } from "./editor";
 
+// happy-dom fires `selectionchange` synchronously inside `Selection.collapse`, so CodeMirror sees
+// it while still writing its own selection and re-enters `EditorView.update`. Browsers queue the
+// event as a task; do the same here.
+const dispatch = document.dispatchEvent.bind(document);
+document.dispatchEvent = (event: Event) => {
+  if (event.type !== "selectionchange") return dispatch(event);
+  setTimeout(() => dispatch(event));
+  return true;
+};
+
 const settings = { fontFamily: "mono", fontSize: 15, lineHeight: 1.6, softWrap: true, maxLineWidth: 72 };
 const callbacks = { onChange: () => {}, onScroll: () => {}, onType: () => {}, onPasteImage: async () => null };
 
