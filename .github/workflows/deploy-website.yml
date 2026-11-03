@@ -11,6 +11,9 @@ on:
 
 jobs:
   deploy:
+    # A `#no-deploy` hashtag in a commit pushed to a branch skips the deploy. Tag pushes (the
+    # release workflow calls this one) always deploy.
+    if: ${{ !(github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && contains(github.event.head_commit.message, '#no-deploy')) }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7

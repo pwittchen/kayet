@@ -29,6 +29,8 @@ jobs:
   # Fails the build on any known vulnerability in npm or Cargo dependencies. cargo audit also
   # denies warnings (unmaintained / unsound / yanked crates); exceptions live in .cargo/audit.toml.
   audit:
+    # A `#no-deploy` hashtag in the pushed commit message skips the whole workflow (build needs audit).
+    if: ${{ !(github.event_name == 'push' && contains(github.event.head_commit.message, '#no-deploy')) }}
     runs-on: ubuntu-24.04
 
     steps:
