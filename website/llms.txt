@@ -20,6 +20,7 @@ kayet edits plain text, Markdown and source code. It offers a live Markdown prev
 
 ## Optional
 
+- [Promo video](https://www.youtube.com/watch?v=r649KcP-Gd8): a short look at kayet on YouTube
 - [Source code](https://github.com/pwittchen/kayet): GitHub repository
 - [License](https://github.com/pwittchen/kayet/blob/master/LICENSE): Apache License 2.0
 - [Comparisons](https://getkayet.app/alternatives/ia-writer.html): kayet as an alternative to iA Writer, Typora, Ulysses, Bear, Obsidian, Notion, Apple Notes, Drafts, Byword, Sublime Text, BBEdit and TextEdit

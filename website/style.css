@@ -236,6 +236,62 @@ section { padding: 0 24px; }
 .btn-link span { transition: transform 0.2s var(--ease); display: inline-block; }
 .btn-link:hover span { transform: translateX(3px); }
 
+.btn-video { color: var(--text); }
+.btn-video .play {
+  width: 1.15em;
+  height: 1.15em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  transition: transform 0.2s var(--ease), color 0.2s;
+}
+.btn-video .play path { fill: currentColor; stroke: none; }
+.btn-video:hover .play { transform: scale(1.12); color: var(--accent); }
+
+/* ---- video modal ---- */
+.video-modal {
+  width: min(960px, calc(100vw - 48px));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 12px;
+  background: #000;
+  box-shadow: var(--shadow);
+}
+.video-modal::backdrop {
+  background: rgb(0 0 0 / 72%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.video-modal[open] { animation: video-in 0.35s var(--ease); }
+.video-modal[open]::backdrop { animation: backdrop-in 0.35s var(--ease); }
+@keyframes video-in { from { opacity: 0; transform: scale(0.96); } }
+@keyframes backdrop-in { from { opacity: 0; } }
+.video-frame { aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; }
+.video-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.video-close {
+  position: absolute;
+  top: -44px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(255 255 255 / 80%);
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+.video-close:hover { color: #fff; background: rgb(255 255 255 / 12%); }
+.video-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.video-close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+
 /* ---- install command ---- */
 .install-cmd {
   display: flex;

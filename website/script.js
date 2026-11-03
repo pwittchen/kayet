@@ -62,3 +62,35 @@ const observer = new IntersectionObserver(
   { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
 );
 document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+// Promo video: plays in a modal. The YouTube embed (privacy-enhanced mode) is created on open
+// and removed on close, so nothing loads from YouTube until asked and playback stops on close.
+const modal = document.querySelector(".video-modal");
+if (modal) {
+  const frame = modal.querySelector(".video-frame");
+
+  function closeVideo() {
+    modal.close();
+  }
+
+  document.querySelectorAll("[data-video]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+      event.preventDefault();
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube-nocookie.com/embed/${link.dataset.video}?autoplay=1&rel=0&playsinline=1`;
+      iframe.title = "kayet promo video";
+      iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+      frame.replaceChildren(iframe);
+      modal.showModal();
+    });
+  });
+
+  modal.querySelector(".video-close").addEventListener("click", closeVideo);
+  // A click on the backdrop (the dialog itself, outside the frame) closes it.
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeVideo();
+  });
+  modal.addEventListener("close", () => frame.replaceChildren());
+}
