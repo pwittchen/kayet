@@ -10,6 +10,13 @@ the minimalistic text editor for macOS
 
 [![Rust](https://github.com/pwittchen/kayet/actions/workflows/rust.yml/badge.svg)](https://github.com/pwittchen/kayet/actions/workflows/rust.yml)
 
+<a href="https://www.producthunt.com/products/kayet?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-kayet" target="_blank" rel="noopener noreferrer">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1303008&amp;theme=dark&amp;t=1793729126256">
+    <img alt="kayet - the minimalistic text editor for macOS | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1303008&amp;theme=light&amp;t=1793729126256">
+  </picture>
+</a>
+
 </div>
 
 <p align="center">
