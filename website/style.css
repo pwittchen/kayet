@@ -549,6 +549,17 @@ kbd {
 .download > p { margin: 0 0 32px; color: var(--text-muted); }
 .note { margin: 18px 0 0; font-size: 14px; color: var(--text-muted); }
 
+/* ---- Product Hunt badge (light / dark variant follows the theme) ---- */
+.ph-badge { display: inline-block; margin-top: 28px; line-height: 0; }
+.ph-badge img { width: 250px; height: 54px; }
+.ph-dark { display: none; }
+:root[data-theme="dark"] .ph-light { display: none; }
+:root[data-theme="dark"] .ph-dark { display: inline; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ph-light { display: none; }
+  :root:not([data-theme="light"]) .ph-dark { display: inline; }
+}
+
 /* ---- contact ---- */
 .contact-section {
   padding-top: 120px;
