@@ -780,10 +780,14 @@ kbd {
   .js .reveal { opacity: 1; transform: none; }
 }
 
-@media (max-width: 600px) {
+/* Icon-only menu before the labels would run into the brand on the left. */
+@media (max-width: 720px) {
   .nav-links { gap: 14px; }
   .nav-links a span { display: none; }
   .nav-links a svg { width: 16px; height: 16px; }
+}
+
+@media (max-width: 600px) {
   .hero { padding-top: 72px; }
   .showcase, .features, .palette, .shortcuts, .config { padding-bottom: 96px; }
   .contact-section { padding-top: 96px; padding-bottom: 96px; }
