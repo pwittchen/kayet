@@ -108,6 +108,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                 "Find in Workspace…",
                 Some("CmdOrCtrl+Shift+F"),
             )?,
+            &sep()?,
+            &item("go-to-line", "Go to Line…", Some("Ctrl+G"))?,
+            &item("go-to-symbol", "Go to Symbol…", Some("CmdOrCtrl+Shift+R"))?,
         ],
     )?;
 

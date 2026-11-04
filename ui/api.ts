@@ -57,6 +57,15 @@ export interface Entry {
 
 /** A file and/or folder kayet was asked to open from Finder or the `kayet` command. */
 /** A line containing the searched text; columns and ranges count UTF-16 code units. */
+/** `.editorconfig` rules for a file; null where none is set. */
+export interface EditorConfig {
+  indent_style: "tab" | "space" | null;
+  indent_size: number | null;
+  tab_width: number | null;
+  trim_trailing_whitespace: boolean | null;
+  insert_final_newline: boolean | null;
+}
+
 export interface SearchMatch {
   path: string;
   /** 1-based line number. */
@@ -133,6 +142,7 @@ export const api = {
   searchWorkspace: (query: string) => invoke<SearchMatch[]>("search_workspace", { query }),
   /** File text travels as raw UTF-8 bytes: encoding and parsing large files as JSON strings takes long. */
   readFile: async (path: string) => utf8.decode(await invoke<ArrayBuffer>("read_file", { path })),
+  editorConfig: (path: string) => invoke<EditorConfig>("editor_config", { path }),
   writeFile: (path: string, contents: string) =>
     invoke<void>("write_file", new TextEncoder().encode(contents), {
       headers: { "kayet-path": encodeURIComponent(path) },

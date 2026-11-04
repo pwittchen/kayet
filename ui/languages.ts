@@ -17,6 +17,16 @@ const properties: Loader = async () => (await import("@codemirror/legacy-modes/m
 const cmake: Loader = async () => (await import("@codemirror/legacy-modes/mode/cmake")).cmake;
 const dockerfile: Loader = async () => (await import("@codemirror/legacy-modes/mode/dockerfile")).dockerFile;
 const ruby: Loader = async () => (await import("@codemirror/legacy-modes/mode/ruby")).ruby;
+const protobuf: Loader = async () => (await import("@codemirror/legacy-modes/mode/protobuf")).protobuf;
+const nginx: Loader = async () => (await import("@codemirror/legacy-modes/mode/nginx")).nginx;
+
+/** Line comments for the modes that don't declare their own (for Toggle Comment, ⌘/). */
+const lineComments = new Map<Loader, string>([
+  [properties, "#"],
+  [cmake, "#"],
+  [protobuf, "//"],
+  [nginx, "#"],
+]);
 
 const byExtension: Record<string, Loader> = {
   // C family
@@ -86,7 +96,7 @@ const byExtension: Record<string, Loader> = {
   fish: shell,
   diff: async () => (await import("@codemirror/legacy-modes/mode/diff")).diff,
   patch: async () => (await import("@codemirror/legacy-modes/mode/diff")).diff,
-  proto: async () => (await import("@codemirror/legacy-modes/mode/protobuf")).protobuf,
+  proto: protobuf,
   cmake,
   // Data and configuration
   json: async () => (await js()).json,
@@ -130,7 +140,7 @@ const byName: Record<string, Loader> = {
   ".gitconfig": properties,
   ".gitignore": properties,
   ".editorconfig": properties,
-  "nginx.conf": async () => (await import("@codemirror/legacy-modes/mode/nginx")).nginx,
+  "nginx.conf": nginx,
 };
 
 function loaderFor(path: string | null): Loader | null {
@@ -157,8 +167,13 @@ export async function codeLanguage(path: string | null): Promise<StreamLanguage<
   let lang = cache.get(loader);
   if (!lang) {
     // Legacy JSON mode tags object keys as "property"; map it so they read as keys.
+    const line = lineComments.get(loader);
     lang = loader().then((parser) =>
-      StreamLanguage.define({ ...parser, tokenTable: { property: tags.propertyName, ...parser.tokenTable } }),
+      StreamLanguage.define({
+        ...parser,
+        tokenTable: { property: tags.propertyName, ...parser.tokenTable },
+        languageData: line ? { commentTokens: { line }, ...parser.languageData } : parser.languageData,
+      }),
     );
     cache.set(loader, lang);
   }

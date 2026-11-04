@@ -14,6 +14,7 @@ import {
   basename,
   Config,
   dirname,
+  EditorConfig,
   isMarkdown,
   isWithin,
   Mode,
@@ -32,8 +33,9 @@ import { exportHtml, exportPdf } from "./export";
 import { imageExtension, looksLikeMarkdown } from "./markdown";
 import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
-import { fileScore, Palette, PaletteItem, PaletteOptions } from "./palette";
+import { fileScore, Palette, PaletteItem, PaletteOptions, score } from "./palette";
 import { Presentation } from "./presentation";
+import { codeSymbols, markdownSymbols, symbolAt } from "./symbols";
 import { Preview } from "./preview";
 import { countWords, formatStats } from "./stats";
 import {
@@ -128,6 +130,8 @@ interface Tab {
   editor: EditorSnapshot | null;
   /** Whether the untitled document was found to be written in Markdown (kept until it is saved). */
   markdown: boolean;
+  /** The `.editorconfig` rules for the file (indentation, save rules); null if none apply. */
+  format: EditorConfig | null;
 }
 
 const newTab = (): Tab => ({
@@ -138,6 +142,7 @@ const newTab = (): Tab => ({
   pendingDisk: null,
   editor: null,
   markdown: false,
+  format: null,
 });
 
 /** Open documents in tab order; `doc` is the one shown. */
@@ -868,6 +873,7 @@ async function applySyntax(): Promise<void> {
   els.btnSyntax.hidden = !available;
   els.btnSyntax.classList.toggle("on", on);
   els.btnSyntax.setAttribute("aria-pressed", String(on));
+  editor.setCodeFile(code && !largeDoc);
   if (largeDoc) return editor.setSyntax(null);
   if (isMarkdown(doc.path)) return editor.setSyntax("markdown");
   const lang = code && on ? await codeLanguage(doc.path) : null;
@@ -932,6 +938,7 @@ function loadDoc(path: string | null, text: string, recent = true): void {
   doc.disk = text;
   doc.savedOnce = false;
   doc.markdown = false;
+  doc.format = null;
   window.clearTimeout(markdownTimer);
   markdownTimer = undefined;
   applySpellCheck();
@@ -946,11 +953,25 @@ function loadDoc(path: string | null, text: string, recent = true): void {
   updateAll();
   syncBackup();
   if (previewVisible()) void preview.render(text, path);
+  void loadEditorConfig(doc);
   editor.focus();
+}
+
+/**
+ * Reads the `.editorconfig` rules for the file in `tab` and applies its indentation (when the
+ * tab is shown; otherwise once it is, see `activate`).
+ */
+async function loadEditorConfig(tab: Tab): Promise<void> {
+  const path = tab.path;
+  const format = path ? await api.editorConfig(path).catch(() => null) : null;
+  if (tab.path !== path) return;
+  tab.format = format;
+  if (tab === doc) editor.setEditorConfig(format);
 }
 
 function setDocPath(path: string): void {
   doc.path = path;
+  void loadEditorConfig(doc);
   applySpellCheck();
   void applySyntax().catch(showError);
   rememberSession();
@@ -980,6 +1001,7 @@ async function activate(tab: Tab): Promise<void> {
   if (tab.editor) editor.restore(tab.editor);
   else editor.load("", null);
   tab.editor = null;
+  editor.setEditorConfig(tab.format);
   checkLarge();
   els.banner.hidden = tab.pendingDisk === null;
   applySpellCheck();
@@ -1083,7 +1105,9 @@ async function confirmDiscardAll(): Promise<boolean> {
   return true;
 }
 
-async function writeDoc(path: string): Promise<boolean> {
+/** Writes the shown document to `path`, after applying the `.editorconfig` save rules to it. */
+async function writeDoc(path: string, auto = false): Promise<boolean> {
+  editor.applySaveRules(doc.format, auto);
   const text = editor.text();
   const snapshot = editor.doc;
   try {
@@ -1099,12 +1123,15 @@ async function writeDoc(path: string): Promise<boolean> {
   updateTitle();
   syncBackup();
   if (path === configPath) await reloadConfig();
+  // An edited .editorconfig applies to the open files right away.
+  if (basename(path) === ".editorconfig") for (const tab of tabs) void loadEditorConfig(tab);
   return true;
 }
 
-async function save(): Promise<boolean> {
+/** Saves the shown document; `auto` for autosave, which leaves whitespace on the cursor's lines. */
+async function save(auto = false): Promise<boolean> {
   if (!doc.path) return saveAs();
-  return writeDoc(doc.path);
+  return writeDoc(doc.path, auto);
 }
 
 async function saveAs(): Promise<boolean> {
@@ -1143,7 +1170,7 @@ async function flushAutosave(): Promise<void> {
   if (autosaveTimer === undefined) return;
   window.clearTimeout(autosaveTimer);
   autosaveTimer = undefined;
-  if (doc.path && isDirty()) await save();
+  if (doc.path && isDirty()) await save(true);
 }
 
 // ---- crash recovery ----
@@ -1392,7 +1419,7 @@ const commands: Record<string, () => unknown> = {
   open: openWithDialog,
   "open-workspace": changeWorkspace,
   "reset-workspace": resetWorkspace,
-  save,
+  save: () => save(),
   "save-as": saveAs,
   "export-html": () => exportDoc("html"),
   "export-pdf": () => exportDoc("pdf"),
@@ -1431,6 +1458,11 @@ const commands: Record<string, () => unknown> = {
   "go-to-file": toggleFileFinder,
   "open-recent": toggleRecent,
   "find-in-workspace": toggleWorkspaceSearch,
+  "go-to-line": toggleGoToLine,
+  "go-to-symbol": toggleGoToSymbol,
+  "toggle-comment": () => editor.toggleComment(),
+  "fold-all": () => editor.fold(true),
+  "unfold-all": () => editor.fold(false),
 };
 
 // ---- command palette ----
@@ -1468,6 +1500,11 @@ function paletteCommands(): PaletteItem[] {
     { id: "find", label: "Find…", shortcut: "⌘F" },
     { id: "replace", label: "Replace…", shortcut: "⌘R" },
     { id: "find-in-workspace", label: "Find in Workspace…", shortcut: "⌘⇧F" },
+    { id: "go-to-line", label: "Go to Line…", shortcut: "⌃G" },
+    { id: "go-to-symbol", label: "Go to Symbol…", shortcut: "⌘⇧R" },
+    code && { id: "toggle-comment", label: "Toggle Comment", shortcut: "⌘/" },
+    codeMode && { id: "fold-all", label: "Fold All", shortcut: "⌃⌥[" },
+    codeMode && { id: "unfold-all", label: "Unfold All", shortcut: "⌃⌥]" },
     {
       id: "toggle-tree",
       label: cfg.ui.sidebar_visible ? "Hide File Tree" : "Show File Tree",
@@ -1549,8 +1586,65 @@ async function toggleFileFinder(): Promise<void> {
     kind: "files",
     placeholder: "Go to file…",
     empty: files.length ? "No matching files" : "No files in the workspace",
-    pick: (path) => void openFile(path),
-    rank: (item, query) => fileScore(paths.get(item.id)!, query),
+    pick: (path, query) => {
+      const at = lineSuffix(query);
+      void openFile(path).then((open) => open && at && editor.goToLine(at.line, at.column));
+    },
+    rank: (item, query) => fileScore(paths.get(item.id)!, lineSuffix(query)?.rest ?? query),
+  });
+}
+
+/** A `:line` or `:line:column` at the end of a file finder query (`main.rs:42`), and the query before it. */
+function lineSuffix(query: string): { rest: string; line: number; column: number } | null {
+  const m = /^(.*?):(\d+)(?::(\d+))?$/.exec(query.trim());
+  return m ? { rest: m[1], line: Number(m[2]), column: Number(m[3] ?? 1) } : null;
+}
+
+/** Go to Line: `42` or `42:7` (line, column) moves the cursor there. */
+function toggleGoToLine(): Promise<void> {
+  const lines = editor.doc.lines;
+  return showPalette([], {
+    kind: "line",
+    placeholder: "Go to line…",
+    prompt: `Type a line number between 1 and ${lines}, or line:column`,
+    empty: "Not a line number",
+    live: (query) => {
+      const m = /^:?(\d+)(?::(\d+))?$/.exec(query);
+      if (!m) return [];
+      const line = Math.min(Number(m[1]), lines);
+      const column = m[2] ? `, column ${m[2]}` : "";
+      return [{ id: `${line}:${m[2] ?? 1}`, label: `Go to line ${line}${column}`, aside: `of ${lines}` }];
+    },
+    pick: (id) => {
+      const [line, column] = id.split(":").map(Number);
+      editor.goToLine(line, column);
+    },
+  });
+}
+
+/** Go to Symbol: the Markdown headings or the definitions in code, the one at the cursor preselected. */
+function toggleGoToSymbol(): Promise<void> {
+  const symbols = largeDoc
+    ? []
+    : markdownDoc()
+      ? markdownSymbols(editor.doc)
+      : isCode(doc.path)
+        ? codeSymbols(editor.doc, doc.path, editor.indentation.tabSize)
+        : [];
+  const items = symbols.map((s, i) => ({
+    id: String(i),
+    // Non-breaking spaces, which the list keeps, show the nesting.
+    label: "\u00a0\u00a0".repeat(Math.min(s.depth, 6)) + s.name,
+    detail: s.kind,
+    aside: String(s.line),
+  }));
+  return showPalette(items, {
+    kind: "symbols",
+    placeholder: "Go to symbol…",
+    empty: largeDoc ? "Not available for large files" : symbols.length ? "No matching symbols" : "No symbols in this file",
+    selected: Math.max(0, symbolAt(symbols, editor.cursorLine())),
+    rank: (item, query) => score(symbols[Number(item.id)].name.toLowerCase(), query),
+    pick: (i) => editor.goToLine(symbols[Number(i)].line),
   });
 }
 

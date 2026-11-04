@@ -8,13 +8,13 @@ kayet is a minimalistic macOS text editor built with Rust + Tauri 2 and a CodeMi
 
 - `core/` — Rust backend (Tauri app crate; the only Cargo workspace member)
   - `commands.rs` Tauri commands, `fs_ops.rs` file I/O, `workspace.rs` file tree,
-    `markdown.rs` Markdown rendering (pulldown-cmark), `export.rs` PDF export (web view print operation), `search.rs` workspace-wide search, `image_cache.rs` web images downloaded into `~/.kayet/cache/images/`, `recovery.rs` crash recovery backup, `update.rs` app update check / install and changelog (GitHub Releases), `menu.rs`, `chrome.rs`, `config.rs`,
+    `markdown.rs` Markdown rendering (pulldown-cmark), `export.rs` PDF export (web view print operation), `search.rs` workspace-wide search, `editorconfig.rs` `.editorconfig` rules for a file, `image_cache.rs` web images downloaded into `~/.kayet/cache/images/`, `recovery.rs` crash recovery backup, `update.rs` app update check / install and changelog (GitHub Releases), `menu.rs`, `chrome.rs`, `config.rs`,
     `cli.rs` installs the `kayet` shell command (launcher script in `core/cli/kayet`),
     `default_app.rs` makes kayet the default app for `.md` / `.txt` files (Launch Services)
 - `ui/` — TypeScript frontend (vanilla TS, no framework), built by Vite into `dist/`
   - `bench.ts` self-measurement for `scripts/bench.mjs` (only active with `KAYET_BENCH` set),
     `startup.ts` shows the window once the first screen is painted,
-    `editor.ts` CodeMirror setup, `markdown.ts` smart Markdown editing (lists, bold / italic, pasting), `languages.ts` code highlighting by file extension, `preview.ts` Markdown preview, `presentation.ts` presentation mode (Markdown slides divided by `---`), `changelog.ts` What's New (release notes as Markdown, once after an update), `export.ts` HTML / PDF export (typography shared with the preview in `markdown-body.css`), `images.ts` web images shown from their downloaded copies, `tree.ts` file tree, `palette.ts` command palette (⌘K), file finder (⌘P) and workspace search (⌘⇧F),
+    `editor.ts` CodeMirror setup, `markdown.ts` smart Markdown editing (lists, bold / italic, pasting), `languages.ts` code highlighting by file extension, `indent.ts` indentation detection and `.editorconfig` save rules, `folding.ts` code folding by indentation, `symbols.ts` Go to Symbol outline, `preview.ts` Markdown preview, `presentation.ts` presentation mode (Markdown slides divided by `---`), `changelog.ts` What's New (release notes as Markdown, once after an update), `export.ts` HTML / PDF export (typography shared with the preview in `markdown-body.css`), `images.ts` web images shown from their downloaded copies, `tree.ts` file tree, `palette.ts` command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F), Go to Line (⌃G) and Go to Symbol (⌘⇧R),
     `chrome.ts` auto-hiding window chrome, `api.ts` Tauri command bindings, `theme.css`
 
 ## Commands

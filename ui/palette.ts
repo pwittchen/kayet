@@ -19,8 +19,8 @@ export interface PaletteOptions {
   placeholder: string;
   /** Shown when nothing matches the query. */
   empty: string;
-  /** Called with the picked item's id. */
-  pick: (id: string) => void;
+  /** Called with the picked item's id and the (trimmed) query it was picked with. */
+  pick: (id: string, query: string) => void;
   /** Ranks an item against the lower-cased query; 0 means no match. Defaults to the label. */
   rank?: (item: PaletteItem, query: string) => number;
   /**
@@ -28,7 +28,12 @@ export interface PaletteOptions {
    * shortly after typing pauses. `empty` is then shown only for a query without results.
    */
   search?: (query: string) => Promise<PaletteItem[]>;
-  /** Shown while the query is empty, in search mode. */
+  /**
+   * Makes the items from the (trimmed) query on each keystroke instead of filtering the given
+   * ones, e.g. "Go to line 42" for "42".
+   */
+  live?: (query: string) => PaletteItem[];
+  /** Shown while the query is empty, in search and live mode. */
   prompt?: string;
   /** Initially selected item index; defaults to 0. */
   selected?: number;
@@ -153,8 +158,9 @@ export class Palette {
     const item = this.matches[index];
     const pick = this.options?.pick;
     if (!item || !pick) return;
+    const query = this.input.value.trim();
     this.close();
-    pick(item.id);
+    pick(item.id, query);
   }
 
   private onKeyDown(e: KeyboardEvent): void {
@@ -214,8 +220,10 @@ export class Palette {
   private filter(): void {
     const query = this.input.value.trim().toLowerCase();
     const rank = this.options?.rank ?? ((item: PaletteItem, q: string) => score(item.label.toLowerCase(), q));
+    const live = this.options?.live;
+    if (live) this.items = live(this.input.value.trim());
     this.matches = (
-      query && !this.options?.search
+      query && !this.options?.search && !live
         ? this.items
             .map((item) => ({ item, score: rank(item, query) }))
             .filter((m) => m.score > 0)
@@ -263,7 +271,7 @@ export class Palette {
     if (!this.matches.length) {
       const empty = document.createElement("li");
       empty.className = "empty";
-      const prompt = this.options?.search && !query ? this.options.prompt : undefined;
+      const prompt = (this.options?.search || live) && !query ? this.options?.prompt : undefined;
       empty.textContent = prompt ?? this.options?.empty ?? "";
       this.list.append(empty);
     }

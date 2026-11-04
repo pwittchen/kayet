@@ -18,6 +18,7 @@ use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::config::{self, Config};
+use crate::editorconfig::{self, EditorConfig};
 use crate::fs_ops::{self, canonical};
 use crate::markdown;
 use crate::recovery;
@@ -446,6 +447,15 @@ pub async fn read_file(
         w.watch_file(&p);
     }
     Ok(tauri::ipc::Response::new(text.into_bytes()))
+}
+
+/// The `.editorconfig` rules (indentation, trailing whitespace, final newline) for a file.
+#[tauri::command]
+pub async fn editor_config(state: State<'_, AppState>, path: String) -> CmdResult<EditorConfig> {
+    let p = state.authorize(&path)?;
+    tauri::async_runtime::spawn_blocking(move || editorconfig::for_file(&p))
+        .await
+        .map_err(err)
 }
 
 /// Writes a file. The text is the raw request body (UTF-8, see `read_file`); the path comes

@@ -1,3 +1,5 @@
+import { EditorSelection } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import { describe, expect, it } from "vitest";
 
 import { Editor, cssFontFamily } from "./editor";
@@ -124,5 +126,70 @@ describe("font family", () => {
 
   it("cannot break out of the declaration", () => {
     expect(cssFontFamily('a"; color: red')).toBe('"a\\"; color: red", var(--font-mono)');
+  });
+});
+
+describe("code editing", () => {
+  const editor = () => new Editor(document.createElement("div"), settings, callbacks);
+  const addCursor = (e: Editor) =>
+    e.view.dispatch({ selection: EditorSelection.create([EditorSelection.cursor(0), EditorSelection.cursor(2)]) });
+
+  it("allows multiple cursors only in code editor mode", () => {
+    const e = editor();
+    e.load("abc", null);
+    addCursor(e);
+    expect(e.view.state.selection.ranges).toHaveLength(1);
+    e.setCodeMode(true);
+    addCursor(e);
+    expect(e.view.state.selection.ranges).toHaveLength(2);
+    e.setCodeMode(false);
+    expect(e.view.state.selection.ranges).toHaveLength(1);
+  });
+
+  it("detects the indentation and takes it from .editorconfig", () => {
+    const e = editor();
+    e.load("a\n\tb\n\tc", null);
+    expect(e.indentation).toEqual({ unit: "\t", tabSize: 4 });
+    e.setEditorConfig({ indent_style: "space", indent_size: 2, tab_width: null, trim_trailing_whitespace: null, insert_final_newline: null });
+    expect(e.indentation).toEqual({ unit: "  ", tabSize: 4 });
+  });
+
+  it("applies the save rules as an edit, keeping the cursor line during autosave", () => {
+    const e = editor();
+    e.load("a  \nb  ", null);
+    e.view.dispatch({ selection: { anchor: e.doc.length } });
+    const rules = { indent_style: null, indent_size: null, tab_width: null, trim_trailing_whitespace: true, insert_final_newline: true };
+    e.applySaveRules(rules, true);
+    expect(e.text()).toBe("a\nb  \n");
+    e.applySaveRules(rules, false);
+    expect(e.text()).toBe("a\nb\n");
+  });
+
+  it("goes to a line and column, clamped to the document", () => {
+    const e = editor();
+    e.load("one\ntwo\nthree", null);
+    e.goToLine(2, 3);
+    expect(e.view.state.selection.main.head).toBe(6);
+    expect(e.cursorLine()).toBe(2);
+    e.goToLine(99, 99);
+    expect(e.view.state.selection.main.head).toBe(e.doc.length);
+  });
+
+  it("closes brackets in code files only", () => {
+    const e = editor();
+    e.load("", null);
+    const type = (text: string) => {
+      const { from, to } = e.view.state.selection.main;
+      // What CodeMirror's input handlers see for typed text.
+      if (!e.view.state.facet(EditorView.inputHandler).some((h) => h(e.view, from, to, text, () => e.view.state.update({ changes: { from, to, insert: text } })))) {
+        e.view.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length } });
+      }
+    };
+    type("(");
+    expect(e.text()).toBe("(");
+    e.load("", null);
+    e.setCodeFile(true);
+    type("(");
+    expect(e.text()).toBe("()");
   });
 });

@@ -8,20 +8,39 @@ import {
   EditorView,
   ViewPlugin,
   ViewUpdate,
+  crosshairCursor,
   drawSelection,
   highlightActiveLine,
   highlightActiveLineGutter,
   highlightSpecialChars,
   keymap,
   lineNumbers,
+  rectangularSelection,
 } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab, redo, undo } from "@codemirror/commands";
-import { HighlightStyle, Language, LanguageSupport, bracketMatching, indentOnInput, syntaxHighlighting } from "@codemirror/language";
+import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { defaultKeymap, history, historyKeymap, indentWithTab, redo, toggleComment, undo } from "@codemirror/commands";
+import {
+  HighlightStyle,
+  Language,
+  LanguageSupport,
+  bracketMatching,
+  codeFolding,
+  foldAll,
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+  indentUnit,
+  syntaxHighlighting,
+  unfoldAll,
+} from "@codemirror/language";
 import { markdownLanguage } from "@codemirror/lang-markdown";
-import { SearchQuery, highlightSelectionMatches, searchKeymap, setSearchQuery } from "@codemirror/search";
+import { SearchQuery, gotoLine, highlightSelectionMatches, searchKeymap, setSearchQuery } from "@codemirror/search";
 import { tags as t } from "@lezer/highlight";
 
+import type { EditorConfig } from "./api";
 import { findBar, openFind } from "./find";
+import { indentFolding } from "./folding";
+import { Indentation, indentation, saveChanges } from "./indent";
 import { ImageSaver, markdownEditing } from "./markdown";
 
 export interface EditorSettings {
@@ -173,14 +192,33 @@ const focusParagraph = [
 
 const zenMode = [typewriter, focusParagraph];
 
-/** Code editor mode: line numbers, the cursor line highlighted, matching brackets marked. */
+/**
+ * Code editor mode: line numbers, the cursor line highlighted, matching brackets marked,
+ * multiple cursors (⌘-click, ⌘D, ⌥-drag for a column) and folding by indentation (the fold
+ * markers show while the pointer is over the gutter).
+ */
 const codeMode = [
   lineNumbers(),
   highlightActiveLine(),
   highlightActiveLineGutter(),
   bracketMatching(),
+  EditorState.allowMultipleSelections.of(true),
+  rectangularSelection(),
+  crosshairCursor(),
+  codeFolding({ placeholderText: "…" }),
+  foldGutter({ openText: "⌄", closedText: "›" }),
+  indentFolding,
+  keymap.of(foldKeymap),
   EditorView.editorAttributes.of({ class: "cm-code-mode" }),
 ];
+
+/** Source code files: brackets and quotes are closed as they are typed. */
+const codeFile = [closeBrackets(), keymap.of(closeBracketsKeymap)];
+
+/** The editor's search keys, without ⌥⌘G (CodeMirror's own go-to-line panel; kayet has Go to Line…). */
+const searchKeys = searchKeymap.filter((binding) => binding.run !== gotoLine);
+
+const indentExtension = (i: Indentation) => [indentUnit.of(i.unit), EditorState.tabSize.of(i.tabSize)];
 
 const spellCheck = (on: boolean) => EditorView.contentAttributes.of({ spellcheck: String(on) });
 
@@ -204,6 +242,8 @@ export class Editor {
   private readonly zen = new Compartment();
   private readonly spell = new Compartment();
   private readonly code = new Compartment();
+  private readonly codeEditing = new Compartment();
+  private readonly indent = new Compartment();
   private zenOn = false;
   private codeOn = false;
   private spellOn = false;
@@ -251,8 +291,11 @@ export class Editor {
       indentOnInput(),
       findBar(),
       highlightSelectionMatches(),
+      // Allowed in code editor mode (see `codeMode`); this default is used otherwise.
       EditorState.allowMultipleSelections.of(false),
-      keymap.of([...searchKeymap, ...historyKeymap, ...defaultKeymap, indentWithTab]),
+      this.indent.of(indentExtension(indentation(Text.of(text.split(/\r\n?|\n/, 2000)), null))),
+      this.codeEditing.of([]),
+      keymap.of([...searchKeys, ...historyKeymap, ...defaultKeymap, indentWithTab]),
       this.language.of(this.languageFor(syntax)),
       this.wrap.of(this.wrapExtension()),
       this.look.of(this.lookExtension()),
@@ -330,6 +373,7 @@ export class Editor {
     this.stopSweep();
     this.view.setState(snapshot.state);
     this.view.dispatch({
+      selection: this.codeOn ? undefined : snapshot.state.selection.asSingle(),
       effects: [
         ...this.layoutEffects(),
         this.code.reconfigure(this.codeOn ? codeMode : []),
@@ -373,6 +417,62 @@ export class Editor {
     });
   }
 
+  /** Code files close brackets and quotes as they are typed. */
+  setCodeFile(on: boolean): void {
+    this.view.dispatch({ effects: this.codeEditing.reconfigure(on ? codeFile : []) });
+  }
+
+  /** Sets the indentation from `.editorconfig` (null: none applies), with what the text uses filling in. */
+  setEditorConfig(config: EditorConfig | null): void {
+    this.view.dispatch({ effects: this.indent.reconfigure(indentExtension(indentation(this.view.state.doc, config))) });
+  }
+
+  /** What one indentation level inserts and how wide a tab is shown (for the tests and the title). */
+  get indentation(): Indentation {
+    const state = this.view.state;
+    return { unit: state.facet(indentUnit), tabSize: state.tabSize };
+  }
+
+  /**
+   * Applies the `.editorconfig` save rules (trailing whitespace, final newline) to the text as an
+   * undoable edit. `keepCursorLines` leaves the whitespace on the lines with a cursor, so autosave
+   * does not take away a space just typed.
+   */
+  applySaveRules(config: EditorConfig | null, keepCursorLines: boolean): void {
+    const state = this.view.state;
+    const keep = new Set<number>();
+    if (keepCursorLines) for (const r of state.selection.ranges) keep.add(state.doc.lineAt(r.head).number);
+    const changes = saveChanges(state.doc, config, state.lineBreak, keep);
+    if (changes.length) this.view.dispatch({ changes, userEvent: "input.format" });
+  }
+
+  /** Moves the cursor to `line` (1-based) and `column` (1-based, optional), scrolled to the middle. Clamped to the document. */
+  goToLine(line: number, column = 1): void {
+    const doc = this.view.state.doc;
+    const at = doc.line(Math.max(1, Math.min(Math.trunc(line), doc.lines)));
+    const pos = Math.min(at.from + Math.max(0, Math.trunc(column) - 1), at.to);
+    this.view.dispatch({ selection: { anchor: pos }, effects: EditorView.scrollIntoView(pos, { y: "center" }) });
+    this.view.focus();
+  }
+
+  /** The cursor's line (1-based). */
+  cursorLine(): number {
+    const state = this.view.state;
+    return state.doc.lineAt(state.selection.main.head).number;
+  }
+
+  /** Comments or uncomments the selected lines with the language's comment syntax. */
+  toggleComment(): void {
+    toggleComment(this.view);
+    this.view.focus();
+  }
+
+  /** Folds every foldable block (code editor mode), or unfolds all of them. */
+  fold(all: boolean): void {
+    (all ? foldAll : unfoldAll)(this.view);
+    this.view.focus();
+  }
+
   setSyntax(syntax: Syntax): void {
     this.view.dispatch({ effects: this.language.reconfigure(this.languageFor(syntax)) });
   }
@@ -388,7 +488,11 @@ export class Editor {
   setCodeMode(on: boolean): void {
     if (on === this.codeOn) return;
     this.codeOn = on;
-    this.view.dispatch({ effects: [this.code.reconfigure(on ? codeMode : []), ...this.layoutEffects()] });
+    this.view.dispatch({
+      effects: [this.code.reconfigure(on ? codeMode : []), ...this.layoutEffects()],
+      // Extra cursors go when multiple cursors are no longer allowed.
+      selection: on ? undefined : this.view.state.selection.asSingle(),
+    });
   }
 
   /** Spell check by the web view (red underlines, suggestions in the context menu); no autocorrect. */

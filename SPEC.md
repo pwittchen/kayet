@@ -252,8 +252,23 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   `target` folders are skipped, and at most 20,000 files are listed.
 - Typing filters fuzzily: matches in the file name rank above matches elsewhere in the path, a
   query containing `/` matches against the whole relative path, spaces are ignored.
+- A query ending in `:line` or `:line:column` (`main.rs:42`, as compilers print it) filters by the
+  part before it and opens the file with the cursor at that line (and column).
 - `↑` / `↓` move the selection, `Enter` or a click opens the file (asking to save unsaved changes
   first), `Esc`, `⌘P` again or a click outside closes it.
+
+### 5.5.1 Go to Line and Go to Symbol
+- `⌃G` (`Edit → Go to Line…` or the command palette) opens the same floating panel: typing a line
+  number (`42`) or a line and column (`42:7`) offers "Go to line 42" (past the end: the last line);
+  `Enter` moves the cursor there, the line centered. With nothing typed it says which lines there
+  are; anything else: "Not a line number".
+- `⌘⇧R` (`Edit → Go to Symbol…` or the command palette) lists the outline of the document, in order:
+  the headings of a Markdown document (not inside code fences), or the definitions in a code file
+  (functions, methods, classes, structs, interfaces, types, modules… found line by line with a few
+  patterns, no language server), or the sections of an INI / TOML file. Each shows its kind (`H2`,
+  `fn`, `class`…) muted beside it, indented by nesting, and its line number on the right. The one at
+  (or above) the cursor is preselected; typing filters by name; `Enter` moves the cursor to it.
+  Plain text lists nothing, and large files (see 7) are not looked through.
 
 ### 5.6 Workspace search
 - `⌘⇧F` (`Edit → Find in Workspace…` or the command palette) opens the same floating panel to
@@ -310,6 +325,13 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   and turning it off turns syntax highlighting off; in between, highlighting can still be toggled
   as usual.
   The title bar word count and reading time are hidden in this mode.
+  Code editor mode also allows **multiple cursors**: `⌘`-click adds a cursor, `⌘D` selects the
+  next occurrence of the selection, `⌥`-drag selects a column, `Esc` goes back to one cursor
+  (turning the mode off does too). And it **folds** blocks by indentation (a line folds the
+  lines below it that are indented deeper): the fold markers (⌄ / ›) show in the gutter while the
+  pointer is over it (a folded line's marker always shows), the folded lines become `…`;
+  `⌥⌘[` / `⌥⌘]` fold / unfold at the cursor, `⌃⌥[` / `⌃⌥]` (or `Fold All` / `Unfold All` in the
+  command palette) every block.
 - Soft wrap on by default; max readable line width (~72ch) centered in the pane.
 - Font: monospace by default (`SF Mono` via `ui-monospace`), optional system UI font (`-apple-system`) setting.
   Default size 15px, line height 1.6.
@@ -326,6 +348,26 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Source code and data/config files (e.g. `.rs`, `.ts`, `.py`, `.json`, `.toml`, `.yaml`, `.xml`,
   `.csv`, `Dockerfile`) get syntax highlighting picked by file extension or well-known file name,
   using the same muted palette as preview code blocks. Grammars are loaded lazily per language.
+- In code files, brackets and quotes are closed as they are typed (`(` gives `()`, typing the
+  closing one steps over it; `Backspace` between an empty pair removes both).
+- `⌘/` (or `Toggle Comment` in the command palette, for code files) comments out the selected
+  lines, or uncomments them, with the language's line comment (`//`, `#`, `--`…) or, where there is
+  none, its block comment (`<!-- -->` in Markdown, HTML and XML).
+- **Indentation**: `Tab` / `⇧Tab` (`⌘]` / `⌘[`) and automatic indentation use one level of the
+  document's own indentation: tabs, or the number of spaces its indented lines most often step in
+  by (looked at in the first 2,000 lines when the file is opened); 4 spaces when it has none.
+  Tabs are shown 4 columns wide.
+- **`.editorconfig`**: the `.editorconfig` files in the file's folder and the folders above it (up
+  to one with `root = true`) apply as usual (closer files and later sections win), when the file is
+  opened or saved under a new name, and to every open file when a `.editorconfig` is saved in kayet:
+  - `indent_style`, `indent_size` and `tab_width` set the indentation (what they leave out still
+    comes from the text);
+  - `trim_trailing_whitespace = true` removes spaces and tabs at the ends of lines on save, and
+    `insert_final_newline = true` adds a line break at the end when there is none. Both are applied
+    to the text as an edit (one undo step), so the editor shows what was saved; autosave leaves the
+    lines with a cursor alone, so a space just typed stays. `false` values change nothing.
+  - Other properties (`charset`, `end_of_line`, `max_line_length`) are ignored: line endings are
+    kept as found (see 4.2).
 - `View → Syntax Highlighting` (or the title bar code icon) toggles highlighting for code files; the setting is global and
   persisted. The item is disabled for plain text and Markdown files, except in code editor mode.
 - Spell check for prose (Markdown, plain text, untitled — not code files), **off by default**:
@@ -557,6 +599,7 @@ kayet/
 │   │   ├── workspace.rs     # workspace resolution, tree listing, watcher
 │   │   ├── fs_ops.rs        # read/write/rename/create/trash
 │   │   ├── search.rs        # workspace-wide text search
+│   │   ├── editorconfig.rs  # .editorconfig rules for a file
 │   │   ├── markdown.rs      # pulldown-cmark + ammonia rendering
 │   │   ├── export.rs        # PDF export (web view print operation)
 │   │   ├── image_cache.rs   # web images downloaded into ~/.kayet/cache/images/
@@ -573,8 +616,11 @@ kayet/
 │   ├── editor.ts            # CodeMirror setup
 │   ├── markdown.ts          # smart Markdown editing (lists, ⌘B / ⌘I, pasting)
 │   ├── languages.ts         # code languages by file extension (lazy-loaded)
+│   ├── indent.ts            # indentation detection, .editorconfig save rules
+│   ├── folding.ts           # code folding by indentation
+│   ├── symbols.ts           # Go to Symbol outline (headings, definitions)
 │   ├── tree.ts              # file tree component
-│   ├── palette.ts           # command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F)
+│   ├── palette.ts           # command palette (⌘K), file finder (⌘P), workspace search (⌘⇧F), Go to Line / Symbol
 │   ├── preview.ts           # preview pane
 │   ├── presentation.ts      # presentation mode (slides divided by ---)
 │   ├── changelog.ts         # What's New: release notes as Markdown (see 4.7)
@@ -601,6 +647,7 @@ kayet/
 | `list_dir(path) -> Vec<Entry>` | List directory entries (lazy tree loading)    |
 | `list_files() -> Vec<String>`  | Every workspace file, for the file finder     |
 | `search_workspace(query) -> Vec<Match>` | Lines containing the query, for workspace search |
+| `editor_config(path) -> EditorConfig` | The `.editorconfig` rules for a file (indentation, save rules) |
 | `read_file(path) -> bytes`     | Read file contents (UTF-8, as raw bytes)      |
 | `write_file(path, bytes)`      | Atomic write (temp file + rename); the text as raw bytes |
 | `save_image(document, bytes)`  | Save a pasted image next to the document      |
@@ -665,6 +712,12 @@ kayet/
 | Switch appearance      | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘R`  |
 | Find in workspace      | `⌘⇧F`     |
+| Go to line             | `⌃G`      |
+| Go to symbol           | `⌘⇧R`     |
+| Toggle comment         | `⌘/`      |
+| Add next occurrence (code mode) | `⌘D` |
+| Fold / unfold (code mode) | `⌥⌘[` / `⌥⌘]` |
+| Fold / unfold all (code mode) | `⌃⌥[` / `⌃⌥]` |
 | Bold / italic (.md)    | `⌘B` / `⌘I` |
 | Zoom in / out / reset  | `⌘+` / `⌘-` / `⌘0` |
 | Show chrome (keyboard) | `⌘.` (hold/toggle) |

@@ -71,7 +71,7 @@ describe("Palette", () => {
     expect(labels()).toEqual(["beta.md"]);
     key("Enter");
     await closed;
-    expect(pick).toHaveBeenCalledWith("b");
+    expect(pick).toHaveBeenCalledWith("b", "bet");
     expect(palette.showing).toBeNull();
     expect(onClose).toHaveBeenCalledOnce();
   });
@@ -93,7 +93,7 @@ describe("Palette", () => {
     expect(palette.showing).toBe("commands");
     expect(onClose).not.toHaveBeenCalled();
     key("Enter");
-    expect(pickCommand).toHaveBeenCalledWith("save");
+    expect(pickCommand).toHaveBeenCalledWith("save", "");
     expect(pickFile).not.toHaveBeenCalled();
   });
 
@@ -102,7 +102,21 @@ describe("Palette", () => {
     const closed = palette.open(items, { ...options(pick), selected: 1 });
     key("Enter");
     await closed;
-    expect(pick).toHaveBeenCalledWith("b");
+    expect(pick).toHaveBeenCalledWith("b", "");
+  });
+
+  it("makes the items from the query in live mode", () => {
+    const pick = vi.fn();
+    const live = (q: string): PaletteItem[] => (/^\d+$/.test(q) ? [{ id: q, label: `Go to line ${q}` }] : []);
+    palette.open([], { ...options(pick), kind: "line", prompt: "Type a line number", empty: "Not a line number", live });
+    const emptyText = () => document.querySelector("#palette li.empty")?.textContent;
+    expect(emptyText()).toBe("Type a line number");
+    type("x");
+    expect(emptyText()).toBe("Not a line number");
+    type("42");
+    expect(labels()).toEqual(["Go to line 42"]);
+    key("Enter");
+    expect(pick).toHaveBeenCalledWith("42", "42");
   });
 
   describe("search mode", () => {
@@ -138,7 +152,7 @@ describe("Palette", () => {
       expect(document.querySelector("#palette mark")?.textContent).toBe("todo");
       key("ArrowDown");
       key("Enter");
-      expect(pick).toHaveBeenCalledWith("b.md:1");
+      expect(pick).toHaveBeenCalledWith("b.md:1", "todo");
     });
 
     it("shows the empty text for a query without results and drops stale results", async () => {

@@ -6,6 +6,7 @@ mod cli;
 mod commands;
 mod config;
 mod default_app;
+mod editorconfig;
 mod export;
 mod fs_ops;
 mod image_cache;
@@ -135,6 +136,7 @@ fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'stat
         commands::search_workspace,
         commands::read_file,
         commands::write_file,
+        commands::editor_config,
         commands::save_image,
         commands::write_recovery,
         commands::clear_recovery,

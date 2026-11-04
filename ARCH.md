@@ -54,6 +54,7 @@ kayet/
 │   │   ├── workspace.rs    workspace resolution, list_dir, list_files, fs watcher
 │   │   ├── fs_ops.rs       read, atomic write, create, rename, trash, save image
 │   │   ├── search.rs       workspace-wide literal text search
+│   │   ├── editorconfig.rs .editorconfig lookup (folder and above, globs) for a file
 │   │   ├── themes.rs       bundled themes (themes/, embedded) + ~/.kayet/themes/
 │   │   ├── markdown.rs     pulldown-cmark → ammonia sanitizer, line anchors
 │   │   ├── export.rs       PDF export through NSPrintOperation on the web view
@@ -74,7 +75,11 @@ kayet/
 │   ├── editor.ts           CodeMirror setup, settings, snapshots per tab
 │   ├── markdown.ts         smart Markdown editing (lists, bold / italic, pasting images),
 │   │                       Markdown detection for untitled documents
-│   ├── languages.ts        code highlighting by file extension (lazy legacy modes)
+│   ├── languages.ts        code highlighting by file extension (lazy legacy modes),
+│   │                       line comment fallbacks for Toggle Comment
+│   ├── indent.ts           indentation detection, .editorconfig save rules
+│   ├── folding.ts          code folding by indentation (code editor mode)
+│   ├── symbols.ts          Go to Symbol: Markdown headings, code definitions by pattern
 │   ├── find.ts             in-document find / replace bar
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
 │   ├── presentation.ts     presentation mode: slides split at `---`, rendered like the preview,
@@ -87,7 +92,8 @@ kayet/
 │   ├── export.ts           HTML / PDF export
 │   ├── images.ts           web images → their downloaded copies (preview and export)
 │   ├── tree.ts             file tree
-│   ├── palette.ts          command palette, file finder, workspace search, tab list (highlight hook for live theme previews)
+│   ├── palette.ts          command palette, file finder, workspace search, tab list, Go to Line /
+│   │                       Symbol (live items from the query; highlight hook for theme previews)
 │   ├── chrome.ts           auto-hiding title bar and left-edge handle
 │   ├── theme.ts            palette/mode resolution, token allowlist, apply / clear
 │   ├── stats.ts            word count
@@ -156,6 +162,7 @@ There are exactly two channels:
   api.listThemes ──────────── invoke("list_themes") ───────▶  themes::list
   api.systemAppearance ────── invoke("system_appearance") ─▶  chrome::system_appearance
   api.searchWorkspace ─────── invoke("search_workspace") ──▶  search::search
+  api.editorConfig ────────── invoke("editor_config") ─────▶  authorize → editorconfig::for_file
   api.getChangelog ────────── invoke("get_changelog") ─────▶  update::releases (via curl)
   api.markChangelogSeen ───── invoke("mark_changelog_seen")▶  AppState session marker
   api.writeRecovery ───────── invoke("write_recovery",       recovery::write
@@ -277,6 +284,7 @@ Arrows point from a module to the modules it uses; lower layers never call upwar
   features     search.rs  markdown.rs  export.rs  recovery.rs  menu.rs  cli.rs
                   │                                 │           │       chrome.rs
                   │                                 │           │       default_app.rs
+                  │                                 │           │       editorconfig.rs
                   ▼                                 │           │
   storage      workspace.rs                         │           │
                   │                                 │           │
@@ -314,6 +322,8 @@ self-contained components that know nothing about each other.
      │         └── Presentation  presentation.ts (one Preview per slide shown)
      ├─▶ markdown.ts   (smart Markdown editing)
      ├─▶ languages.ts  (code grammars, loaded lazily)
+     ├─▶ indent.ts     (indentation, .editorconfig save rules)
+     ├─▶ folding.ts    (folding by indentation)
      ├─▶ find.ts       (find / replace bar)
      ├─▶ Changelog     changelog.ts (What's New overlay)
      ├─▶ About         about.ts (About panel)
@@ -392,6 +402,12 @@ smart Markdown editing or word count, and crash recovery backups wait for a paus
                                           saved → syncBackup() removes the backup
                                           once no tab has unsaved changes
 ```
+
+Before writing, `writeDoc` applies the `.editorconfig` save rules (trim trailing whitespace,
+insert a final newline) to the buffer as an undoable edit, so the editor and the file agree;
+autosave leaves the whitespace on the cursor lines alone. Each tab keeps its `.editorconfig`
+rules (`Tab.format`), read when its file is opened or saved under a new name, and re-read for
+every tab when a `.editorconfig` file is saved in kayet.
 
 `fs_ops::write_atomic` writes to a hidden temp file next to the target and renames it into
 place, so the file on disk is never half-written; permissions of an existing file are kept.

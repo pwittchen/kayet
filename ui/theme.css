@@ -580,6 +580,31 @@ button:focus-visible {
   min-width: 4ch;
 }
 
+/* Fold markers stay out of sight until the pointer is over the gutter; a folded block's
+   marker always shows. */
+#editor .cm-foldGutter .cm-gutterElement {
+  width: 14px;
+  padding-right: 2px;
+  text-align: center;
+  cursor: default;
+  opacity: 0;
+  transition: opacity var(--fade);
+}
+
+#editor .cm-gutters:hover .cm-foldGutter .cm-gutterElement,
+#editor .cm-foldGutter .cm-gutterElement:has(span[title="Unfold line"]) {
+  opacity: 1;
+}
+
+#editor .cm-foldPlaceholder {
+  background: var(--hover);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  padding: 0 4px;
+  margin: 0 2px;
+}
+
 #editor .cm-activeLine,
 #editor .cm-activeLineGutter {
   background: var(--hover);
