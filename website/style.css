@@ -173,7 +173,7 @@ section { padding: 0 24px; }
   letter-spacing: -0.05em;
 }
 
-.hero-version { margin: 28px 0 0; }
+.download-version { margin: 20px 0 0; }
 .version-pill {
   display: inline-block;
   padding: 3px 12px;
