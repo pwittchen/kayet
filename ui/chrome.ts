@@ -19,6 +19,11 @@ export class Chrome {
     private readonly treeVisible: () => boolean,
     private readonly onPinnedChange: (pinned: boolean) => void,
     private readonly onShow: () => void = () => {},
+    /**
+     * Called right after the layout changed for the title bar being shown or hidden (scroll areas
+     * start below it while it is shown), to re-measure what positions things from measurements.
+     */
+    private readonly onLayout: () => void = () => {},
   ) {
     document.addEventListener("mousemove", (e) => this.onMouseMove(e), { passive: true });
     document.documentElement.addEventListener("mouseleave", () => {
@@ -49,6 +54,7 @@ export class Chrome {
     this.visible = true;
     this.titlebar.classList.add("visible");
     document.body.classList.add("chrome-visible");
+    this.onLayout();
     void api.setChromeVisible(true);
     this.onShow();
   }
@@ -60,6 +66,7 @@ export class Chrome {
     this.visible = false;
     this.titlebar.classList.remove("visible");
     document.body.classList.remove("chrome-visible");
+    this.onLayout();
     void api.setChromeVisible(false);
   }
 

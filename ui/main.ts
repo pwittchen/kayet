@@ -304,6 +304,10 @@ const chrome = new Chrome(
     }
   },
   () => updateStats(),
+  // The editor's scroll area and top padding just changed. CodeMirror would only notice through
+  // its ResizeObserver and re-measure a frame later, painting the line numbers, cursor and
+  // selection one frame out of place (a blink). Asked now, it measures before this frame paints.
+  () => editor.view.requestMeasure(),
 );
 
 // ---- config ----

@@ -105,6 +105,19 @@ describe("title bar hover-reveal", () => {
     expect(marked()).toBe(false);
   });
 
+  it("reports the layout change right after marking the body, so the editor re-measures in the same frame", () => {
+    const seen: boolean[] = [];
+    const onLayout = () => seen.push(document.body.classList.contains("chrome-visible"));
+    chrome = new Chrome(titlebar, edgeHandle, () => treeVisible, onPinnedChange, onShow, onLayout);
+    move(300, 10);
+    chrome.hide();
+    expect(seen).toEqual([true, false]);
+    // Already shown: no layout change, nothing to report.
+    chrome.show();
+    chrome.show();
+    expect(seen).toEqual([true, false, true]);
+  });
+
   it("does not restart the hide delay on further moves outside the zone", () => {
     move(300, 10);
     move(300, 200);
