@@ -1278,6 +1278,8 @@ body.presenting #edge-handle {
   font-weight: 500;
   color: var(--accent);
   border-radius: var(--radius);
+  /* A hand, like the links in About. */
+  cursor: pointer;
 }
 
 .settings-link:hover {
