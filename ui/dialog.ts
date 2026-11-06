@@ -17,6 +17,8 @@ export interface DialogOptions<T> {
   buttons: DialogButton<T>[];
   /** What Esc answers. */
   cancel: T;
+  /** In the middle of the window instead of below the title bar (update dialogs). */
+  centered?: boolean;
 }
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -28,11 +30,12 @@ export function ask<T>(options: DialogOptions<T>): Promise<T> {
   return answer;
 }
 
-function show<T>({ title, message, buttons, cancel }: DialogOptions<T>): Promise<T> {
+function show<T>({ title, message, buttons, cancel, centered }: DialogOptions<T>): Promise<T> {
   return new Promise((resolve) => {
     const previous = document.activeElement as HTMLElement | null;
     const scrim = document.createElement("div");
     scrim.className = "sheet-scrim";
+    scrim.classList.toggle("centered", !!centered);
     const sheet = document.createElement("div");
     sheet.className = "sheet";
     sheet.setAttribute("role", "alertdialog");

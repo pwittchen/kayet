@@ -124,8 +124,11 @@ neither download carries the other's code.
 - kayet looks for a newer release on GitHub (the latest non-draft, non-prerelease release of
   `pwittchen/kayet`) ~10s after launch and once a day while running, unless
   `[updates] check_automatically = false`. Development builds never check on their own.
-- `kayet → Check for Updates…` (or the command palette) checks right away and also reports when
-  kayet is up to date or the check failed.
+- `kayet → Check for Updates…` (or the command palette, About or Settings) checks right away and
+  also reports when kayet is up to date or the check failed.
+- Update dialogs appear in the middle of the window. When the check was started from About or
+  Settings, that panel is hidden while the dialog shows and comes back once it is closed (OK,
+  **Later**, **Skip This Version**); after **Update** it stays closed and the update goes on as usual.
 - When a newer version is found, a dialog (see 5.7) offers **Update**, **Skip This Version** (automatic
   checks don't offer that version again; a manual check still does) or **Later**.
 - **Update** downloads the release's `.dmg` for the Mac's architecture, verifies that the app inside has a valid signature
@@ -286,7 +289,8 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
 - Questions are asked in the app, not in native alerts: saving unsaved changes (**Don't Save** /
   **Cancel** / **Save**), saving before an action (**Cancel** / **Save**), crash recovery
   (**Discard** / **Restore**), Move to Trash and app updates (see 4.5).
-- A dialog is a sheet that drops in just below the title bar over the dimmed window: a bold title,
+- A dialog is a sheet that drops in just below the title bar (update dialogs: in the middle of
+  the window) over the dimmed window: a bold title,
   a muted message and the buttons right-aligned, the default one filled with the accent color
   and focused (`Enter`). A button that discards (**Don't Save**, **Skip This Version**) stands
   apart on the left. `Esc` answers like Cancel; `Tab` cycles the buttons; clicking outside does

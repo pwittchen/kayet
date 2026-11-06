@@ -1093,6 +1093,16 @@ body.presenting #edge-handle {
   animation: sheet-in 180ms var(--ease-out);
 }
 
+/* Update dialogs: in the middle of the window, like the About and Settings panels. */
+.sheet-scrim.centered {
+  align-items: center;
+}
+
+.sheet-scrim.centered .sheet {
+  margin-top: 0;
+  animation: panel-in 180ms var(--ease-out);
+}
+
 .sheet h2 {
   margin: 0 0 6px;
   font-size: 13px;

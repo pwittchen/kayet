@@ -262,7 +262,7 @@ function showChangelog(focusVersion?: string): Promise<void> {
 const about = new About(els.about, els.aboutBody, {
   exit: closeAbout,
   changelog: () => void showChangelog(),
-  checkUpdates: () => void api.checkForUpdates().catch(showError),
+  checkUpdates: () => void checkUpdatesFrom("about"),
 });
 
 els.aboutClose.addEventListener("click", closeAbout);
@@ -285,7 +285,7 @@ const settings = new Settings(els.settings, els.settingsBody, {
   exit: closeSettings,
   editFile: () => void openSettingsFile().catch(showError),
   change: changeSettings,
-  checkUpdates: () => void api.checkForUpdates().catch(showError),
+  checkUpdates: () => void checkUpdatesFrom("settings"),
   resetWorkspace: () =>
     void resetWorkspace()
       .then(() => settings.sync())
@@ -317,6 +317,37 @@ async function toggleSettings(): Promise<void> {
   changelog.hide();
   about.hide();
   settings.show(themes, version);
+}
+
+/** The panel a manual update check was started from, shown again once its result is closed. */
+let updateOrigin: "about" | "settings" | null = null;
+
+/** Checks for updates from the About or Settings panel (see `showUpdateResult`). */
+async function checkUpdatesFrom(origin: "about" | "settings"): Promise<void> {
+  updateOrigin = origin;
+  try {
+    await api.checkForUpdates();
+  } catch (e) {
+    updateOrigin = null;
+    showError(e);
+  }
+}
+
+/**
+ * Shows what an update check found. A check started from About or Settings hides that panel
+ * while the dialog is up and shows it again afterwards, unless the user chose to update.
+ */
+async function showUpdateResult(checked: UpdateChecked): Promise<void> {
+  const origin = updateOrigin;
+  updateOrigin = null;
+  const panel = origin === "about" ? about : origin === "settings" ? settings : null;
+  const hidden = panel?.open ?? false;
+  if (hidden) panel!.hide();
+  const { outcome, installing } = await showUpdateChecked(checked);
+  // Updating goes on as usual (download, install, restart) with the panel closed.
+  if (outcome === "update") editor.focus();
+  else if (hidden) await (origin === "about" ? showAbout() : toggleSettings());
+  await installing;
 }
 
 /** Shows What's New once after an upgrade; on first run the version is only recorded. */
@@ -1962,7 +1993,7 @@ async function init(): Promise<void> {
     listen<string>("notice", (e) => notify(e.payload)),
     listen<{ path: string }>("file://dropped", (e) => void openFile(e.payload.path)),
     listen<Opened>("open://requested", (e) => void openRequested(e.payload).catch(showError)),
-    listen<UpdateChecked>("update://checked", (e) => void showUpdateChecked(e.payload).catch(showError)),
+    listen<UpdateChecked>("update://checked", (e) => void showUpdateResult(e.payload).catch(showError)),
     listen<UpdateFailed>("update://failed", (e) => void showUpdateFailed(e.payload).catch(showError)),
     listen<string>("update://installed", (e) => void restartToUpdate(e.payload).catch(showError)),
     appWindow.onFocusChanged((e) => {

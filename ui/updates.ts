@@ -18,8 +18,22 @@ export interface UpdateFailed {
 
 let offering = false;
 
-/** Shows the result of a check; a newer version is offered with Update, Skip This Version or Later. */
-export async function showUpdateChecked(checked: UpdateChecked): Promise<void> {
+/**
+ * What became of a check's result: `update` when the user chose to install the new version,
+ * `closed` when the dialog was dismissed otherwise, `none` when no dialog was shown (an offer
+ * is open already).
+ */
+export type UpdateOutcome = "update" | "closed" | "none";
+
+/**
+ * Shows the result of a check, in the middle of the window; a newer version is offered with
+ * Update, Skip This Version or Later. Resolves once the dialog is closed, before an update
+ * chosen there is installed (`installing` follows the install).
+ */
+export async function showUpdateChecked(
+  checked: UpdateChecked,
+): Promise<{ outcome: UpdateOutcome; installing: Promise<void> }> {
+  const done = Promise.resolve();
   switch (checked.kind) {
     case "up-to-date":
       await ask({
@@ -27,19 +41,21 @@ export async function showUpdateChecked(checked: UpdateChecked): Promise<void> {
         message: `kayet ${checked.current} is the latest version.`,
         buttons: [{ label: "OK", value: undefined, primary: true }],
         cancel: undefined,
+        centered: true,
       });
-      return;
+      return { outcome: "closed", installing: done };
     case "failed":
       await ask({
         title: "Couldn't check for updates",
         message: checked.error,
         buttons: [{ label: "OK", value: undefined, primary: true }],
         cancel: undefined,
+        centered: true,
       });
-      return;
+      return { outcome: "closed", installing: done };
     case "available": {
       // A later check while the offer is still open only refreshes the backend's release.
-      if (offering) return;
+      if (offering) return { outcome: "none", installing: done };
       offering = true;
       const answer = await ask<"update" | "skip" | "later">({
         title: "A new version of kayet is available",
@@ -50,8 +66,9 @@ export async function showUpdateChecked(checked: UpdateChecked): Promise<void> {
           { label: "Update", value: "update", primary: true },
         ],
         cancel: "later",
+        centered: true,
       }).finally(() => (offering = false));
-      await api.answerUpdate(answer);
+      return { outcome: answer === "update" ? "update" : "closed", installing: api.answerUpdate(answer) };
     }
   }
 }
@@ -66,6 +83,7 @@ export async function showUpdateFailed(failed: UpdateFailed): Promise<void> {
       { label: "Download", value: true, primary: true },
     ],
     cancel: false,
+    centered: true,
   });
   if (download) await api.openExternal(failed.page);
 }
