@@ -40,15 +40,37 @@ jobs:
       with:
         node-version: 22
 
+    # Each audit writes its report to the job summary, also when it fails (then the step
+    # still fails with the audit's exit status).
     - name: Audit npm dependencies
-      run: npm audit
+      run: |
+        set -o pipefail
+        status=0
+        npm audit 2>&1 | tee npm-audit.txt || status=$?
+        {
+          echo '### npm audit'
+          echo '```'
+          cat npm-audit.txt
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
 
     - uses: taiki-e/install-action@v2
       with:
         tool: cargo-audit
 
     - name: Audit Cargo dependencies
-      run: cargo audit --deny warnings
+      run: |
+        set -o pipefail
+        status=0
+        cargo audit --deny warnings --color never 2>&1 | tee cargo-audit.txt || status=$?
+        {
+          echo '### Cargo audit'
+          echo '```'
+          cat cargo-audit.txt
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
 
   build:
     # Audits gate the build: a failed audit fails the workflow without building or testing.
