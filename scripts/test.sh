@@ -1,6 +1,6 @@
 #!/bin/sh
-# Runs the checks CI enforces: Rust formatting and lints, then the Rust and frontend tests,
-# and prints a summary table with each step's result and time. Every step runs even if an
+# Runs the dependency audits (cargo audit, npm audit), then the checks CI enforces: Rust
+# formatting and lints, then the Rust and frontend tests, and prints a summary table with each step's result and time. Every step runs even if an
 # earlier one fails; the script exits non-zero if any did.
 # The frontend is built first, since the Rust crate embeds dist/ at compile time.
 # Usage: scripts/test.sh
@@ -40,6 +40,24 @@ result_of() {
           if (failed) printf ", %d failed", failed
         }'
       ;;
+    cargo-audit)
+      # Prints nothing when clean; otherwise "error: N vulnerabilities found!" and / or
+      # "warning: N allowed warnings found".
+      printf '%s\n' "$clean" | awk '
+        function count(n, one, many) { return n " " (n == 1 ? one : many) }
+        /^error: [0-9]+ vulnerabilit/ { vulns = $2 + 0 }
+        /^warning: [0-9]+ (allowed )?warnings? found/ { warns = $2 + 0 }
+        END {
+          printf "%s", count(vulns + 0, "vulnerability", "vulnerabilities")
+          if (warns) printf ", %s", count(warns, "warning", "warnings")
+        }'
+      ;;
+    npm-audit)
+      # "found 0 vulnerabilities" or e.g. "3 vulnerabilities (1 moderate, 2 high)".
+      printf '%s\n' "$clean" | awk '
+        /^found 0 vulnerabilities/ { print "0 vulnerabilities"; exit }
+        /^[0-9]+ .*vulnerabilit(y|ies)/ { print; exit }'
+      ;;
     vitest)
       printf '%s\n' "$clean" | awk '
         /^ *Tests  / {
@@ -68,6 +86,8 @@ step() {
 }
 
 total_start=$(now_ms)
+step "Rust audit" cargo-audit cargo audit
+step "npm audit" npm-audit npm audit
 step "Frontend build" - npm run build
 step "Rust format" - cargo fmt --check
 step "Rust lint (clippy)" - cargo clippy --locked --all-targets -- -D warnings -W clippy::pedantic
