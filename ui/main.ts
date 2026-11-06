@@ -35,6 +35,7 @@ import { icons } from "./icons";
 import { codeLanguage, isCode } from "./languages";
 import { fileScore, Palette, PaletteItem, PaletteOptions, score } from "./palette";
 import { Presentation } from "./presentation";
+import { Settings } from "./settings";
 import { codeSymbols, markdownSymbols, symbolAt } from "./symbols";
 import { Preview } from "./preview";
 import { countWords, formatStats } from "./stats";
@@ -99,6 +100,9 @@ const els = {
   about: $("about"),
   aboutBody: $("about-body"),
   aboutClose: $<HTMLButtonElement>("about-close"),
+  settings: $("settings"),
+  settingsBody: $("settings-body"),
+  settingsClose: $<HTMLButtonElement>("settings-close"),
   presentation: $("presentation"),
   slideScroller: $("slide-scroller"),
   slide: $("slide"),
@@ -251,6 +255,7 @@ function closeChangelog(): void {
 function showChangelog(focusVersion?: string): Promise<void> {
   endPresentation();
   about.hide();
+  settings.hide();
   return changelog.show(focusVersion);
 }
 
@@ -272,7 +277,46 @@ async function showAbout(): Promise<void> {
   const version = await getVersion().catch(() => "");
   endPresentation();
   changelog.hide();
+  settings.hide();
   about.show(version);
+}
+
+const settings = new Settings(els.settings, els.settingsBody, {
+  exit: closeSettings,
+  editFile: () => void openSettingsFile().catch(showError),
+  change: changeSettings,
+  checkUpdates: () => void api.checkForUpdates().catch(showError),
+  resetWorkspace: () =>
+    void resetWorkspace()
+      .then(() => settings.sync())
+      .catch(showError),
+  changeWorkspace: () =>
+    void changeWorkspace(false)
+      .then(() => settings.sync())
+      .catch(showError),
+  config: () => cfg,
+  workspace: () => workspace,
+  themeFixed: () => fixedVariant !== null,
+});
+
+els.settingsClose.addEventListener("click", closeSettings);
+
+function closeSettings(): void {
+  settings.hide();
+  editor.focus();
+}
+
+/** Shows the Settings panel, or closes it if it is open. */
+async function toggleSettings(): Promise<void> {
+  if (settings.open) return closeSettings();
+  const [themes, version] = await Promise.all([
+    api.listThemes().catch(() => []),
+    getVersion().catch(() => ""),
+  ]);
+  endPresentation();
+  changelog.hide();
+  about.hide();
+  settings.show(themes, version);
 }
 
 /** Shows What's New once after an upgrade; on first run the version is only recorded. */
@@ -331,10 +375,19 @@ function saveConfig(): void {
   void api.setConfig(cfg).catch((e) => console.error("set_config failed", e));
 }
 
-/** Opens the config file in the editor. */
-async function openSettings(): Promise<void> {
+/** Closes the Settings panel and opens the config file in the editor. */
+async function openSettingsFile(): Promise<void> {
+  settings.hide();
   configPath = await api.configFile();
   await openFile(configPath);
+}
+
+/** Applies a change made in the Settings panel right away and saves it. */
+function changeSettings(edit: (cfg: Config) => void): void {
+  const prev = structuredClone(cfg);
+  edit(cfg);
+  saveConfig();
+  void applyConfig(prev, false).catch(showError);
 }
 
 /** Applies the config file after it was saved from the editor. */
@@ -345,8 +398,7 @@ async function reloadConfig(): Promise<void> {
   } catch (e) {
     return notify(String(e));
   }
-  const hiddenChanged = next.workspace.show_hidden_files !== cfg.workspace.show_hidden_files;
-  const pinnedChanged = next.ui.titlebar_pinned !== cfg.ui.titlebar_pinned;
+  const prev = cfg;
   cfg = next;
   const migrated = migrateLegacyTheme(cfg.ui.theme, cfg.ui.mode);
   if (migrated.theme !== cfg.ui.theme) {
@@ -354,8 +406,19 @@ async function reloadConfig(): Promise<void> {
     cfg.ui.mode = migrated.mode;
     saveConfig();
   }
-  void applyTheme();
-  if (pinnedChanged) chrome.setPinned(cfg.ui.titlebar_pinned);
+  await applyConfig(prev, true);
+  const path = await api.getWorkspace();
+  if (path !== workspace) await applyWorkspace(path);
+  settings.sync();
+}
+
+/**
+ * Brings the window up to date with `cfg` after it changed from `prev`; `theme` re-applies the
+ * theme even if its name and mode stayed the same.
+ */
+async function applyConfig(prev: Config, theme: boolean): Promise<void> {
+  if (theme || prev.ui.theme !== cfg.ui.theme || prev.ui.mode !== cfg.ui.mode) void applyTheme();
+  if (prev.ui.titlebar_pinned !== cfg.ui.titlebar_pinned) chrome.setPinned(cfg.ui.titlebar_pinned);
   editor.applySettings(editorSettings());
   applyCodeMode();
   applyZen();
@@ -363,10 +426,12 @@ async function reloadConfig(): Promise<void> {
   updateLayout();
   applySpellCheck();
   updateStats();
+  scheduleAutosave();
+  settings.sync();
   await applySyntax();
-  if (hiddenChanged) await tree.refresh();
-  const path = await api.getWorkspace();
-  if (path !== workspace) await applyWorkspace(path);
+  const shown = cfg.ui.sidebar_visible && !prev.ui.sidebar_visible;
+  if (shown) els.edgeHandle.classList.remove("visible");
+  if (shown || prev.workspace.show_hidden_files !== cfg.workspace.show_hidden_files) await tree.refresh();
 }
 
 /** Applies edits made to the config file outside kayet. */
@@ -806,6 +871,7 @@ function togglePresentation(): void {
   if (!presentable()) return;
   changelog.hide();
   about.hide();
+  settings.hide();
   document.body.classList.add("presenting");
   presentation.start(editor.text(), doc.path);
   updatePresentButton();
@@ -938,6 +1004,7 @@ function loadDoc(path: string | null, text: string, recent = true): void {
   endPresentation();
   changelog.hide();
   about.hide();
+  settings.hide();
   doc.path = path;
   doc.disk = text;
   doc.savedOnce = false;
@@ -997,6 +1064,7 @@ async function activate(tab: Tab): Promise<void> {
   endPresentation();
   changelog.hide();
   about.hide();
+  settings.hide();
   if (tabs.includes(doc)) {
     await flushAutosave();
     doc.editor = editor.snapshot();
@@ -1333,9 +1401,10 @@ async function applyWorkspace(path: string | null): Promise<void> {
   void checkDiskChange(); // also watches the document again: the new watcher starts without it
 }
 
-async function changeWorkspace(): Promise<void> {
+/** Picks a workspace folder; `showTree` shows the file tree afterwards (not from Settings). */
+async function changeWorkspace(showTree = true): Promise<void> {
   await applyWorkspace(await chrome.hold(api.pickWorkspace()).catch(showError));
-  if (!cfg.ui.sidebar_visible) await toggleTree();
+  if (showTree && !cfg.ui.sidebar_visible) await toggleTree();
 }
 
 /** Handles a file / folder opened from Finder or the `kayet` command while running. */
@@ -1421,7 +1490,7 @@ function inTextField(): HTMLInputElement | null {
 const commands: Record<string, () => unknown> = {
   new: newDoc,
   open: openWithDialog,
-  "open-workspace": changeWorkspace,
+  "open-workspace": () => changeWorkspace(),
   "reset-workspace": resetWorkspace,
   save: () => save(),
   "save-as": saveAs,
@@ -1441,7 +1510,8 @@ const commands: Record<string, () => unknown> = {
   "toggle-tree": toggleTree,
   "toggle-preview": togglePreview,
   "toggle-presentation": togglePresentation,
-  "open-settings": openSettings,
+  "open-settings": toggleSettings,
+  "edit-settings-file": openSettingsFile,
   "install-cli": installCli,
   "make-default-editor": makeDefaultEditor,
   "check-updates": () => api.checkForUpdates(),
@@ -1544,6 +1614,7 @@ function paletteCommands(): PaletteItem[] {
     { id: "zoom-out", label: "Zoom Out", shortcut: "⌘−" },
     { id: "zoom-reset", label: "Actual Size", shortcut: "⌘0" },
     { id: "open-settings", label: "Settings…", shortcut: "⌘," },
+    { id: "edit-settings-file", label: "Edit Settings File" },
     { id: "install-cli", label: "Install ‘kayet’ Command" },
     { id: "make-default-editor", label: "Make Default Editor for .md and .txt" },
     { id: "check-updates", label: "Check for Updates…" },
@@ -1772,7 +1843,11 @@ function zoom(step: number | "reset"): void {
 function run(id: string): void {
   if (tree.handleMenu(id)) return;
   const command = commands[id];
-  if (command) Promise.resolve(command()).catch(showError);
+  if (!command) return;
+  Promise.resolve(command())
+    .catch(showError)
+    // A menu command may change a setting the open Settings panel shows.
+    .finally(() => settings.sync());
 }
 
 els.btnPalette.addEventListener("click", () => run("palette"));
@@ -1811,6 +1886,7 @@ els.btnSyntax.innerHTML = icons.code;
 els.btnSpell.innerHTML = icons.spell;
 els.changelogClose.innerHTML = icons.closeFile;
 els.aboutClose.innerHTML = icons.closeFile;
+els.settingsClose.innerHTML = icons.closeFile;
 els.btnCloseFile.innerHTML = icons.closeFile;
 els.btnNewTab.innerHTML = icons.newTab;
 
@@ -1821,7 +1897,7 @@ document.addEventListener(
   "keydown",
   (e) => {
     if (e.key !== "Tab" || !e.shiftKey || e.ctrlKey || e.metaKey) return;
-    if (document.activeElement?.closest("input, .find-bar")) return;
+    if (document.activeElement?.closest("input, select, .find-bar, .panel-scrim")) return;
     e.preventDefault();
     e.stopPropagation();
     run(e.altKey ? "prev-tab" : "next-tab");

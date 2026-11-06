@@ -230,7 +230,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   | Folder | Change workspace | `⌘⇧O` |
   | Code | Toggle syntax highlighting — **only shown for code and data/config files, or for any file in code editor mode** | — |
   | "A" with a wavy underline | Toggle spell check (off by default) — **only shown for prose files** (Markdown, plain text, untitled), hidden in code editor mode | — |
-  | Sliders (settings) | Open `~/.kayet/config.toml` in the editor; saving it applies the changes | `⌘,` |
+  | Sliders (settings) | Open the Settings panel (see 10) | `⌘,` |
   | Theme | Switch appearance: a System / Light / Dark list; disabled for single-variant themes (see 9) | `⌘⇧L` |
   | Presentation (screen) | Start presentation mode; turns into an exit icon while presenting (see 8.2) — **only shown for `.md` files and untitled documents** | — |
   | Eye (preview) | Toggle Markdown preview — **only shown for `.md` files and untitled documents written in Markdown** (see 8) | `⌘⇧P` |
@@ -291,7 +291,7 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   and focused (`Enter`). A button that discards (**Don't Save**, **Skip This Version**) stands
   apart on the left. `Esc` answers like Cancel; `Tab` cycles the buttons; clicking outside does
   nothing. While it is open, keys don't reach the document; dialogs asked meanwhile wait their turn.
-- Panels (About) share the look: the theme's background, a hairline border, 12px corners, the
+- Panels (About, Settings) share the look: the theme's background, a hairline border, 12px corners, the
   palette's shadow and a 40px header with a centred title and a close button.
 - File pickers (open, save, export, workspace) stay native.
 
@@ -576,8 +576,20 @@ check_automatically = true  # look for a new kayet release at launch and once a 
 - `font_family`: `"mono"` (SF Mono) and `"system"` (SF Pro) are keywords; any other value is a font
   family name or a comma-separated list of them (fallbacks, e.g. for CJK scripts), always followed
   by the default monospace stack, so a font that isn't installed falls back to SF Mono.
-- The file can be edited in kayet itself (`kayet → Settings…`, `⌘,`, or the title bar sliders icon);
-  saving it applies the changes immediately. Edits made in another editor apply when the kayet
+- `kayet → Settings…`, `⌘,`, the title bar sliders icon or `Settings…` in the command palette
+  open the **Settings panel**: centred over the dimmed window like About, with the settings
+  grouped as Appearance (theme, appearance mode, font, font size, line height, blinking cursor),
+  Editor (wrap lines, line width, autosave, syntax highlighting, spell check, code editor mode,
+  zen mode), Window (file tree, title bar, new tabs, presentation steps), Workspace (folder with
+  `Change…` and `Set to Default` buttons, which leave the file tree as it is; hidden files) and Updates (the running version, e.g. `kayet 0.14.0`, with a
+  `Check for Updates…` button, and automatic checks). Every change applies and is saved immediately (a
+  number once it is valid and within range); controls that don't apply (zen mode and spell check
+  in code editor mode, the appearance mode for a single-variant theme) are disabled. `Esc`, the
+  close button, a click outside or `⌘,` again close it. Window geometry, sizes of the sidebar /
+  preview and the session are not shown.
+- At the very top of the panel, `Edit as Text File` closes it and opens `~/.kayet/config.toml` in
+  the editor (also `Edit Settings File` in the command palette); saving the file applies the
+  changes immediately. Edits made in another editor apply when the kayet
   window is focused again. Changing `workspace.path` moves to that workspace; if it isn't a folder,
   the current workspace stays and a notice says so. Window geometry and the session are owned by
   the running app and are not reloaded.
@@ -625,6 +637,8 @@ kayet/
 │   ├── presentation.ts      # presentation mode (slides divided by ---)
 │   ├── changelog.ts         # What's New: release notes as Markdown (see 4.7)
 │   ├── about.ts             # About: icon, version, update actions and project links (see 4.6)
+│   ├── settings.ts          # Settings panel: config controls, applied immediately (see 10)
+│   ├── dropdown.ts          # dropdown in kayet's style (button + palette-like list)
 │   ├── dialog.ts            # in-app dialogs: unsaved changes, recovery, Trash (see 5.7)
 │   ├── updates.ts           # update dialogs (see 4.5)
 │   ├── export.ts            # HTML / PDF export
@@ -707,7 +721,7 @@ kayet/
 | Close file / window    | `⌘W` / `⌘⇧W` |
 | Toggle file tree       | `⌘\`      |
 | Toggle preview (.md)   | `⌘⇧P`     |
-| Settings (config file) | `⌘,`      |
+| Settings               | `⌘,`      |
 | Command palette        | `⌘K`      |
 | Switch appearance      | `⌘⇧L`     |
 | Find / Replace         | `⌘F` / `⌘R`  |

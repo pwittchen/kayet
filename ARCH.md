@@ -86,6 +86,8 @@ kayet/
 │   │                       revealed block by block / list item by list item
 │   ├── changelog.ts        What's New: release notes as Markdown, once after an update
 │   ├── about.ts            About: icon, version, What's New / update check, project links
+│   ├── settings.ts         Settings panel: config controls, each change applied and saved at once
+│   ├── dropdown.ts         dropdown drawn like kayet's controls (palette-like list), used by Settings
 │   ├── dialog.ts           in-app dialogs (sheets): unsaved changes, recovery, Trash, updates
 │   ├── updates.ts          update dialogs for update://checked and update://failed
 │   ├── highlight.ts        highlight.js for code blocks in the preview (lazy)
@@ -327,6 +329,7 @@ self-contained components that know nothing about each other.
      ├─▶ find.ts       (find / replace bar)
      ├─▶ Changelog     changelog.ts (What's New overlay)
      ├─▶ About         about.ts (About panel)
+     ├─▶ Settings      settings.ts (Settings panel; edits cfg through main.ts, which applies + saves)
      └─▶ dialog.ts     in-app dialogs (updates.ts asks through it too)
 
                   all of them call the backend only through api.ts
@@ -347,7 +350,7 @@ The page is a fixed skeleton from `ui/index.html`; components render into it:
 ├──────────────┴─┴──────────────────────────────────┴─┴─────────────────────────┤
 │ #presentation (presentation mode, over everything but the title bar)          │
 │ #changelog (What's New overlay, over everything)                              │
-│ #about (About panel) · .sheet-scrim (dialogs, added while open)               │
+│ #about / #settings (panels) · .sheet-scrim (dialogs, added while open)        │
 │ #edge-handle · #toast · #print (PDF export only)                              │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -534,7 +537,8 @@ preserves like `skipped_version`.
 ├── config.toml          [workspace] [ui] [editor] [window] [updates] [session]
 │                        — settings, window geometry, open / recent files, skipped version,
 │                          last version the changelog was shown for;
-│                          edited as a normal document from Settings (⌘,), reloaded on save
+│                          edited from the Settings panel (⌘,: set_config on every change)
+│                          or as a normal document (Edit as Text File), reloaded on save
 │                          and, after edits made elsewhere, on window focus
 ├── themes/              themes (<name>.toml), selected via [ui] theme
 ├── workspace/           default workspace (used when none is configured or it is gone)

@@ -1238,6 +1238,245 @@ body.presenting #edge-handle {
   text-decoration: underline;
 }
 
+/* ---- Settings (settings.ts) ---- */
+
+/* Shorter than the window, so it sits centred over the editor; the settings scroll inside. */
+#settings .panel {
+  width: min(460px, 100%);
+  max-height: min(560px, 70vh);
+}
+
+#settings-body {
+  padding: 12px 20px 20px;
+}
+
+.settings-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.settings-link {
+  flex: none;
+  font-weight: 500;
+  color: var(--accent);
+  border-radius: var(--radius);
+}
+
+.settings-link:hover {
+  text-decoration: underline;
+}
+
+.settings-section h3 {
+  margin: 18px 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 34px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row label {
+  flex: none;
+}
+
+.settings-row input[type="number"],
+.settings-row input[type="text"] {
+  height: 24px;
+  padding: 0 8px;
+  font: 13px var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+}
+
+.settings-row input[type="number"] {
+  width: 72px;
+  text-align: right;
+}
+
+.settings-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  max-width: 240px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.settings-row input:focus-visible {
+  border-color: var(--accent);
+}
+
+.settings-row :disabled {
+  opacity: 0.4;
+}
+
+/* An on / off switch, accent colored when on. */
+.settings-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 16px;
+  margin: 0;
+  background: var(--border);
+  border-radius: 8px;
+  transition: background-color var(--fade);
+}
+
+.settings-switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
+  transition: transform var(--fade);
+}
+
+.settings-switch:checked {
+  background: var(--accent);
+}
+
+.settings-switch:checked::before {
+  transform: translateX(12px);
+}
+
+.settings-switch:focus-visible {
+  outline: 2px solid var(--selection);
+  outline-offset: 1px;
+}
+
+.settings-folder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.settings-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/* ---- dropdowns (dropdown.ts): a field-like button and a palette-like list ---- */
+
+.dropdown {
+  position: relative;
+  max-width: 200px;
+  height: 24px;
+  padding: 0 24px 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 13px var(--font-ui);
+  color: var(--text);
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: background-color var(--fade);
+}
+
+.dropdown:hover:not(:disabled),
+.dropdown[aria-expanded="true"] {
+  background: var(--hover);
+}
+
+.dropdown:focus-visible {
+  border-color: var(--accent);
+}
+
+.dropdown:disabled {
+  opacity: 0.4;
+}
+
+.dropdown::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  background: var(--text-muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M1 2.75 4 5.75 7 2.75' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M1 2.75 4 5.75 7 2.75' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.dropdown-list {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  font: 13px var(--font-ui);
+  color: var(--text);
+  background: var(--bar-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-float);
+  outline: none;
+  animation: palette-in var(--fade);
+}
+
+.dropdown-list li {
+  position: relative;
+  padding: 5px 28px 5px 10px;
+  white-space: nowrap;
+  border-radius: var(--radius);
+}
+
+.dropdown-list li[aria-selected="true"] {
+  background: var(--pill);
+}
+
+/* The current choice is checked, in the accent color. */
+.dropdown-list li[aria-checked="true"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  background: var(--accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5.25 4.25 7.5 8 2.75' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5.25 4.25 7.5 8 2.75' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 @keyframes scrim-in {
   from {
     opacity: 0;

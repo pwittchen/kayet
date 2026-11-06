@@ -62,6 +62,16 @@
       </div>
     </section>
 
+    <section id="settings" class="panel-scrim" tabindex="-1" hidden>
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <header class="panel-head" data-tauri-drag-region>
+          <h2 id="settings-title" data-tauri-drag-region>Settings</h2>
+          <button id="settings-close" class="overlay-close" type="button" title="Close (Esc)" aria-label="Close Settings"></button>
+        </header>
+        <div id="settings-body" class="panel-body"></div>
+      </div>
+    </section>
+
     <header id="titlebar" data-tauri-drag-region>
       <nav class="controls controls-left">
         <button id="btn-sidebar" type="button" title="Toggle file tree (⌘\)" aria-label="Toggle file tree"></button>
