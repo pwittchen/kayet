@@ -13,6 +13,9 @@ export const icons = {
   settings: svg(
     `<path d="M1.75 4.5h7M12.5 4.5h1.75M1.75 11.5h1.75M7 11.5h7.25"/><circle cx="10.75" cy="4.5" r="1.75"/><circle cx="5.25" cy="11.5" r="1.75"/>`,
   ),
+  editor: svg(`<path d="M10.5 2.75 13.25 5.5 6 12.75H3.25V10z"/><path d="M8.75 4.5 11.5 7.25"/>`),
+  window: svg(`<rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2"/><path d="M1.75 5.75h12.5"/>`),
+  updates: svg(`<circle cx="8" cy="8" r="5.75"/><path d="M8 5v5.5M5.75 8.25 8 10.5l2.25-2.25"/>`),
   themeSystem: svg(
     `<circle cx="8" cy="8" r="5.75"/><path d="M8 2.25a5.75 5.75 0 0 1 0 11.5z" fill="currentColor" stroke="none"/>`,
   ),

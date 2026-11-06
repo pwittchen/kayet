@@ -1257,7 +1257,7 @@ body.presenting #edge-handle {
 }
 
 #settings-body {
-  padding: 12px 20px 20px;
+  padding: 0 20px 20px;
 }
 
 .settings-file {
@@ -1286,13 +1286,51 @@ body.presenting #edge-handle {
   text-decoration: underline;
 }
 
-.settings-section h3 {
-  margin: 18px 0 2px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+/* A toolbar of tabs, like the top of a Mac settings window: an icon above each name. Pinned
+   at the top, so a long section scrolls below it. */
+.settings-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 0 -20px 14px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 72px;
+  padding: 6px 10px 5px;
+  font: 500 11px var(--font-ui);
   color: var(--text-muted);
+  border-radius: var(--radius);
+  transition: background-color var(--fade), color var(--fade);
+}
+
+.settings-tab svg {
+  width: 20px;
+  height: 20px;
+}
+
+.settings-tab:hover {
+  color: var(--text);
+}
+
+.settings-tab[aria-selected="true"] {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* As tall as the longest section, so the panel keeps its size between tabs. */
+.settings-section {
+  min-height: calc(7 * 34px);
 }
 
 .settings-row {

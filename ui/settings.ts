@@ -2,6 +2,7 @@
 
 import { Config, Mode } from "./api";
 import { Dropdown, DropdownOption } from "./dropdown";
+import { icons } from "./icons";
 import { effectiveMode, isLegacyTheme } from "./theme";
 
 export interface SettingsCallbacks {
@@ -37,6 +38,9 @@ const FONTS: DropdownOption[] = [
   ["custom", "Custom…"],
 ];
 
+/** The tabs' icons, in the order of the sections. */
+const TAB_ICONS = [icons.themeSystem, icons.editor, icons.window, icons.folder, icons.updates];
+
 /** A number setting: its range, and the step values are rounded to. */
 interface NumberSpec {
   min: number;
@@ -56,6 +60,8 @@ export class Settings {
   private customFont = false;
   /** The dropdowns shown, whose open lists close with the panel. */
   private dropdowns: Dropdown[] = [];
+  /** The tab shown; kept while kayet runs, so the panel reopens where it was left. */
+  private tab = 0;
 
   constructor(
     private readonly root: HTMLElement,
@@ -117,8 +123,7 @@ export class Settings {
     edit.addEventListener("click", () => this.cb.editFile());
     file.append(note, edit);
 
-    return [
-      file,
+    const sections = [
       section(
         "Appearance",
         this.select(
@@ -216,6 +221,57 @@ export class Settings {
         ),
       ),
     ];
+    const [bar, ...panes] = this.tabs(sections);
+    return [bar, file, ...panes];
+  }
+
+  /**
+   * A toolbar of tabs over the sections (an icon above each name, like a Mac settings window),
+   * of which the chosen one is shown.
+   */
+  private tabs(sections: HTMLElement[]): HTMLElement[] {
+    const bar = document.createElement("div");
+    bar.className = "settings-tabs";
+    bar.setAttribute("role", "tablist");
+    this.tab = Math.min(this.tab, sections.length - 1);
+    const buttons = sections.map((pane, i) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "settings-tab";
+      button.setAttribute("role", "tab");
+      const label = document.createElement("span");
+      label.textContent = pane.dataset.title ?? "";
+      button.innerHTML = TAB_ICONS[i] ?? "";
+      button.append(label);
+      button.id = `settings-tab-${i}`;
+      pane.id = `settings-pane-${i}`;
+      pane.setAttribute("role", "tabpanel");
+      pane.setAttribute("aria-labelledby", button.id);
+      button.setAttribute("aria-controls", pane.id);
+      button.addEventListener("click", () => select(i));
+      return button;
+    });
+    const select = (i: number) => {
+      this.tab = i;
+      for (const d of this.dropdowns) d.hide();
+      buttons.forEach((b, j) => {
+        b.setAttribute("aria-selected", String(j === i));
+        b.tabIndex = j === i ? 0 : -1;
+        sections[j].hidden = j !== i;
+      });
+    };
+    // Arrow keys move between the tabs, like a native tab bar.
+    bar.addEventListener("keydown", (e) => {
+      const step = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      const i = (this.tab + step + sections.length) % sections.length;
+      select(i);
+      buttons[i].focus();
+    });
+    bar.append(...buttons);
+    select(this.tab);
+    return [bar, ...sections];
   }
 
   private toggle(
@@ -361,9 +417,8 @@ export function parseNumber(text: string, spec: NumberSpec): number | null {
 function section(title: string, ...rows: HTMLElement[]): HTMLElement {
   const el = document.createElement("section");
   el.className = "settings-section";
-  const h = document.createElement("h3");
-  h.textContent = title;
-  el.append(h, ...rows);
+  el.dataset.title = title;
+  el.append(...rows);
   return el;
 }
 

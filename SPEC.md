@@ -582,7 +582,8 @@ check_automatically = true  # look for a new kayet release at launch and once a 
   by the default monospace stack, so a font that isn't installed falls back to SF Mono.
 - `kayet → Settings…`, `⌘,`, the title bar sliders icon or `Settings…` in the command palette
   open the **Settings panel**: centred over the dimmed window like About, with the settings
-  grouped as Appearance (theme, appearance mode, font, font size, line height, blinking cursor),
+  grouped in tabs (a toolbar pinned at the top with an icon above each name, like a Mac settings
+  window; `←` / `→` switch between them and the panel reopens on the last tab used while kayet runs): Appearance (theme, appearance mode, font, font size, line height, blinking cursor),
   Editor (wrap lines, line width, autosave, syntax highlighting, spell check, code editor mode,
   zen mode), Window (file tree, title bar, new tabs, presentation steps), Workspace (folder with
   `Change…` and `Set to Default` buttons, which leave the file tree as it is; hidden files) and Updates (the running version, e.g. `kayet 0.14.0`, with a
@@ -591,7 +592,7 @@ check_automatically = true  # look for a new kayet release at launch and once a 
   in code editor mode, the appearance mode for a single-variant theme) are disabled. `Esc`, the
   close button, a click outside or `⌘,` again close it. Window geometry, sizes of the sidebar /
   preview and the session are not shown.
-- At the very top of the panel, `Edit as Text File` closes it and opens `~/.kayet/config.toml` in
+- At the top of the panel, under the tabs, `Edit as Text File` closes it and opens `~/.kayet/config.toml` in
   the editor (also `Edit Settings File` in the command palette); saving the file applies the
   changes immediately. Edits made in another editor apply when the kayet
   window is focused again. Changing `workspace.path` moves to that workspace; if it isn't a folder,

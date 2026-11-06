@@ -98,8 +98,8 @@ describe("Settings", () => {
     expect(body.querySelector(".settings-path")?.textContent).toBe("/Users/me/notes");
   });
 
-  it("offers editing the config file at the top", () => {
-    const first = body.firstElementChild!;
+  it("offers editing the config file at the top, under the tabs", () => {
+    const first = body.children[1];
     expect(first.className).toBe("settings-file");
     first.querySelector("button")!.click();
     expect(editFile).toHaveBeenCalledOnce();
@@ -181,6 +181,22 @@ describe("Settings", () => {
     list.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     expect(cfg.ui.mode).toBe("light");
     expect(control("Appearance").textContent).toBe("Light");
+  });
+
+  it("groups the settings in tabs", () => {
+    const tabs = [...body.querySelectorAll<HTMLElement>('[role="tab"]')];
+    expect(tabs.map((t) => t.textContent)).toEqual(["Appearance", "Editor", "Window", "Workspace", "Updates"]);
+    expect(rowNamed("Theme").closest("section")!.hidden).toBe(false);
+    expect(rowNamed("Wrap lines").closest("section")!.hidden).toBe(true);
+    tabs[1].click();
+    expect(tabs[1].getAttribute("aria-selected")).toBe("true");
+    expect(rowNamed("Theme").closest("section")!.hidden).toBe(true);
+    expect(rowNamed("Wrap lines").closest("section")!.hidden).toBe(false);
+    tabs[1].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    expect(rowNamed("Show file tree").closest("section")!.hidden).toBe(false);
+    // Reopened on the tab it was left on.
+    view.show([], "0.14.0");
+    expect(rowNamed("Show file tree").closest("section")!.hidden).toBe(false);
   });
 
   it("closes on Escape", () => {
