@@ -63,7 +63,7 @@ const ALTS: Alt[] = [
       ["Free and open source", "No license to buy for each device. The source code is on GitHub under the Apache License 2.0."],
       ["Also a text editor", "Code and config files are highlighted by extension, so the same quiet window works for a README, a script or a TOML file."],
       ["Slides from Markdown", "Split a document with <code>---</code> lines and present it full window, without leaving the editor."],
-      ["Configured in a text file", "Every setting lives in <code>~/.kayet/config.toml</code>. No preferences window."],
+      ["Configured in a text file", "Every setting lives in <code>~/.kayet/config.toml</code>. Edit it in the Settings window or as a text file, with the same effect."],
     ],
     better: [
       "You write on iPhone, iPad, Windows or Android as well as on the Mac. kayet is a Mac app only.",
@@ -399,7 +399,7 @@ const ALTS: Alt[] = [
     familiar: [
       ["Go to anything", "<kbd>⌘</kbd><kbd>P</kbd> finds files, <kbd>⌘</kbd><kbd>K</kbd> runs commands and <kbd>⌘</kbd><kbd>⇧</kbd><kbd>F</kbd> searches the workspace."],
       ["Fast", "Native Rust under the hood. kayet starts instantly."],
-      ["Settings in a file", "All configuration is in one text file, <code>~/.kayet/config.toml</code>."],
+      ["Settings in a file", "All configuration is in one text file, <code>~/.kayet/config.toml</code>, also editable from the Settings window."],
     ],
     different: [
       ["Prose first", "Smart Markdown lists, emphasis shortcuts, spell check and a live preview with HTML and PDF export."],

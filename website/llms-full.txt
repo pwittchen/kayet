@@ -49,13 +49,13 @@
 | Toggle preview (Markdown) | `⌘⇧P` |
 | Bold / italic (Markdown) | `⌘B` / `⌘I` |
 | Switch appearance | `⌘⇧L` |
-| Settings (config file) | `⌘,` |
+| Settings | `⌘,` |
 | Show chrome | `⌘.` |
 | Zoom in / out / reset | `⌘+` / `⌘-` / `⌘0` |
 
 ## Configuration
 
-Every setting lives in one TOML file, `~/.kayet/config.toml`. There is no preferences window. The file is created on first launch; missing keys are filled in with their defaults and written back. Open it in kayet with `⌘,` — changes apply as soon as it is saved. A file that fails to parse is left untouched and defaults are used.
+Every setting lives in one TOML file, `~/.kayet/config.toml`. Settings can be changed in the Settings window (`⌘,`) or by editing the file directly; the effect is the same either way. Changes in the window apply and are saved immediately; `Edit as Text File` at the top of the window (or `Edit Settings File` in the command palette) opens the file in kayet, and changes apply as soon as it is saved. The file is created on first launch; missing keys are filled in with their defaults and written back. A file that fails to parse is left untouched and defaults are used.
 
 ```toml
 [workspace]
