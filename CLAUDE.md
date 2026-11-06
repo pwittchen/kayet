@@ -25,6 +25,7 @@ npm run build          # type-check + build frontend into dist/ (required before
 cargo build --locked
 cargo test --locked
 npm test               # frontend tests (Vitest + happy-dom, ui/*.test.ts)
+scripts/test.sh        # all checks: frontend build, cargo fmt --check, clippy, cargo test, npm test
 npm run test:coverage       # frontend coverage report in coverage/ui/
 npm run test:coverage:rust  # backend coverage report in coverage/rust/ (needs cargo-llvm-cov)
 cargo fmt --check
