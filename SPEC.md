@@ -336,7 +336,9 @@ keyboard shortcut (`⌘\` for the file tree, `⌘⇧P` for the preview) and hidd
   pointer is over it (a folded line's marker always shows), the folded lines become `…`;
   `⌥⌘[` / `⌥⌘]` fold / unfold at the cursor, `⌃⌥[` / `⌃⌥]` (or `Fold All` / `Unfold All` in the
   command palette) every block.
-- Soft wrap on by default; max readable line width (~72ch) centered in the pane.
+- Soft wrap on by default; max readable line width (~72ch) centered in the pane. A wrapped line
+  keeps a hanging indent: it continues under the text of its list item (bullet, number, task box),
+  block quote or indentation instead of at the left edge.
 - Font: monospace by default (`SF Mono` via `ui-monospace`), optional system UI font (`-apple-system`) setting.
   Default size 15px, line height 1.6.
 - Markdown syntax highlighting is subtle (weight/opacity changes, muted accent for links/code).

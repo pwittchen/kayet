@@ -42,6 +42,7 @@ import { findBar, openFind } from "./find";
 import { indentFolding } from "./folding";
 import { Indentation, indentation, saveChanges } from "./indent";
 import { ImageSaver, markdownEditing } from "./markdown";
+import { hangingIndent } from "./wrapindent";
 
 export interface EditorSettings {
   /** "mono", "system", or font family names separated by commas. */
@@ -324,7 +325,7 @@ export class Editor {
 
   /** Soft wrap per the settings; code editor mode never wraps. */
   private wrapExtension(): Extension {
-    return this.settings.softWrap && !this.codeOn ? EditorView.lineWrapping : [];
+    return this.settings.softWrap && !this.codeOn ? [EditorView.lineWrapping, hangingIndent] : [];
   }
 
   private lookExtension(): Extension {

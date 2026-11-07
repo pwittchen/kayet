@@ -79,6 +79,7 @@ kayet/
 │   │                       line comment fallbacks for Toggle Comment
 │   ├── indent.ts           indentation detection, .editorconfig save rules
 │   ├── folding.ts          code folding by indentation (code editor mode)
+│   ├── wrapindent.ts       hanging indent of soft-wrapped list items, quotes, indented lines
 │   ├── symbols.ts          Go to Symbol: Markdown headings, code definitions by pattern
 │   ├── find.ts             in-document find / replace bar
 │   ├── preview.ts          debounced preview rendering, links, scroll sync
@@ -326,6 +327,7 @@ self-contained components that know nothing about each other.
      ├─▶ languages.ts  (code grammars, loaded lazily)
      ├─▶ indent.ts     (indentation, .editorconfig save rules)
      ├─▶ folding.ts    (folding by indentation)
+     ├─▶ wrapindent.ts (hanging indent of wrapped lines)
      ├─▶ find.ts       (find / replace bar)
      ├─▶ Changelog     changelog.ts (What's New overlay)
      ├─▶ About         about.ts (About panel)
