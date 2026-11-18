@@ -70,7 +70,8 @@ neither download carries the other's code.
 - One active document at a time, several can be open in **tabs** (see 4.4).
 - Files are opened from the file tree, the file finder (`⌘P`, see 5.5), workspace search (`⌘⇧F`, see 5.6), via `⌘O`, by drag-and-drop onto the window, from
   Finder or from the terminal (see 4.3).
-- Encoding: UTF-8. Line endings are preserved as found in the file.
+- Encoding: UTF-8. Line endings are preserved as found in the file; a file mixing ending
+  styles opens with every break shown and saves with its predominant style (the first one wins ties).
 - `File → Open Recent` lists the last 10 opened files, most recent first, by name (files sharing a
   name get their folder appended); files that no longer exist are dropped, `Clear Menu` empties the
   list. Picking one opens it (asking to save unsaved changes first). The command palette offers the

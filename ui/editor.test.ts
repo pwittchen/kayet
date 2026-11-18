@@ -2,7 +2,7 @@ import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { describe, expect, it } from "vitest";
 
-import { Editor, cssFontFamily } from "./editor";
+import { Editor, cssFontFamily, normalizeLineEndings } from "./editor";
 
 // happy-dom fires `selectionchange` synchronously inside `Selection.collapse`, so CodeMirror sees
 // it while still writing its own selection and re-enters `EditorView.update`. Browsers queue the
@@ -173,6 +173,73 @@ describe("code editing", () => {
     expect(e.cursorLine()).toBe(2);
     e.goToLine(99, 99);
     expect(e.view.state.selection.main.head).toBe(e.doc.length);
+  });
+});
+
+describe("line endings", () => {
+  const editor = () => new Editor(document.createElement("div"), settings, callbacks);
+  // Same break pattern as the mixed-line-endings.txt attached to issue #16: LF, LF,
+  // CRLF, CRLF, CR, CR, LF, CRLF, CR, then a last line without any ending.
+  const mixed =
+    "Line 1: ends with LF (Unix)\n" +
+    "Line 2: ends with LF (Unix)\n" +
+    "Line 3: ends with CRLF (Windows)\r\n" +
+    "Line 4: ends with CRLF (Windows)\r\n" +
+    "Line 5: ends with CR (classic Mac)\r" +
+    "Line 6: ends with CR (classic Mac)\r" +
+    "Line 7: mixed again, LF\n" +
+    "Line 8: CRLF\r\n" +
+    "Line 9: CR\r" +
+    "Line 10: no line ending at end of file";
+
+  it("normalizes a mixed text to the predominant break, ties to the first one", () => {
+    expect(normalizeLineEndings("a\nb\nc")).toBe("a\nb\nc");
+    expect(normalizeLineEndings("a\r\nb\r\n")).toBe("a\r\nb\r\n");
+    expect(normalizeLineEndings("a\rb\r")).toBe("a\rb\r");
+    expect(normalizeLineEndings("no breaks")).toBe("no breaks");
+    expect(normalizeLineEndings("a\r\nb\r\nc\nd")).toBe("a\r\nb\r\nc\r\nd");
+    expect(normalizeLineEndings("a\rb\nc\nd")).toBe("a\nb\nc\nd");
+    // Three of each: the first break (LF) wins.
+    expect(normalizeLineEndings(mixed)).toBe(mixed.replace(/\r\n|\r/g, "\n"));
+  });
+
+  it("breaks every line of a mixed file (issue #16)", () => {
+    const e = editor();
+    e.load(mixed, null);
+    expect(e.doc.lines).toBe(10);
+    expect(e.doc.line(1).text).toBe("Line 1: ends with LF (Unix)");
+    expect(e.doc.line(5).text).toBe("Line 5: ends with CR (classic Mac)");
+    expect(e.doc.line(10).text).toBe("Line 10: no line ending at end of file");
+    expect(e.text()).toBe(mixed.replace(/\r\n|\r/g, "\n"));
+  });
+
+  it("keeps uniform files round-tripping byte-identically", () => {
+    const e = editor();
+    e.load("a\r\nb\r\nc", null);
+    expect(e.doc.lines).toBe(3);
+    expect(e.text()).toBe("a\r\nb\r\nc");
+    e.load("a\rb\rc", null);
+    expect(e.doc.lines).toBe(3);
+    expect(e.text()).toBe("a\rb\rc");
+    e.load("a\nb\nc", null);
+    expect(e.text()).toBe("a\nb\nc");
+    e.load("a\r\nb\r\n", null);
+    expect(e.text()).toBe("a\r\nb\r\n");
+  });
+
+  it("breaks lines around a stray carriage return in an LF file", () => {
+    const e = editor();
+    e.load("a\nb\rc\nd\n", null);
+    expect(e.doc.lines).toBe(5);
+    expect(e.text()).toBe("a\nb\nc\nd\n");
+  });
+
+  it("normalizes mixed text reloaded from disk", () => {
+    const e = editor();
+    e.load("a\nb\n", null);
+    e.replaceText(mixed);
+    expect(e.doc.lines).toBe(10);
+    expect(e.text()).toBe(mixed.replace(/\r\n|\r/g, "\n"));
   });
 
   it("closes brackets in code files only", () => {
