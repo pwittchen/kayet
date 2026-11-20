@@ -234,6 +234,31 @@ function detectLineSeparator(text: string): string {
   return "\n";
 }
 
+/**
+ * Normalizes a text mixing several line break styles (`\n`, `\r\n`, `\r`) to the predominant
+ * one (the first one wins ties), so every break shows as a line break in the editor: CodeMirror
+ * only splits on the configured separator, and a configured `\r\n` leaves lone `\n` and `\r`
+ * characters inside the lines. A text with at most one style is returned unchanged, so uniform
+ * files keep round-tripping byte-identically (see `detectLineSeparator`).
+ */
+export function normalizeLineEndings(text: string): string {
+  const breaks = text.match(/\r\n|\r|\n/g);
+  if (!breaks) return text;
+  const counts = new Map<string, number>();
+  for (const b of breaks) counts.set(b, (counts.get(b) ?? 0) + 1);
+  if (counts.size < 2) return text;
+  let dominant = "\n";
+  let count = 0;
+  for (const b of breaks) {
+    // The first break among equally frequent ones wins, as it is seen first here.
+    if ((counts.get(b) ?? 0) > count) {
+      dominant = b;
+      count = counts.get(b) ?? 0;
+    }
+  }
+  return text.split(/\r\n|\r|\n/).join(dominant);
+}
+
 export class Editor {
   readonly view: EditorView;
   private readonly language = new Compartment();
@@ -358,7 +383,7 @@ export class Editor {
   /** Replaces the document; resets undo history. */
   load(text: string, syntax: Syntax): void {
     this.stopSweep();
-    this.view.setState(this.createState(text, syntax));
+    this.view.setState(this.createState(normalizeLineEndings(text), syntax));
     this.view.scrollDOM.scrollTop = 0;
     if (this.spellOn) void this.checkSpelling();
   }
@@ -389,6 +414,7 @@ export class Editor {
   /** Replaces the text while keeping history, the cursor and the scroll position. */
   replaceText(text: string): void {
     this.stopSweep();
+    text = normalizeLineEndings(text);
     const state = this.view.state;
     const sep = detectLineSeparator(text);
     if (sep !== state.lineBreak) {

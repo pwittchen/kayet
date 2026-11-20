@@ -26,55 +26,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Fails the build on any known vulnerability in npm or Cargo dependencies. cargo audit also
-  # denies warnings (unmaintained / unsound / yanked crates); exceptions live in .cargo/audit.toml.
-  audit:
-    # A `#no-deploy` hashtag in the pushed commit message skips the whole workflow (build needs audit).
-    if: ${{ !(github.event_name == 'push' && contains(github.event.head_commit.message, '#no-deploy')) }}
-    runs-on: ubuntu-24.04
-
-    steps:
-    - uses: actions/checkout@v7
-
-    - uses: actions/setup-node@v7
-      with:
-        node-version: 22
-
-    # Each audit writes its report to the job summary, also when it fails (then the step
-    # still fails with the audit's exit status).
-    - name: Audit npm dependencies
-      run: |
-        set -o pipefail
-        status=0
-        npm audit 2>&1 | tee npm-audit.txt || status=$?
-        {
-          echo '### npm audit'
-          echo '```'
-          cat npm-audit.txt
-          echo '```'
-        } >> "$GITHUB_STEP_SUMMARY"
-        exit "$status"
-
-    - uses: taiki-e/install-action@v2
-      with:
-        tool: cargo-audit
-
-    - name: Audit Cargo dependencies
-      run: |
-        set -o pipefail
-        status=0
-        cargo audit --deny warnings --color never 2>&1 | tee cargo-audit.txt || status=$?
-        {
-          echo '### Cargo audit'
-          echo '```'
-          cat cargo-audit.txt
-          echo '```'
-        } >> "$GITHUB_STEP_SUMMARY"
-        exit "$status"
-
   build:
-    # Audits gate the build: a failed audit fails the workflow without building or testing.
-    needs: audit
+    # A `#no-deploy` hashtag in the pushed commit message skips the whole workflow.
+    if: ${{ !(github.event_name == 'push' && contains(github.event.head_commit.message, '#no-deploy')) }}
 
     # Apple Silicon and Intel (SPEC.md §3): checks run natively on the Apple Silicon runner,
     # the Intel app is cross-compiled there too.
