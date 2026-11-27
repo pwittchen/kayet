@@ -12,4 +12,6 @@ ignore = [
     "RUSTSEC-2026-0370", # zvariant unmaintained, merged into zbus 6 (via tauri-plugin-opener)
     "RUSTSEC-2026-0371", # zbus_names unmaintained, merged into zbus 6
     "RUSTSEC-2026-0372", # zvariant_derive unmaintained, merged into zbus 6
+    "RUSTSEC-2026-0543", # chrono unmaintained: only an unused optional dep of serde_with
+                         # left in Cargo.lock; not compiled (`cargo tree -i chrono` is empty)
 ]
